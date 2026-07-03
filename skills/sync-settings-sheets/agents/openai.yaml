@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sync Settings Sheets"
+  short_description: "Download Drive settings Sheets as CSV"
+  default_prompt: "Use $sync-settings-sheets to refresh data/settings CSVs from the configured Google Drive folder."
