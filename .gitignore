@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+wheels/
+
+# Environment files
+.env*
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Version files
+.version
+
+# Scrapy cache
+.scrapy/
+
+# Temporary files
+*.tmp
+
+# Custom folders
+/plans

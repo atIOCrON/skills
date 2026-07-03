@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rank Concurrent Plans"
+  short_description: "Rank plans into safe concurrent implementation lanes."
+  default_prompt: "Rank these plans into dependency-safe concurrent agent lanes, and list any plans that must wait."

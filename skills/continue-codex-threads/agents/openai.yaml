@@ -1,0 +1,4 @@
+interface:
+  display_name: "Continue Codex Threads"
+  short_description: "Send a fixed continue prompt to selected Codex threads."
+  default_prompt: "Send the continue prompt to these Codex threads:"
