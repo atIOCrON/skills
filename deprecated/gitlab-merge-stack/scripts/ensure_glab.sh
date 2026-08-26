@@ -2,7 +2,7 @@
 # Resolve glab and jq for the calling shell, falling back to Homebrew's
 # shellenv when the invoking shell did not load the user's profile. A child
 # process cannot mutate its parent's PATH, so run this as
-#   eval "$(scripts/ensure_glab.sh)"
+#   eval "$(.agents/skills/<skill>/scripts/ensure_glab.sh)"
 # at the start of every shell invocation that uses glab. Emits an
 # `export PATH=...` line on stdout; prints diagnostics and the resolved glab
 # path on stderr.
