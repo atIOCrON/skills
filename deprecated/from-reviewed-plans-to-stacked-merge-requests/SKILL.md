@@ -1,6 +1,6 @@
 ---
 name: from-reviewed-plans-to-stacked-merge-requests
-description: Run an ordered list of reviewed plans through implementation, verification, pushed stacked branches, and GitLab merge requests without merging. Bundles all reusable orchestration components required by the route.
+description: Run an ordered list of reviewed plans through implementation, verification, pushed stacked branches, and GitLab merge requests without merging.
 metadata:
   layer: runner
 ---
@@ -11,19 +11,6 @@ Use when the user provides one or more reviewed plan filenames and wants each
 plan implemented, reviewed, committed, pushed, and opened as a GitLab merge
 request stacked on the previous plan branch.
 
-## Bundled Resources
-
-Supporting workflow instructions are under `references/`, and executable
-helpers are under `scripts/`. They are bundled resources, not separately
-installed or discoverable skills.
-
-Read each reference only when the workflow reaches the step that needs it. For
-each plan, begin with `references/from-reviewed-plan-to-git-handoff.md`.
-Direct stack operations additionally use:
-
-- `references/git-branch-commit-push.md`;
-- `references/gitlab-create-mr.md`.
-
 ## Inputs
 
 - Ordered reviewed plan filenames or `plans/<file>.md` paths.
@@ -33,7 +20,7 @@ Direct stack operations additionally use:
 
 Stacked-MR terms (base target branch, stack parent branch, MR target branch,
 true stacked MR chain) are defined in
-`references/orchestration-stacked-mrs.md`. This
+`.agents/skills/orchestration-conventions/references/stacked_mrs.md`. This
 route creates a true stacked MR chain.
 
 ## Workflow
@@ -43,19 +30,17 @@ For each plan, in order:
 1. Start from the current stack head. The first plan's stack parent branch is
    the starting branch; every later plan's stack parent branch is the
    previous plan's branch.
-2. Read and follow `references/from-reviewed-plan-to-git-handoff.md`.
+2. Run `.agents/skills/from-reviewed-plan-to-git-handoff/SKILL.md`.
 3. Run any stack-level or final verification not already covered by the
    git-handoff route. Run the project's full-suite verification skill named by AGENTS.md when the change affects
    full pipeline/export behavior or the user asks for it; otherwise state it
    was not needed.
-4. Stage intended files only, then read and follow
-   `references/git-branch-commit-push.md`
-   for branch, commit, and push. Explicitly pass the plan's stack parent branch as
+4. Stage intended files only, then use `git-branch-commit-push` for branch,
+   commit, and push. Explicitly pass the plan's stack parent branch as
    `<base-branch>`; never rely on the helper's `develop` default in stack
    mode.
-5. After the branch is pushed, read and follow
-   `references/gitlab-create-mr.md` to
-   create a true stacked MR. Explicitly pass the plan's stack parent branch as
+5. After the branch is pushed, use `gitlab-create-mr` to create a true
+   stacked MR: explicitly pass the plan's stack parent branch as
    `<target-branch>`. The first plan's MR therefore targets the base target
    branch and every later MR targets the previous stack branch.
 6. Before moving on, verify `plans/<slug>.reviews/` exists and contains the
@@ -70,11 +55,10 @@ on the final stack head regardless of per-plan export-test decisions.
 ## Rules
 
 - Preserve unrelated dirty work; never stage or revert it.
-- Use the bundled `git-branch-commit-push` component's branch naming and
-  commit-message standards, with the current stack head as the parent for each
-  plan branch.
-- Pass explicit `<base-branch>` and `<target-branch>` values to the bundled git
-  components for every stack item; do not rely on their defaults.
+- Use `git-branch-commit-push` branch naming and commit-message standards, with
+  the current stack head as the parent for each plan branch.
+- Pass explicit `<base-branch>` and `<target-branch>` values to the delegated
+  git skills for every stack item; do not rely on their defaults.
 - Use a clean worktree for `gitlab-create-mr` if unrelated dirty work would
   fail its glab preflight (distinct from the reviewer preflight that the
   git-handoff route runs via `reviewer-preflight`).

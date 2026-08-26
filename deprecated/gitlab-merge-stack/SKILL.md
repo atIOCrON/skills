@@ -1,6 +1,7 @@
 ---
 name: gitlab-merge-stack
-description: Sequentially merge a stack of already-reviewed GitLab merge requests into the base target branch, rebasing and retargeting successors as needed. Bundles its terminology, cleanup instructions, and executable helpers.
+description: Sequentially merge a stack of already-reviewed GitLab merge requests into the base target branch (default develop), inferring stack order from branch ancestry and commit counts, then rebasing and force-pushing each next branch onto the freshly updated base target branch before merging it. Handles both base-targeted stacks and true stacked MR chains, retargeting successor MRs as the stack merges.
+compatibility: Requires git, glab, and jq with GitLab authentication
 metadata:
   layer: runner
 ---
@@ -11,22 +12,9 @@ Use when the user provides already-reviewed stacked GitLab branches or merge
 requests to merge into the base target branch one at a time. The base target
 branch defaults to `develop` unless the user names another.
 
-Requires `git`, `glab`, and `jq`, with GitLab authentication configured.
-
-## Bundled Resources
-
-Supporting terminology and cleanup instructions are under `references/`, and
-executable helpers are under `scripts/`. They are bundled resources, not
-separately installed skills.
-
-Read `references/orchestration-stacked-mrs.md` before classifying the stack
-layout. Read `references/gitlab-post-merge-cleanup.md` only after the complete
-stack merges successfully and local cleanup begins. Use the helper scripts at
-the workflow steps that name them; do not load every resource at activation.
-
 Stacked-MR terms (base target branch, stack parent branch, MR target branch,
 layouts) are defined in
-`references/orchestration-stacked-mrs.md`.
+`.agents/skills/orchestration-conventions/references/stacked_mrs.md`.
 
 ## Inputs
 
@@ -38,11 +26,11 @@ layouts) are defined in
 ## Preflight
 
 A child process cannot change this shell's PATH, so begin every shell invocation
-that runs `glab` with `eval "$(scripts/ensure_glab.sh)"`;
+that runs `glab` with `eval "$(.agents/skills/gitlab-merge-stack/scripts/ensure_glab.sh)"`;
 the script resolves `glab` and `jq` for non-interactive shells. Then run:
 
 ```bash
-eval "$(scripts/ensure_glab.sh)"
+eval "$(.agents/skills/gitlab-merge-stack/scripts/ensure_glab.sh)"
 original_worktree="$PWD"
 original_branch="$(git branch --show-current)"
 git status --short
@@ -89,7 +77,7 @@ branch ancestry.
 Determine the merge order from Git, not from the user-supplied order:
 
 ```bash
-scripts/resolve_stack_order.sh <base-target-branch> <source-branch>...
+.agents/skills/gitlab-merge-stack/scripts/resolve_stack_order.sh <base-target-branch> <source-branch>...
 ```
 
 The script fetches, counts commits per branch relative to the base target
@@ -119,7 +107,7 @@ For each source branch in order:
    mergeable, rebase it the same way as every later branch:
 
    ```bash
-   scripts/rebase_stack_branch.sh <base-target-branch> <source-branch>
+   .agents/skills/gitlab-merge-stack/scripts/rebase_stack_branch.sh <base-target-branch> <source-branch>
    ```
 
    The script detaches at the remote SHA, rebases onto the base target branch,
@@ -136,7 +124,7 @@ For each source branch in order:
 3. Wait for the MR pipeline on the new head SHA:
 
    ```bash
-   scripts/wait_for_mr_pipeline.sh <iid-or-url> <rebased-head-sha>
+   .agents/skills/gitlab-merge-stack/scripts/wait_for_mr_pipeline.sh <iid-or-url> <rebased-head-sha>
    ```
 
    Wait policy: poll every 30 seconds, stop after 20 minutes. Stop if the
@@ -150,7 +138,7 @@ For each source branch in order:
    MR should target the current source branch.
 
    ```bash
-   scripts/validate_successor_mr.sh <source-branch> <expected-successor-iid-or-null>
+   .agents/skills/gitlab-merge-stack/scripts/validate_successor_mr.sh <source-branch> <expected-successor-iid-or-null>
    ```
 
    The script exits non-zero if the refresh returns multiple open MRs, an
@@ -159,7 +147,7 @@ For each source branch in order:
    stacked chain. Record the printed `successor_iid` value, then merge:
 
    ```bash
-   scripts/merge_stack_mr.sh <iid> <current-head-sha> <successor-iid-or-null>
+   .agents/skills/gitlab-merge-stack/scripts/merge_stack_mr.sh <iid> <current-head-sha> <successor-iid-or-null>
    ```
 
    The merge script uses `--remove-source-branch` only when `successor_iid` is
@@ -189,7 +177,7 @@ For each source branch in order:
    from the validated step-4 refresh as `<successor-iid>`:
 
    ```bash
-   eval "$(scripts/ensure_glab.sh)"
+   eval "$(.agents/skills/gitlab-merge-stack/scripts/ensure_glab.sh)"
    glab mr update <successor-iid> --target-branch <base-target-branch>
    ```
 
@@ -197,7 +185,7 @@ For each source branch in order:
    script:
 
    ```bash
-   scripts/delete_branch_if_unreferenced.sh <merged-source-branch>
+   .agents/skills/gitlab-merge-stack/scripts/delete_branch_if_unreferenced.sh <merged-source-branch>
    ```
 
    The script rechecks GitLab before deleting and exits non-zero if any open MR
@@ -220,9 +208,9 @@ After the stack finishes successfully:
 2. Return to the original worktree (`cd "$original_worktree"`). If a temporary
    worktree was used and is clean, remove it (`git worktree remove
    "$tmp_worktree"`, then `git worktree prune`) — this stays here because this
-   workflow created it. Keep any worktree holding conflict state to inspect.
-3. Read and follow `references/gitlab-post-merge-cleanup.md`, passing the base
-   target branch and the record file to `scripts/cleanup_merged_branches.sh`.
+   skill created it. Keep any worktree holding conflict state to inspect.
+3. Invoke `.agents/skills/gitlab-post-merge-cleanup/SKILL.md` with the base
+   target branch and the record file.
 
 ## Rules
 
