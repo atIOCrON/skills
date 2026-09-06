@@ -29,7 +29,7 @@ exit_code_file="$artifact_dir/cursor-exit-code"
 stderr_file="$artifact_dir/cursor-stderr.log"
 attempts_file="$artifact_dir/cursor-attempts.md"
 failure_file="$artifact_dir/cursor-failure.md"
-model="${CURSOR_REVIEW_MODEL:-composer-2.5}"
+model="${CURSOR_REVIEW_MODEL:-cursor-grok-4.6-high}"
 reviewer="cursor"
 
 rm -f "$failure_file"

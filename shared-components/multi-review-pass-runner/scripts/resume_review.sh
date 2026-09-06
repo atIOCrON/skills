@@ -58,7 +58,7 @@ while [ "$attempt" -le "$max_attempts" ]; do
     cursor)
       command -v cursor-agent >/dev/null 2>&1 || { echo "error: cursor-agent CLI not found on PATH" >&2; exit 3; }
       set +e
-      cursor-agent --model "${CURSOR_REVIEW_MODEL:-composer-2.5}" --trust --mode ask \
+      cursor-agent --model "${CURSOR_REVIEW_MODEL:-cursor-grok-4.6-high}" --trust --mode ask \
         --workspace "$repo_root" --resume "$session_id" -p --output-format text \
         < "$prompt_file" > "$output_file" 2>> "$stderr_file"
       final_exit_code=$?

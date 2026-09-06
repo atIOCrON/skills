@@ -49,7 +49,7 @@ run_claude() {
 run_cursor() {
   command -v cursor-agent >/dev/null 2>&1 || { echo "error: cursor-agent CLI not found on PATH" >&2; exit 3; }
   local chat_id model
-  model="${CURSOR_REVIEW_MODEL:-composer-2.5}"
+  model="${CURSOR_REVIEW_MODEL:-cursor-grok-4.6-high}"
   chat_id="$(cursor-agent create-chat)"
   test -n "$chat_id" || { echo "error: cursor-agent create-chat returned no chat id" >&2; exit 4; }
   cursor-agent --model "$model" --trust --mode ask --workspace "$repo_root" --resume "$chat_id" \
