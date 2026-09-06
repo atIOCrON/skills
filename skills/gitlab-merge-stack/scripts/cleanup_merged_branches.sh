@@ -43,8 +43,15 @@ delete_branch() {
 }
 
 if [ -n "$record_file" ]; then
-  while read -r branch old_remote_sha rebased_head_sha || [ -n "$branch" ]; do
+  while read -r branch old_remote_sha rebased_head_sha landed_sha extra || [ -n "${branch:-}" ]; do
     [ -n "$branch" ] || continue
+    if [ -n "${extra:-}" ] || [ -z "${old_remote_sha:-}" ] || [ -z "${rebased_head_sha:-}" ]; then
+      echo "skipped: $branch (malformed cleanup record)"
+      continue
+    fi
+    # Legacy triple records represent non-squash merges, where the rebased
+    # branch head itself was the landed commit.
+    landed_sha="${landed_sha:-$rebased_head_sha}"
     if ! git show-ref --verify --quiet "refs/heads/$branch"; then
       echo "skipped: $branch (no local branch)"
       continue
@@ -54,15 +61,25 @@ if [ -n "$record_file" ]; then
       echo "skipped: $branch (local SHA $local_sha differs from recorded old_remote_sha $old_remote_sha)"
       continue
     fi
-    if ! git merge-base --is-ancestor "$rebased_head_sha" "refs/heads/$target"; then
-      echo "skipped: $branch (rebased head $rebased_head_sha not merged into $target)"
+    if ! git cat-file -e "${rebased_head_sha}^{commit}" 2>/dev/null ||
+      ! git cat-file -e "${landed_sha}^{commit}" 2>/dev/null; then
+      echo "skipped: $branch (recorded rebased or landed commit is unavailable)"
       continue
     fi
-    if ! git branch -f "$branch" "$rebased_head_sha"; then
+    if [ "$rebased_head_sha" != "$landed_sha" ] &&
+      ! git diff --quiet "${rebased_head_sha}^{tree}" "${landed_sha}^{tree}"; then
+      echo "skipped: $branch (rebased head and landed squash commit have different trees)"
+      continue
+    fi
+    if ! git merge-base --is-ancestor "$landed_sha" "refs/heads/$target"; then
+      echo "skipped: $branch (landed commit $landed_sha not merged into $target)"
+      continue
+    fi
+    if ! git branch -f "$branch" "$landed_sha"; then
       echo "skipped: $branch (could not advance stale local branch ref)"
       continue
     fi
-    echo "advanced: $branch -> $rebased_head_sha"
+    echo "advanced: $branch -> $landed_sha"
     delete_branch "$branch"
   done < "$record_file"
 else
