@@ -1,7 +1,7 @@
 ---
 name: write-high-level-plans
 description: Write concise, outcome-focused implementation plans with foundational database schemas, while leaving detailed technical design to the implementing agent.
------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---
 
 # Write High-Level Plans
 
