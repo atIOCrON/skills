@@ -3,7 +3,8 @@
 # the validated successor state.
 # Exit codes: 0 = merged, 2 = usage, 3 = glab/jq unavailable,
 # 4 = invalid arguments, 5 = removal flag unsafe, 6 = merge failed,
-# 7 = GitLab API update/query failed.
+# 7 = GitLab API update/query failed, 8 = squash-on-merge is not effective,
+# 9 = MR state or head does not match the reviewed input.
 set -euo pipefail
 
 if [ "$#" -ne 3 ]; then
@@ -29,16 +30,37 @@ esac
 
 case "$successor_iid" in
   null)
-    if ! glab mr merge "$mr_iid" --sha "$current_head_sha" --remove-source-branch --yes; then
-      echo "error: failed to merge MR $mr_iid with source branch removal" >&2
-      exit 6
-    fi
-    echo "merge_mode=remove-source-branch"
-    exit 0
     ;;
   ''|*[!0-9]*)
     echo "error: successor IID must be numeric or null" >&2
     exit 4
+    ;;
+esac
+
+if ! mr_json="$(glab api "projects/:id/merge_requests/$mr_iid")"; then
+  echo "error: failed to refresh MR $mr_iid before merge" >&2
+  exit 7
+fi
+if ! printf '%s\n' "$mr_json" |
+  jq -e --arg sha "$current_head_sha" '.state == "opened" and .sha == $sha' >/dev/null; then
+  echo "error: MR $mr_iid is not open at reviewed head $current_head_sha" >&2
+  exit 9
+fi
+if ! printf '%s\n' "$mr_json" |
+  jq -e '.squash_on_merge == true' >/dev/null; then
+  echo "error: MR $mr_iid does not have effective squash-on-merge enabled" >&2
+  exit 8
+fi
+
+case "$successor_iid" in
+  null)
+    if ! glab mr merge "$mr_iid" --sha "$current_head_sha" --squash --remove-source-branch --yes; then
+      echo "error: failed to merge MR $mr_iid with source branch removal" >&2
+      exit 6
+    fi
+    echo "squash_on_merge=true"
+    echo "merge_mode=remove-source-branch"
+    exit 0
     ;;
 esac
 
@@ -59,10 +81,11 @@ if ! printf '%s\n' "$mr_json" |
   exit 5
 fi
 
-if ! glab mr merge "$mr_iid" --sha "$current_head_sha" --yes; then
+if ! glab mr merge "$mr_iid" --sha "$current_head_sha" --squash --yes; then
   echo "error: failed to merge MR $mr_iid while preserving source branch for successor MR $successor_iid" >&2
   exit 6
 fi
 
+echo "squash_on_merge=true"
 echo "merge_mode=preserve-source-branch"
 echo "successor_iid=$successor_iid"

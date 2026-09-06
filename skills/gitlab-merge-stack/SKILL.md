@@ -33,7 +33,9 @@ layouts) are defined in
 - Branch names, MR URLs, or MR IIDs for the reviewed stack. The user does not
   need to provide them in merge order.
 - Base target branch if not `develop`.
-- Optional non-default merge mode; otherwise use the MR or project default and do not force squash/rebase settings.
+
+This workflow requires effective squash-on-merge for every MR. The project
+setting should require squash, and each MR must report `squash_on_merge=true`.
 
 ## Preflight
 
@@ -70,11 +72,13 @@ checkout, and stop if creating the temporary worktree fails.
 ## Resolve Stack
 
 For every input, resolve and record: source branch, MR IID and URL, MR target
-branch, MR state, latest pipeline/check status, head SHA, and whether GitLab
-shows approvals/review requirements are satisfied. Use `glab mr view` and
-`glab api` as needed. Stop if any item is missing an open MR, appears
+branch, MR state, latest pipeline/check status, initial head SHA, effective
+`squash_on_merge` value, and whether GitLab shows approvals/review requirements
+are satisfied. Use `glab mr view` and `glab api` as needed. Stop if any item is
+missing an open MR, has effective squash-on-merge disabled, appears
 unreviewed/unapproved, has a failed pipeline, or is already merged out of
-order.
+order, except for a pipeline failure caused only by exhausted CI minutes or
+quota; handle that case as described below.
 
 Detect the MR target layout from the recorded MR metadata:
 
@@ -106,6 +110,10 @@ Confirm the project setting when possible (`glab api` field
 setting as permission to merge red or pending checks; skip green-check
 enforcement only when the user explicitly asks and acknowledges the risk.
 
+If a pipeline fails only because CI minutes or quota are exhausted (for
+example, `ci_quota_exceeded`), run every affected required job locally on the
+exact MR head SHA. Proceed only if all pass; record the commands and results.
+
 ## Workflow
 
 For each source branch in order:
@@ -116,17 +124,29 @@ For each source branch in order:
 2. Prepare the current branch against the latest base target branch. For the
    first branch, merge directly if GitLab reports it mergeable against the
    current base target branch and its checks are green; if it is stale or not
-   mergeable, rebase it the same way as every later branch:
+   mergeable, rebase it without a stack-parent argument:
 
    ```bash
    scripts/rebase_stack_branch.sh <base-target-branch> <source-branch>
    ```
 
-   The script detaches at the remote SHA, rebases onto the base target branch,
-   pushes with an explicit `--force-with-lease=refs/heads/<branch>:<old-sha>`
-   lease, and prints `old_remote_sha` and `rebased_head_sha`; record both for
-   local cleanup (for branches merged without rebasing, record the same value
-   as both).
+   Rebase every later branch while explicitly removing the already-integrated
+   stack prefix. Pass the preceding branch's recorded `old_remote_sha`, which
+   must be an ancestor of the current branch:
+
+   ```bash
+   scripts/rebase_stack_branch.sh \
+     <base-target-branch> \
+     <source-branch> \
+     <preceding-branch-old-remote-sha>
+   ```
+
+   The script detaches at the remote SHA and rebases onto the base target
+   branch. With the stack-parent argument it uses `rebase --onto` so commits
+   already represented by an earlier squash commit are not replayed. It pushes
+   with an explicit `--force-with-lease=refs/heads/<branch>:<old-sha>` lease and
+   prints `old_remote_sha` and `rebased_head_sha`; record both for local cleanup
+   (for branches merged without rebasing, record the same value as both).
 
    Conflict policy: on a rebase conflict the script runs `git rebase --abort`,
    prints the conflicting files, and exits with its dedicated conflict exit
@@ -141,7 +161,8 @@ For each source branch in order:
 
    Wait policy: poll every 30 seconds, stop after 20 minutes. Stop if the
    script reports failure, cancellation, an unexpected skip, or a timeout, or
-   if the MR is not mergeable.
+   if the MR is not mergeable. For a quota-only failure, run local CI as
+   specified above instead of stopping.
 
 4. Merge the MR. First identify the expected successor from the detected layout
    and ordered stack metadata. For a true stacked MR chain, use the next stack
@@ -162,24 +183,32 @@ For each source branch in order:
    scripts/merge_stack_mr.sh <iid> <current-head-sha> <successor-iid-or-null>
    ```
 
-   The merge script uses `--remove-source-branch` only when `successor_iid` is
-   `null`. If an expected successor still targets this source branch, it clears
-   and verifies GitLab's source-branch-removal setting before merging without
+   The merge script refreshes the MR and rejects a stale head or effective
+   `squash_on_merge` value other than `true`, then merges with `--squash`. It
+   uses `--remove-source-branch` only when `successor_iid` is `null`. If an
+   expected successor still targets this source branch, it clears and verifies
+   GitLab's source-branch-removal setting before merging without
    `--remove-source-branch`. If the script reports that GitLab may still remove
    the source branch, stop; that blocks safe true-stacked merging while a
-   successor targets it. Because this repo requires green checks, merge only
-   after the MR head pipeline is successful.
+   successor targets it. Merge only after the MR head pipeline succeeds or
+   quota-exhaustion local CI passes.
 
 5. Confirm the merge landed:
 
    ```bash
-   git fetch --prune origin
-   git merge-base --is-ancestor <merged-head-sha> origin/<base-target-branch>
+   scripts/confirm_squash_merge.sh \
+     <iid> \
+     <merged-head-sha> \
+     <base-target-branch>
    ```
 
-   Stop if `origin/<base-target-branch>` does not contain the merged head SHA,
-   if the MR did not close/merge, or if the source branch removal behaves
-   unexpectedly.
+   Record the printed `squash_commit_sha` as `landed_sha` and the printed
+   `target_head_sha` as the resulting base target SHA. Stop if the MR did not
+   merge from the reviewed head with effective squash enabled, if GitLab did
+   not report a squash commit, if that commit is absent from
+   `origin/<base-target-branch>`, or if source branch removal behaves
+   unexpectedly. Do not test the pre-squash MR head for ancestry: a squash
+   merge intentionally creates a different commit SHA.
 
 6. True stacked MR chain only — if the expected successor MR still targets the
    just-merged source branch, retarget that successor MR to the base target
@@ -203,9 +232,9 @@ For each source branch in order:
    The script rechecks GitLab before deleting and exits non-zero if any open MR
    still targets the branch or if GitLab blocks the deletion. Report that branch
    for manual cleanup instead of forcing it. A retarget or force-push restarts
-   checks: rerun steps 2-3 for the successor and wait for fresh results on its
-   new head SHA; never rely on green checks produced against the previous target
-   branch.
+   checks: in the successor's iteration, rebase it with the just-merged branch's
+   recorded `old_remote_sha`, then wait for fresh results on its new head SHA;
+   never rely on green checks produced against the previous target branch.
 
 Repeat the refresh, rebase, wait, merge, confirm, and retarget cycle for the
 next branch.
@@ -214,9 +243,9 @@ next branch.
 
 After the stack finishes successfully:
 
-1. Write the recorded per-branch SHA triples to a record file in the
+1. Write the recorded per-branch SHA values to a record file in the
    artefact/working directory, one whitespace-separated
-   `branch old_remote_sha rebased_head_sha` triple per line.
+   `branch old_remote_sha rebased_head_sha landed_sha` record per line.
 2. Return to the original worktree (`cd "$original_worktree"`). If a temporary
    worktree was used and is clean, remove it (`git worktree remove
    "$tmp_worktree"`, then `git worktree prune`) — this stays here because this
@@ -226,18 +255,22 @@ After the stack finishes successfully:
 
 ## Rules
 
-- Preserve unrelated dirty work by using a clean temporary worktree when needed;
-  never stash, revert, or stage unrelated user changes.
+- Preserve unrelated dirty work by using a clean temporary worktree for merge
+  operations. Do not stash, revert, or stage it except for the temporary stash
+  explicitly allowed by the final-cleanup procedure.
 - Infer and verify stack order from remote branch ancestry and commit counts;
   never merge branches out of the verified stack order.
 - Use `--force-with-lease` with explicit remote SHA leases, never plain
   `--force`; keep temporary worktrees local-only and never push remote
   temporary branches.
-- Record original and rebased head SHAs for each branch so post-merge cleanup
-  can safely handle stale local branch refs left behind by detached-worktree
-  rebases.
-- Require successful GitLab checks by default; do not skip them unless the user
-  explicitly asks and acknowledges the risk.
+- Record original, rebased, and landed squash SHAs for each branch so
+  post-merge cleanup can safely handle stale local branch refs left behind by
+  detached-worktree rebases and squash merges.
+- Require effective squash-on-merge for every MR; do not merge when
+  `squash_on_merge` is false or when GitLab does not return a landed squash
+  commit.
+- Require successful GitLab checks, or equivalent local checks when CI quota is
+  exhausted; otherwise require explicit user acknowledgement to bypass them.
 - Never delete a remote source branch that is still the target of an open MR;
   retarget the successor first and defer deletion until GitLab confirms no
   open MR targets the branch.
@@ -249,6 +282,7 @@ After the stack finishes successfully:
 
 Return the detected MR target layout and the ordered stack with branch name,
 MR URL/IID, MR target branch, retarget status, rebase status, pushed head
-SHA, pipeline/check result, merge result, resulting
+SHA, effective squash setting, pipeline/check result, squash commit SHA, merge
+result, resulting
 `origin/<base-target-branch>` SHA, local cleanup status, temporary worktree
 cleanup status, and any branches that were not attempted because of a blocker.
