@@ -1,49 +1,36 @@
 # Reviewer Preflight
 
-Verify one reviewer CLI's availability and same-conversation resume behavior.
+Verify one external reviewer CLI and same-session resume.
 
 ## Inputs
 
 Require:
 
-- reviewer: `claude` or `cursor`;
-- repo root (required when the reviewer is `cursor`).
+- reviewer: `codex`, `claude`, or `cursor`;
+- repository root.
 
-Fail with a clear message when the reviewer input is neither `claude` nor
-`cursor`, and require the repo root when the reviewer is `cursor`.
+Run this only for CLI reviewers; the host reviewer uses the native runtime
+contract.
 
-## Claude Checks
+## Command
 
 Run:
 
 ```bash
-scripts/run_reviewer_preflight.sh claude
-```
-
-## Cursor Checks
-
-Run from the repository root, replacing `{repo_root}` with the absolute
-repository root:
-
-```bash
-scripts/run_reviewer_preflight.sh cursor "{repo_root}"
+"$orchestration_skill_root/scripts/run_reviewer_preflight.sh" <codex|claude|cursor> "{repo_root}"
 ```
 
 ## Pass Criteria
 
 Pass only when:
 
-- the reviewer CLI command resolves (`claude` or `cursor-agent`; for cursor,
-  `cursor-agent create-chat` must also return a chat id);
+- the provider CLI resolves and can create a session;
 - the first smoke prompt's normalized token line returns exactly
   `REVIEWER_SMOKE_OK`;
 - the resumed session's normalized token line returns exactly
   `ORCHESTRATE_SESSION_SMOKE`.
 
-Normalize smoke output by reading the last non-empty output line before
-comparing it to the expected token. Some reviewer CLIs prepend model or agent
-headers even when `--output-format text` is used; those headers should not fail
-the smoke test when the final token line is correct.
+Compare the last non-empty output line to the token.
 
 ## Failure Rules
 

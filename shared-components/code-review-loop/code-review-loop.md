@@ -23,10 +23,11 @@ that first invokes it, not up front:
 Require:
 
 - repository root;
+- host provider and provider-to-transport mapping;
 - plan path;
 - plan slug;
 - intended implementation files or modules;
-- reviewer preflight status for Claude Code and Cursor;
+- preflight status for both external CLI reviewers;
 - passed initial verification, unless the route is explicitly starting at
   staged changes and verification will run first.
 
@@ -66,6 +67,8 @@ For each pass:
    `references/code-review-loop-closure-invocation.md`
    for closure prompts. `{triage_ledger_path}` renders to
    `plans/<plan_slug>.reviews/code-review-triage-ledger.md`.
+   Resume the same reviewer context, then apply its proposed ledger transitions
+   through the orchestrator.
 9. Resolve `recurring-escalation` ledger entries with explicit user decisions
    before starting the next pass.
 

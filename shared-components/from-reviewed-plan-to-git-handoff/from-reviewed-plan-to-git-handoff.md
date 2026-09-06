@@ -18,21 +18,22 @@ Ledger, material, and artefact terms are defined in
 references/orchestration-conventions.md.
 
 1. Load `AGENTS.md`, the plan, and relevant docs named by `AGENTS.md`.
-2. Read and follow `references/implementation-dispatch.md` for initial
+2. Read `references/orchestration-runtime.md` and select the host mapping.
+3. Read and follow `references/implementation-dispatch.md` for initial
    implementation.
-3. Read and follow `references/verification-runner.md`.
-4. Read and follow `references/staged-diff-scope.md`.
-5. Read and follow `references/reviewer-preflight.md` for claude and for
-   cursor.
-6. Read and follow `references/code-review-loop.md`.
-7. Read and follow `references/orchestration-final-handoff.md` for git handoff.
+4. Read and follow `references/verification-runner.md`.
+5. Read and follow `references/staged-diff-scope.md`.
+6. Read and follow `references/reviewer-preflight.md` for both non-host
+   providers.
+7. Read and follow `references/code-review-loop.md`.
+8. Read and follow `references/orchestration-final-handoff.md` for git handoff.
 
 ## Stop Conditions
 
 - Ownership scope is insufficient.
 - Intended staged-diff scope is unclear or includes unrelated files.
 - Verification remains blocked after allowed repair attempts.
-- Reviewer preflight fails for Claude Code or Cursor.
+- A required native operation or external reviewer preflight fails.
 - Code review has unresolved material ledger entries, contradictions, accepted
   fixes, or recurring escalations.
 

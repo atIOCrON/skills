@@ -8,10 +8,9 @@ with one row per distinct material concern:
 | ledger_id | first_pass | last_pass | reviewers | concern (one line) | files | status | resolution evidence |
 ```
 
-The bundled `code-review-triage` component is the only writer of ledger entries; it owns
-entry creation and recurrence detection. `code-review-closure` transitions the
-status of existing entries through the vocabulary below and never creates
-entries.
+The orchestrator owns ledger writes. It applies entry changes from
+`code-review-triage` and status transitions proposed by `code-review-closure`.
+Reviewers never write the ledger.
 
 ## Status Vocabulary
 

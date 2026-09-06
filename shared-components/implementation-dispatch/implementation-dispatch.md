@@ -8,6 +8,7 @@ instructions in `references/plan-implement.md`.
 Require:
 
 - repository root;
+- host provider: `codex`, `claude`, or `cursor`;
 - plan path;
 - dispatch type: `initial-implementation`, `verification-fix`, or
   `code-review-fix`;
@@ -24,15 +25,15 @@ For initial implementation:
 2. Render
    `references/implementation-dispatch-plan-invocation.md`.
 3. Assign owned files or modules as a newline bullet list.
-4. Send the prompt to a fresh Codex worker.
-5. Record the worker id or thread reference when available.
+4. Send the prompt to a fresh native implementation sub-agent of the host.
+5. Record its session reference.
 
 ## Fix Dispatch
 
 For verification or code-review fixes:
 
-1. Prefer reusing the original implementation worker when available.
-2. Otherwise start a fresh worker.
+1. Resume the original implementation sub-agent.
+2. Stop if it cannot be resumed; do not silently change implementers.
 3. Read `references/plan-implement.md`, include its operational instructions in
    the worker prompt, then render
    `references/implementation-dispatch-fix-request.md`.
@@ -53,7 +54,8 @@ For verification or code-review fixes:
 Report:
 
 - dispatch type;
-- worker/session reference when available;
+- host provider and native transport;
+- worker/session reference;
 - owned files or modules;
 - requested changes;
 - artifact paths supplied;

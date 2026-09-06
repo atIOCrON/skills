@@ -29,7 +29,7 @@ exit_code_file="$artifact_dir/cursor-exit-code"
 stderr_file="$artifact_dir/cursor-stderr.log"
 attempts_file="$artifact_dir/cursor-attempts.md"
 failure_file="$artifact_dir/cursor-failure.md"
-model="composer-2.5"
+model="${CURSOR_REVIEW_MODEL:-composer-2.5}"
 reviewer="cursor"
 
 rm -f "$failure_file"
@@ -66,6 +66,7 @@ record_setup_failure() {
 # Cursor Review Session
 
 - slug: cursor
+- transport: cli-session
 - chat_id: unavailable
 - model: $model
 - command: cursor-agent setup
@@ -178,10 +179,10 @@ while [ "$attempt" -le "$max_attempts" ]; do
   fi
 
   final_chat_id="$chat_id"
-  command_shape="cursor-agent --model $model --trust --force --workspace $repo_root --resume <chat-id> $prompt_flag --output-format text < <prompt-file-stdin>"
+  command_shape="cursor-agent --model $model --trust --mode ask --workspace $repo_root --resume <chat-id> $prompt_flag --output-format text < <prompt-file-stdin>"
 
   set +e
-  cursor-agent --model "$model" --trust --force --workspace "$repo_root" --resume "$chat_id" \
+  cursor-agent --model "$model" --trust --mode ask --workspace "$repo_root" --resume "$chat_id" \
     "$prompt_flag" --output-format text \
     < "$prompt_file" \
     > "$output_file" 2>> "$attempt_stderr"
@@ -255,9 +256,10 @@ cat > "$session_file" <<EOF
 # Cursor Review Session
 
 - slug: cursor
+- transport: cli-session
 - chat_id: $final_chat_id
 - model: $model
-- command: cursor-agent --model $model --trust --force --workspace $repo_root --resume <chat-id> <prompt-mode> --output-format text < <prompt-file-stdin>
+- command: cursor-agent --model $model --trust --mode ask --workspace $repo_root --resume <chat-id> <prompt-mode> --output-format text < <prompt-file-stdin>
 - prompt_path: $prompt_file
 - output_path: $output_file
 - stderr_path: $stderr_file
