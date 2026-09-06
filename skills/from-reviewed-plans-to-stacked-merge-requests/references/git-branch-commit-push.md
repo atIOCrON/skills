@@ -91,4 +91,5 @@ Stop if switching branches or pulling would overwrite local work, dirty files ov
 
 ## Final Response
 
-Report the chosen base branch, the branch, commit hash, push result, and any unrelated uncommitted files left in the worktree. After successful actions, emit the required `::git-create-branch`, `::git-commit`, and `::git-push` directives.
+Report the chosen base branch, branch, commit hash, push result, and unrelated
+uncommitted files. On Codex, also emit its supported Git UI directives.

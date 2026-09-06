@@ -11,17 +11,18 @@ Defaults:
 - Assignee: authenticated GitLab username
 - Reviewer: authenticated GitLab username
 - Merge option: remove source branch when merged
+- Squash option: squash commits when merged
 
 ## Preflight
 
 A child process cannot change this shell's PATH, so begin every shell
 invocation that runs `glab` with
-`eval "$(scripts/ensure_glab.sh)"`; the script
+`eval "$("$orchestration_skill_root/scripts/ensure_glab.sh")"`; the script
 resolves `glab` and `jq` for non-interactive shells that did not load the
 user's profile. Then run:
 
 ```bash
-eval "$(scripts/ensure_glab.sh)"
+eval "$("$orchestration_skill_root/scripts/ensure_glab.sh")"
 glab auth status
 git branch --show-current
 git status --short
@@ -34,7 +35,7 @@ Stop if `ensure_glab.sh` reports an error, `glab` is unauthenticated, the curren
 Resolve the GitLab username:
 
 ```bash
-eval "$(scripts/ensure_glab.sh)"
+eval "$("$orchestration_skill_root/scripts/ensure_glab.sh")"
 username="$(glab api user | jq -r '.username')"
 test -n "$username" && test "$username" != "null"
 ```
@@ -64,7 +65,7 @@ If dirty/untracked files overlap with branch diff files or would affect MR metad
 Check for an existing merge request for the source branch, with any target:
 
 ```bash
-eval "$(scripts/ensure_glab.sh)"
+eval "$("$orchestration_skill_root/scripts/ensure_glab.sh")"
 glab mr list --source-branch "<branch-name>"
 ```
 
@@ -80,7 +81,7 @@ its target branch.
 Create the merge request:
 
 ```bash
-eval "$(scripts/ensure_glab.sh)"
+eval "$("$orchestration_skill_root/scripts/ensure_glab.sh")"
 glab mr create \
   --source-branch "<branch-name>" \
   --target-branch "<target-branch>" \
@@ -88,13 +89,28 @@ glab mr create \
   --description "<description>" \
   --assignee "<gitlab-username>" \
   --reviewer "<gitlab-username>" \
+  --squash-before-merge=true \
   --remove-source-branch \
   --yes
 ```
 
 Prefer explicit title and description over `--fill`.
+After creation, refresh the MR and verify the requested target and effective
+squash setting; project settings can override the requested MR value:
+
+```bash
+eval "$("$orchestration_skill_root/scripts/ensure_glab.sh")"
+mr_json="$(glab mr list --source-branch "<branch-name>" --output json)"
+printf '%s\n' "$mr_json" |
+  jq -e --arg target "<target-branch>" \
+    'length == 1 and .[0].target_branch == $target and .[0].squash_on_merge == true'
+```
+
+Stop if the refresh does not return exactly one open MR for the source branch,
+if its target is wrong, or if effective `squash_on_merge` is not `true`.
 
 ## Final Response
 
-Report the source branch, target branch, merge request URL, assignee,
-reviewer, and remove-source-branch setting. After successful creation, emit the required `::git-create-pr` directive with the MR URL, branch, cwd, and `isDraft=false`.
+Report the source branch, target branch, merge request URL, assignee, reviewer,
+effective squash-on-merge value, and remove-source-branch setting. On Codex,
+also emit its supported MR UI directive.

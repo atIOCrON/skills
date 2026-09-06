@@ -27,7 +27,7 @@ exit_code_file="$artifact_dir/claude-exit-code"
 stderr_file="$artifact_dir/claude-stderr.log"
 attempts_file="$artifact_dir/claude-attempts.md"
 failure_file="$artifact_dir/claude-failure.md"
-model="opus"
+model="${CLAUDE_REVIEW_MODEL:-opus}"
 reviewer="claude"
 
 rm -f "$failure_file"
@@ -64,6 +64,7 @@ record_setup_failure() {
 # Claude Review Session
 
 - slug: claude
+- transport: cli-session
 - session_id: unavailable
 - model: $model
 - command: claude setup
@@ -107,11 +108,11 @@ while [ "$attempt" -le "$max_attempts" ]; do
   attempt_stderr="$(mktemp)"
   : > "$output_file"
 
-  command_shape="claude --model $model --dangerously-skip-permissions --session-id <session-id> $prompt_flag --input-format text --output-format text < <prompt-file-stdin>"
+  command_shape="claude --model $model --permission-mode plan --session-id <session-id> $prompt_flag --input-format text --output-format text < <prompt-file-stdin>"
   append_stderr_header "$stderr_file" "$attempt"
 
   set +e
-  claude --model "$model" --dangerously-skip-permissions \
+  claude --model "$model" --permission-mode plan \
     --session-id "$session_id" \
     "$prompt_flag" --input-format text --output-format text \
     < "$prompt_file" \
@@ -186,9 +187,10 @@ cat > "$session_file" <<EOF
 # Claude Review Session
 
 - slug: claude
+- transport: cli-session
 - session_id: $final_session_id
 - model: $model
-- command: claude --model $model --dangerously-skip-permissions --session-id <session-id> <prompt-mode> --input-format text --output-format text < <prompt-file-stdin>
+- command: claude --model $model --permission-mode plan --session-id <session-id> <prompt-mode> --input-format text --output-format text < <prompt-file-stdin>
 - prompt_path: $prompt_file
 - output_path: $output_file
 - stderr_path: $stderr_file

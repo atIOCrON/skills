@@ -7,6 +7,7 @@ Run one numbered review pass for one review phase.
 Require:
 
 - repository root;
+- host provider: `codex`, `claude`, or `cursor`;
 - phase: `plan-review` or `code-review`;
 - pass number;
 - reviewer label;
@@ -19,9 +20,9 @@ Require:
 
 ## Reviewers
 
-Run three fresh reviewer contexts in parallel: `claude`, `codex`, and
-`cursor`. The slug-to-reviewer mapping is defined in
-`references/orchestration-finding-ids.md`.
+Run `claude`, `codex`, and `cursor` in fresh parallel contexts. Use the host's
+native sub-agent for its matching reviewer and CLI sessions for the other two.
+Reviewer slugs are defined in `references/orchestration-finding-ids.md`.
 
 Combine the supplied bundled reviewer instructions with the same rendered
 prompt envelope for each reviewer. Replace the envelope's existing
@@ -57,38 +58,47 @@ If closure is later requested by the owning loop, it should persist:
 <artifact_dir>/<reviewer>-closure.md
 ```
 
-Session metadata for the CLI reviewers records reviewer slug, session/chat id,
-redacted command shape, prompt/output paths, stderr path, attempt-log path,
-final output byte count, and failure artifact path when applicable (written by
-the launch scripts). The Codex sub-agent's session metadata additionally
-records phase, pass, label, and the sub-agent operation.
+Session metadata records provider, transport, session reference, phase, pass,
+redacted command or native operation, artifact paths, output bytes, and failure
+path when applicable.
 
 ## Commands
 
-Write the rendered prompt to `<artifact_dir>/<reviewer>-prompt.md` first, then
-launch each CLI reviewer through its script.
+Write every rendered prompt before launch. Send the host review prompt unchanged
+to a fresh native reviewer. Launch each non-host reviewer with its provider
+script:
+
+Codex review:
+
+```bash
+"$orchestration_skill_root/scripts/launch_codex_review.sh" <artifact_dir>/codex-prompt.md <artifact_dir> {repo_root}
+```
 
 Claude review:
 
 ```bash
-scripts/launch_claude_review.sh <artifact_dir>/claude-prompt.md <artifact_dir>
+"$orchestration_skill_root/scripts/launch_claude_review.sh" <artifact_dir>/claude-prompt.md <artifact_dir>
 ```
 
 Cursor review:
 
 ```bash
-scripts/launch_cursor_review.sh <artifact_dir>/cursor-prompt.md <artifact_dir> {repo_root}
+"$orchestration_skill_root/scripts/launch_cursor_review.sh" <artifact_dir>/cursor-prompt.md <artifact_dir> {repo_root}
 ```
 
-Each script generates a fresh session or chat id, feeds the prompt file to the
-reviewer CLI on stdin, and writes `<reviewer>.md` (output),
+Each script generates a fresh session, feeds the prompt on stdin, and writes
+`<reviewer>.md` (output),
 `<reviewer>-session.md` (session metadata), `<reviewer>-exit-code` (the
 numeric exit status), `<reviewer>-stderr.log` (stderr for each attempt), and
 `<reviewer>-attempts.md` (redacted command shape, byte counts, exit code, and
 retry decision per attempt) into the artifact directory.
 The redacted command shape records `<prompt-file-stdin>`, not the prompt body.
 
-Send the rendered prompt unchanged to the Codex peer sub-agent.
+For closure, resume the native reviewer through the host or run:
+
+```bash
+"$orchestration_skill_root/scripts/resume_review.sh" <codex|claude|cursor> <closure-prompt> <artifact_dir> {repo_root}
+```
 
 ## Liveness And Failures
 
@@ -110,8 +120,8 @@ Send the rendered prompt unchanged to the Codex peer sub-agent.
 - The CLI launch scripts must treat zero-byte stdout as a launcher failure even
   when the reviewer exits `0`; they retry once and write a populated failure
   artifact if the retry does not produce output.
-- Snapshot `git status --porcelain` before and after each reviewer. If a
-  reviewer changes the worktree, stop for manual inspection.
+- Reviewers are read-only. Snapshot `git status --porcelain` before and after
+  each reviewer; stop if it changes.
 - Do not leave failed reviewer processes running.
 
 ## Failure Artifact

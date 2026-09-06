@@ -30,9 +30,7 @@ Require:
 - For rejected findings, decide whether the rejection evidence is sufficient.
 - Use evidence from the staged diff, cited docs, cited code, verification
   results, or gold-standard data-engineering best practice.
-- Do not edit code or doc files. Updating the cross-pass triage ledger to
-  transition status for entries this reviewer raised is the only file write
-  closure performs and is treated as a closure artifact, not a code change.
+- Do not write files. Propose ledger transitions for the orchestrator to apply.
 - Do not inspect unrelated files except where needed to validate a staged-diff
   contract or cited reader/consumer.
 - Do not perform a fresh code review or introduce new findings. New concerns
@@ -49,9 +47,8 @@ Require:
 Ledger schema and status transitions are defined in
 references/orchestration-triage-ledger-protocol.md.
 
-For each finding this reviewer raised in the original review artifact, update
-the ledger entry created by triage. Do not create new ledger entries. Closure
-maps its output sections to ledger statuses as follows:
+For each finding this reviewer raised, propose a transition for its existing
+ledger entry. Do not create entries. The orchestrator applies these mappings:
 
 - `## Resolved` -> ledger status `resolved`.
 - `## Rejection Accepted` -> ledger status `rejected`.
@@ -62,8 +59,8 @@ maps its output sections to ledger statuses as follows:
   `open` or `accepted-fix-pending`); the orchestrator pauses for user
   decision before the next pass.
 
-Cite the `ledger_id` for every entry this closure transitions in the closure
-artifact. If a finding cannot be matched to an existing ledger entry, treat
+Cite the `ledger_id` for every proposed transition. If a finding cannot be
+matched to an existing ledger entry, treat
 that as a procedural failure: do not create a new entry and report the
 mismatch under `## Skill Feedback` so the orchestrator can correct triage.
 
