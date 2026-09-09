@@ -21,7 +21,9 @@ Stop if the plan lacks deterministic verification commands.
 1. Read the plan verification section.
 2. Run every required plan verification command from the repository root.
 3. Add focused checks for touched surfaces when risk justifies them.
-4. Capture command, exit status, and concise output summary.
+4. Save commands, exit status, and concise results under
+   `plans/<plan_slug>.evidence/` and update its index; follow
+   `references/orchestration-plans-layout.md` for retention.
 5. If verification passes, return `verification-passed`.
 6. If verification fails, classify the failure and send a concrete fix request
    through `implementation-dispatch`.
