@@ -19,6 +19,8 @@ installed or discoverable skills.
 
 Resolve `orchestration_skill_root` to this skill directory. Before processing
 plans, read `references/orchestration-runtime.md` and select the host mapping.
+Read `references/orchestration-plans-layout.md` for review, execution, and
+evidence paths and retention rules.
 
 Read each reference only when the workflow reaches the step that needs it. For
 each plan, begin with `references/from-reviewed-plan-to-git-handoff.md`.
@@ -61,10 +63,10 @@ For each plan, in order:
    branch and every later MR targets the previous stack branch. Require the
    created MR's effective `squash_on_merge` value to be `true` before moving
    on.
-6. Before moving on, verify `plans/<slug>.reviews/` exists and contains the
-   code-review-loop review artefacts. If using a temporary worktree, copy
-   ignored plan/review artefacts back to the user's main checkout and verify
-   them there before deleting or abandoning the worktree.
+6. Before moving on, verify `plans/<slug>.reviews/` contains the review
+   artefacts and `plans/<slug>.evidence/` contains indexed verification evidence.
+   Preserve these folders, any `plans/<slug>.execution/` folder, and ignored plans
+   in the user's main checkout before deleting or abandoning a worktree.
 7. Stay on the pushed branch before starting the next plan.
 
 After all plan branches are committed and pushed, verify the clean final stack
@@ -79,6 +81,9 @@ head:
      --commit "$(git rev-parse HEAD)" \
      --output-dir <verification-artifact-directory>
    ```
+
+Keep bulk verification output outside artefact folders. Index the final check's
+summary and small evidence under the last plan's `.evidence/` folder.
 
 Protected verification must use the committed lock-selected seed and baseline.
 Never publish or refresh either during this route. Treat a lock mismatch or
@@ -99,8 +104,8 @@ separate reviewed publication workflow.
 - Do not use deprecated `git-branch-and-merge`.
 - Do not merge any merge request, clean up, or delete branches.
 - Do not leave a created MR with squash-on-merge disabled.
-- Do not finish until every plan has a preserved `plans/<slug>.reviews/`
-  folder or an explicit blocker explaining why preservation failed.
+- Do not finish until every plan's artefact folders are preserved, or report
+  an explicit preservation blocker.
 - Stop and report blockers if tests fail, export output is unexpected, or a
   clean commit cannot be created safely.
 - Do not skip the final full-pipeline export test unless the user explicitly
@@ -111,5 +116,5 @@ separate reviewed publication workflow.
 Return the ordered branch stack with branch name, stack parent branch, MR
 target branch, commit SHA, push status, verification summary, per-plan
 export-test status, final full-pipeline export-test status, merge-request
-status and effective squash-on-merge value, review-artefact folder paths, and
-confirmation that no merge was performed.
+status and effective squash-on-merge value, review and execution folders,
+evidence indexes, and confirmation that no merge was performed.

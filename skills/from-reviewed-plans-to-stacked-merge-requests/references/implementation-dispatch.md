@@ -16,6 +16,10 @@ Require:
 - fix requests or verification failures for non-initial dispatches;
 - relevant artifact paths.
 
+For every dispatch, include the contents of
+`references/orchestration-plans-layout.md` in the worker prompt and assign
+execution and evidence subdirectories within its ownership scope.
+
 ## Initial Implementation
 
 For initial implementation:
