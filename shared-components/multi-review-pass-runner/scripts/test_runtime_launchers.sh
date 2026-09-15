@@ -22,7 +22,7 @@ for arg in "$@"; do
 done
 case "$prompt" in
   *"Remember token"*) result="REVIEWER_SMOKE_OK" ;;
-  *"Return exactly the token"*) result="ORCHESTRATE_SESSION_SMOKE" ;;
+  *"Run these read-only commands"*) result="ORCHESTRATE_SESSION_SMOKE $(git rev-parse HEAD)" ;;
   *"CLOSURE"*) result="CODEX_CLOSURE_OK" ;;
   *) result="CODEX_REVIEW_OK" ;;
 esac
@@ -37,7 +37,7 @@ printf 'claude %s\n' "$*" >> "$STUB_ARGS_LOG"
 prompt="$(cat) $*"
 case "$prompt" in
   *"Remember token"*) echo "REVIEWER_SMOKE_OK" ;;
-  *"Return exactly the token"*) echo "ORCHESTRATE_SESSION_SMOKE" ;;
+  *"Run these read-only commands"*) echo "ORCHESTRATE_SESSION_SMOKE $(git rev-parse HEAD)" ;;
   *"CLOSURE"*) echo "CLAUDE_CLOSURE_OK" ;;
   *) echo "CLAUDE_REVIEW_OK" ;;
 esac
@@ -51,7 +51,7 @@ if [ "${1:-}" = "create-chat" ]; then echo "cursor-session-1"; exit 0; fi
 prompt="$(cat) $*"
 case "$prompt" in
   *"Remember token"*) echo "REVIEWER_SMOKE_OK" ;;
-  *"Return exactly the token"*) echo "ORCHESTRATE_SESSION_SMOKE" ;;
+  *"Run these read-only commands"*) echo "ORCHESTRATE_SESSION_SMOKE $(git rev-parse HEAD)" ;;
   *"CLOSURE"*) echo "CURSOR_CLOSURE_OK" ;;
   *) echo "CURSOR_REVIEW_OK" ;;
 esac
@@ -78,15 +78,25 @@ for provider in codex claude cursor; do
   printf 'CLOSURE\n' > "$artifact_dir/$provider-closure-prompt.md"
   "$script_dir/resume_review.sh" "$provider" "$artifact_dir/$provider-closure-prompt.md" "$artifact_dir" "$repo_root"
   test -s "$artifact_dir/$provider-closure.md"
+  "$script_dir/resume_review.sh" "$provider" "$artifact_dir/$provider-closure-prompt.md" "$artifact_dir" "$repo_root" closure-round2
+  test -s "$artifact_dir/$provider-closure-round2.md"
 done
 
-"$repo_root/shared-components/reviewer-preflight/scripts/run_reviewer_preflight.sh" codex "$repo_root" >/dev/null
-"$repo_root/shared-components/reviewer-preflight/scripts/run_reviewer_preflight.sh" claude "$repo_root" >/dev/null
-"$repo_root/shared-components/reviewer-preflight/scripts/run_reviewer_preflight.sh" cursor "$repo_root" >/dev/null
+preflight_script="$script_dir/run_reviewer_preflight.sh"
+if [ ! -x "$preflight_script" ]; then
+  preflight_script="$repo_root/shared-components/reviewer-preflight/scripts/run_reviewer_preflight.sh"
+fi
+"$preflight_script" codex "$repo_root" >/dev/null
+"$preflight_script" claude "$repo_root" >/dev/null
+"$preflight_script" cursor "$repo_root" >/dev/null
 
 grep -qF -- '-s read-only -a never' "$STUB_ARGS_LOG"
 grep -qF -- '--permission-mode plan' "$STUB_ARGS_LOG"
-grep -qF -- '--mode ask' "$STUB_ARGS_LOG"
+grep -qF -- '--auto-review --sandbox enabled' "$STUB_ARGS_LOG"
+if grep -qF -- '--mode ask' "$STUB_ARGS_LOG"; then
+  echo "cursor launchers must use default agent mode, not ask mode" >&2
+  exit 1
+fi
 grep -qF 'CODEX_CLOSURE_OK' "$artifact_dir/codex-closure.md"
 grep -qF 'CLAUDE_CLOSURE_OK' "$artifact_dir/claude-closure.md"
 grep -qF 'CURSOR_CLOSURE_OK' "$artifact_dir/cursor-closure.md"

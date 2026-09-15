@@ -2,8 +2,8 @@
 # Resume a provider's original review session for closure.
 set -euo pipefail
 
-if [ "$#" -ne 4 ]; then
-  echo "usage: resume_review.sh <codex|claude|cursor> <prompt-file> <artifact-dir> <repo-root>" >&2
+if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then
+  echo "usage: resume_review.sh <codex|claude|cursor> <prompt-file> <artifact-dir> <repo-root> [closure-label]" >&2
   exit 2
 fi
 
@@ -11,11 +11,16 @@ provider="$1"
 prompt_file="$2"
 artifact_dir="$3"
 repo_root="$4"
+closure_label="${5:-closure}"
+case "$closure_label" in
+  closure|closure-round[0-9]*) ;;
+  *) echo "error: closure-label must be closure or closure-round<N>" >&2; exit 2 ;;
+esac
 session_file="$artifact_dir/$provider-session.md"
-output_file="$artifact_dir/$provider-closure.md"
-stderr_file="$artifact_dir/$provider-closure-stderr.log"
-exit_code_file="$artifact_dir/$provider-closure-exit-code"
-events_file="$artifact_dir/$provider-closure-events.jsonl"
+output_file="$artifact_dir/$provider-$closure_label.md"
+stderr_file="$artifact_dir/$provider-$closure_label-stderr.log"
+exit_code_file="$artifact_dir/$provider-$closure_label-exit-code"
+events_file="$artifact_dir/$provider-$closure_label-events.jsonl"
 
 test -s "$prompt_file" || { echo "error: closure prompt missing or empty: $prompt_file" >&2; exit 2; }
 test -f "$session_file" || { echo "error: session artifact not found: $session_file" >&2; exit 2; }
@@ -58,8 +63,9 @@ while [ "$attempt" -le "$max_attempts" ]; do
     cursor)
       command -v cursor-agent >/dev/null 2>&1 || { echo "error: cursor-agent CLI not found on PATH" >&2; exit 3; }
       set +e
-      cursor-agent --model "${CURSOR_REVIEW_MODEL:-cursor-grok-4.6-high}" --trust --mode ask \
-        --workspace "$repo_root" --resume "$session_id" -p --output-format text \
+      cursor-agent --model "${CURSOR_REVIEW_MODEL:-cursor-grok-4.6-high}" --trust \
+        --auto-review --sandbox enabled --workspace "$repo_root" \
+        --resume "$session_id" -p --output-format text \
         < "$prompt_file" > "$output_file" 2>> "$stderr_file"
       final_exit_code=$?
       set -e

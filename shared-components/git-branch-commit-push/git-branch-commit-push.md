@@ -10,6 +10,19 @@ Branch names must describe the change only: no tool, model, assistant,
 
 Allowed prefixes: `feature/`, `fix/`, `docs/`, `refactor/`, `chore/`.
 
+Follow the repository's branch-naming policy when one exists. Otherwise choose
+the prefix by the type of change:
+
+- `fix/`: correct existing behavior that is incorrect, crashes, loses data,
+  violates an external schema, or contradicts documented settings. This
+  includes independently reproducible vendor defects and promised compatibility
+  that does not work as intended.
+- `feature/`: add new behavior, an integration, a capability, or compatibility
+  that was not previously supported.
+- `docs/`: change documentation only.
+- `refactor/`: restructure implementation without an intended behavior change.
+- `chore/`: perform maintenance not covered by another prefix.
+
 Default to a fresh branch from a fresh `<base-branch>`. Continue on an
 existing non-`develop` branch only when the user explicitly asks to continue
 that branch in the current request.

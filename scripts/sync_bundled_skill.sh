@@ -23,6 +23,7 @@ while IFS='|' read -r source target; do
   [ -n "$source" ] && sync_one "$source" "$target"
 done <<'EOF'
 shared-components/code-review-closure/code-review-closure.md|references/code-review-closure.md
+shared-components/code-review-pack/code-review-pack.md|references/code-review-pack.md
 shared-components/code-review-loop/code-review-loop-closure-invocation.md|references/code-review-loop-closure-invocation.md
 shared-components/code-review-loop/code-review-loop-code-review-invocation.md|references/code-review-loop-code-review-invocation.md
 shared-components/code-review-loop/code-review-loop.md|references/code-review-loop.md

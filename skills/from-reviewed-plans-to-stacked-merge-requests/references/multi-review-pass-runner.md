@@ -14,6 +14,7 @@ Require:
 - plan path;
 - prompt envelope path;
 - artifact directory;
+- neutral review-pack path;
 - reviewer instructions supplied by the owning loop from
   `references/code-review.md`;
 - placeholder values required by the prompt envelope.
@@ -54,8 +55,8 @@ On failure or manual stop, also persist:
 If closure is later requested by the owning loop, it should persist:
 
 ```text
-<artifact_dir>/<reviewer>-closure-prompt.md
-<artifact_dir>/<reviewer>-closure.md
+<artifact_dir>/<reviewer>-closure-round<N>-prompt.md
+<artifact_dir>/<reviewer>-closure-round<N>.md
 ```
 
 Session metadata records provider, transport, session reference, phase, pass,
@@ -97,7 +98,7 @@ The redacted command shape records `<prompt-file-stdin>`, not the prompt body.
 For closure, resume the native reviewer through the host or run:
 
 ```bash
-"$orchestration_skill_root/scripts/resume_review.sh" <codex|claude|cursor> <closure-prompt> <artifact_dir> {repo_root}
+"$orchestration_skill_root/scripts/resume_review.sh" <codex|claude|cursor> <closure-prompt> <artifact_dir> {repo_root} closure-round<N>
 ```
 
 ## Liveness And Failures

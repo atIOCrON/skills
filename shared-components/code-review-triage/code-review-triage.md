@@ -58,6 +58,8 @@ implementation files that may need an implementation-worker fix request.
   refactors, or unrelated cleanup.
 - For accepted findings, write the smallest fix request that resolves the issue
   and preserves the implementer's intent.
+- Batch all accepted material findings for the same implementer into one
+  handoff. Do not routinely accept, fix, or close nits.
 - Leave unrelated dirty files unstaged.
 
 Resolve contradictions by preferring gold-standard data-engineering

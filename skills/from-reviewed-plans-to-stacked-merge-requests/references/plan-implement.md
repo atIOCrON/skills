@@ -15,6 +15,16 @@ implementation details. If no plan path or ownership scope is provided, ask.
 3. Read the docs AGENTS.md labels as code standards and logging standards, and
    any other referenced or relevant `docs/*.md`.
 4. Identify the files to create, change, or delete within the assigned ownership scope.
+5. For a complex or cross-cutting change, write
+   `plans/<plan_slug>.execution/implementation-analysis.md` before editing. Keep
+   it concise and include:
+   - entry points and in-repo readers;
+   - relevant state transitions and failure states;
+   - invariants and hazards the implementation must preserve;
+   - adversarial checks that can disprove the proposed behavior.
+
+Use the analysis to shape the implementation and verification harness. Do not
+send it to fresh reviewers; they retain an independent perspective.
 
 Use `AGENTS.md` to choose relevant docs.
 
@@ -44,7 +54,8 @@ Use `AGENTS.md` to choose relevant docs.
 ## Verification
 
 Run the verification named by the plan when practical for the owned surface.
-Report failures honestly; if verification is impossible here, say why.
+Run the planned adversarial checks for complex or cross-cutting work. Report
+failures honestly; if verification is impossible here, say why.
 
 ## Output
 
@@ -60,6 +71,9 @@ Report failures honestly; if verification is impossible here, say why.
 
 ## Changed Files
 - <file>
+
+## Implementation Analysis
+- <artifact path, or Not required>
 
 ## Blockers
 - <blocker, or None>

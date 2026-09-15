@@ -1,6 +1,7 @@
 # Reviewer Preflight
 
-Verify one external reviewer CLI and same-session resume.
+Verify one external reviewer CLI, same-session resume, and read-only repository
+commands.
 
 ## Inputs
 
@@ -27,8 +28,10 @@ Pass only when:
 - the provider CLI resolves and can create a session;
 - the first smoke prompt's normalized token line returns exactly
   `REVIEWER_SMOKE_OK`;
-- the resumed session's normalized token line returns exactly
-  `ORCHESTRATE_SESSION_SMOKE`.
+- the resumed session can run `git status`, staged `git diff`, `git show`, and a
+  synthetic `git apply --check` without changing the worktree;
+- the resumed session's normalized token line returns
+  `ORCHESTRATE_SESSION_SMOKE <HEAD_SHA>` with the actual repository HEAD.
 
 Compare the last non-empty output line to the token.
 
@@ -47,6 +50,6 @@ Report:
 - command availability;
 - smoke session/chat id;
 - first prompt status;
-- resume status;
+- resume and read-only command status;
 - pass/fail;
 - blocker reason when failed.
