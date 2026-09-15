@@ -6,6 +6,7 @@
   contains:
   - `plan-review-pass<N>/` directories, one per plan-review pass;
   - `code-review-pass<N>/` directories, one per code-review pass;
+  - `code-review-pack/`, neutral inputs shared by fresh code reviewers;
   - `code-review-triage-ledger.md`, the cross-pass triage ledger.
 - One-off scripts and execution helpers live in `plans/<plan_slug>.execution/`.
   Keep permanent tests and tooling in their normal repo locations.

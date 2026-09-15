@@ -10,9 +10,11 @@ Require:
 
 - original review artifact path,
 - reviewer session artifact path,
-- triage summary,
-- applied code fixes and rejected findings,
-- verification summary,
+- finding IDs selected for closure,
+- applied change per finding,
+- rejection evidence for any selected rejected material finding,
+- verification evidence paths,
+- neutral review-pack path,
 - plan path,
 - cross-pass triage ledger path
   (`plans/<plan_slug>.reviews/code-review-triage-ledger.md`).
@@ -20,13 +22,13 @@ Require:
 ## Scope
 
 - Assess only findings from the original code-review artifact.
-- Closure is conditional in `code-review-loop`; if a finding was not included
-  in the closure request, do not assess it.
+- Assess only IDs named in the closure request. Batch all selected findings from
+  this reviewer into one response; do not assess ordinary nits.
 - This closure is expected to run in the same reviewer conversation/session that
   produced the original review artifact. If it is not the same conversation,
   report that as `Closure blocked` rather than doing a fresh review.
-- For accepted findings, decide whether the staged code fix resolves the
-  finding.
+- For accepted findings, decide whether the staged fix resolves the finding and
+  preserves its surrounding invariant.
 - For rejected findings, decide whether the rejection evidence is sufficient.
 - Use evidence from the staged diff, cited docs, cited code, verification
   results, or gold-standard data-engineering best practice.
@@ -39,16 +41,15 @@ Require:
 - Closure must not extend the review loop beyond the original requested
   concern. Decide only whether the concern is resolved, reasonably rejected, or
   still materially open.
-- Do not use findings, summaries, or conclusions from other reviewers unless
-  they are included in the triage summary.
+- Do not use findings, summaries, or conclusions from other reviewers.
 
 ## Cross-Pass Triage Ledger Updates
 
 Ledger schema and status transitions are defined in
 references/orchestration-triage-ledger-protocol.md.
 
-For each finding this reviewer raised, propose a transition for its existing
-ledger entry. Do not create entries. The orchestrator applies these mappings:
+For each selected finding, propose a transition for its existing ledger entry.
+Do not create entries. The orchestrator applies these mappings:
 
 - `## Resolved` -> ledger status `resolved`.
 - `## Rejection Accepted` -> ledger status `rejected`.
@@ -88,6 +89,10 @@ mismatch under `## Skill Feedback` so the orchestrator can correct triage.
 
 If there is no skill feedback, write exactly `- None`. Use `- None` under any
 output section with no entries.
+
+Keep the response findings-only. Cite concise evidence and artifact paths; do
+not restate the implementation, transcript, or successful checks unrelated to
+the selected findings.
 
 End with exactly one:
 

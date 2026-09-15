@@ -41,6 +41,26 @@ true stacked MR chain) are defined in
 `references/orchestration-stacked-mrs.md`. This
 route creates a true stacked MR chain.
 
+## Progress Reporting
+
+Keep one compact commentary table and replace ordinary progress narration with
+it where practical:
+
+```text
+| Plan | Status | Reviews | Branch | Commit | Next action |
+```
+
+Use only `Queued`, `In progress`, `Blocked`, or `Complete`. Show completed versus
+currently required fresh review passes, increasing the requirement after a
+material-fix pass. Show the branch and short commit SHA. Update the table only
+when a plan changes state, a review pass finishes, a commit is created,
+restacking completes, or verification changes the outcome.
+
+`Complete` means the plan is committed, pushed, verified, fully reviewed,
+correctly restacked when applicable, and has its required MR. Never predict or
+announce a “final pass”; identify passes by number and let the completion gates
+decide when review ends.
+
 ## Workflow
 
 For each plan, in order:
@@ -110,6 +130,13 @@ separate reviewed publication workflow.
   clean commit cannot be created safely.
 - Do not skip the final full-pipeline export test unless the user explicitly
   cancels it.
+- Use deterministic commands for patch application, hashes, byte comparisons,
+  changed-file scope, and branch ancestry. Do not ask a reviewer to infer facts
+  a command can establish.
+- Before a restack, classify every delta from the prior stack state as
+  `verbatim`, `mechanical regeneration`, or `intentional behavior change`.
+  Record each delta and its evidence. Verify the first two deterministically;
+  send the third through normal implementation, verification, and review.
 
 ## Final Response
 
@@ -117,4 +144,5 @@ Return the ordered branch stack with branch name, stack parent branch, MR
 target branch, commit SHA, push status, verification summary, per-plan
 export-test status, final full-pipeline export-test status, merge-request
 status and effective squash-on-merge value, review and execution folders,
-evidence indexes, and confirmation that no merge was performed.
+evidence indexes, any restack classification evidence, and confirmation that no
+merge was performed.

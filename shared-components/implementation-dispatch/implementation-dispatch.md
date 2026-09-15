@@ -29,8 +29,11 @@ For initial implementation:
 2. Render
    `references/implementation-dispatch-plan-invocation.md`.
 3. Assign owned files or modules as a newline bullet list.
-4. Send the prompt to a fresh native implementation sub-agent of the host.
-5. Record its session reference.
+4. For a complex or cross-cutting change, require the worker to create the
+   implementation analysis defined in `references/plan-implement.md` before
+   editing. Pass its artifact path to later fix requests.
+5. Send the prompt to a fresh native implementation sub-agent of the host.
+6. Record its session reference.
 
 ## Fix Dispatch
 
@@ -41,7 +44,8 @@ For verification or code-review fixes:
 3. Read `references/plan-implement.md`, include its operational instructions in
    the worker prompt, then render
    `references/implementation-dispatch-fix-request.md`.
-4. Include only accepted fixes or concrete verification failures.
+4. Include only accepted fixes or concrete verification failures. Batch all
+   accepted findings for the same worker into one request.
 5. Include relevant artifact paths, not long copied transcripts unless needed.
 6. Preserve owned-file boundaries.
 

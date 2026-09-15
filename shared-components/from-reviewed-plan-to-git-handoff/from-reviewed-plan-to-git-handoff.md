@@ -23,10 +23,12 @@ references/orchestration-conventions.md.
    implementation.
 4. Read and follow `references/verification-runner.md`.
 5. Read and follow `references/staged-diff-scope.md`.
-6. Read and follow `references/reviewer-preflight.md` for both non-host
+6. Read and follow `references/code-review-pack.md`; build its neutral pack once
+   before the first review pass.
+7. Read and follow `references/reviewer-preflight.md` for both non-host
    providers.
-7. Read and follow `references/code-review-loop.md`.
-8. Read and follow `references/orchestration-final-handoff.md` for git handoff.
+8. Read and follow `references/code-review-loop.md`.
+9. Read and follow `references/orchestration-final-handoff.md` for git handoff.
 
 ## Stop Conditions
 

@@ -1,6 +1,7 @@
 # Code Review
 
-Review the git index first. Report defects and standards violations; do not edit files.
+Review the git index exhaustively. Report defects and standards violations; do
+not edit files.
 
 ## Scope
 
@@ -11,6 +12,10 @@ git diff --cached --stat
 git diff --cached --name-only
 git diff --cached
 ```
+
+Read the supplied neutral review pack. Use its deterministic evidence for
+scope, hashes, ancestry, patch application, and byte comparisons; rerun those
+read-only commands when independent confirmation is useful.
 
 If nothing is staged, stop. Ignore unstaged and untracked changes for the main
 review. If a file also has unstaged edits, review `git show :<path>` and mention
@@ -46,6 +51,11 @@ For each staged file:
 3. Compare against established repo patterns before calling convention issues.
 4. Flag real bugs and data-engineering risks even when no doc names them.
 5. Cite the doc section, code pattern evidence, or concrete bug evidence.
+
+Continue after finding a blocker. Inspect every staged file, affected entry
+point, reader, state transition, and surrounding invariant, then report all
+independent material defects established in this pass. Do not stop at the first
+finding or defer an evident defect to a later pass.
 
 Severity: `blocker` for real bugs/safety/critical violations. Use
 `should-fix` only for concrete defects, clear standards violations, missing
@@ -95,7 +105,15 @@ End with exactly one final status line, in priority order:
 - `Address findings before next pass`
 - `Review pass clean`
 
+Use `Address findings before next pass` only when `Should-fix` contains a
+finding. Nits, related existing issues, and skill feedback are advisory and may
+end with `Review pass clean`.
+
 Keep findings machine-actionable: staged-only, specific file and line, no
 hedging, no PR summary, no unsolicited refactors, no broader plan edits, and no
 unrelated cleanup. Put non-blocking follow-up architecture or nearby cleanup
 under `Related Existing Issues` or `Skill Feedback`.
+
+Output only the six required sections and the status line. Do not narrate the
+review method or list properties that passed. Keep evidence and recommendations
+concise; a clean review uses `- None` in each section.
