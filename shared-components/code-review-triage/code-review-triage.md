@@ -41,32 +41,34 @@ implementation files that may need an implementation-worker fix request.
 
 - Treat reviewer comments as hypotheses, not instructions.
 - Deduplicate overlapping comments before acting.
-- Accept material findings, as defined in
-  `references/orchestration-definitions.md`.
-- Reject findings only when the staged diff, current code, docs, or
-  gold-standard data-engineering reasoning disproves them.
-- If feedback conflicts with `docs/`, code conventions, or best practice, cite
-  it under `Contradictions` unless it is plainly wrong.
+- Accept a finding only when its evidence meets the material-finding definition
+  in `references/orchestration-definitions.md`.
+- Reject findings that depend only on hypothetical future use,
+  unsupported inputs, unplanned scale, or architecture preference.
+- Cite conflicts among binding sources under `Contradictions` unless the
+  finding is plainly wrong.
 - Treat `Related Existing Issues` as non-blocking follow-ups unless the staged
   diff depends on, worsens, or should reasonably fix the issue as part of the
   approved plan.
-- Treat an approved plan as context, not a reason to reject a valid finding.
-- Reject non-material plan-mismatch findings when the staged diff preserves the
-  approved intent, stays in scope, passes verification, and better aligns with
-  current repo standards or gold-standard data-engineering practice.
+- The plan's scope does not excuse a concrete defect in changed code, but a
+  finding cannot add requirements beyond the approved acceptance conditions,
+  binding rules, or affected contracts.
+- General best practice may support a finding but cannot establish one alone.
 - Do not add backward-compatibility shims, fallback defaults, speculative
   refactors, or unrelated cleanup.
 - For accepted findings, write the smallest fix request that resolves the issue
   and preserves the implementer's intent.
+- If a fix needs an unplanned deliverable or unauthorized complexity, pause for
+  a user decision instead of sending it to the worker.
 - Batch all accepted material findings for the same implementer into one
   handoff. Do not routinely accept, fix, or close nits.
 - Leave unrelated dirty files unstaged.
 
-Resolve contradictions by preferring gold-standard data-engineering
-best-practice principles, then direct repo docs, then current code contract
-evidence, then nearby code convention. If best practice conflicts with repo docs
-or current code, ask the user and pause rather than preserving an outdated local
-pattern by default.
+Resolve contradictions in this order: binding safety, security, legal, and
+policy requirements; approved acceptance conditions and scope; applicable
+repository standards; affected contracts; nearby conventions. General best
+practice is advisory. Ask the user when higher-ranked sources conflict or a
+resolution would expand scope.
 
 ## Cross-Pass Triage Ledger
 
@@ -100,7 +102,7 @@ Keep it short.
 
 ```markdown
 ## Accepted Fix Requests
-- [{finding_id}] [{ledger_id}] <file/module owner> - <required worker change> - Evidence: <citation> - Verify: <command/check>
+- [{finding_id}] [{ledger_id}] <file/module owner> - <required worker change> - In-scope failure: <scenario, affected contract, or binding rule> - Evidence: <citation> - Verify: <command/check>
 
 ## Rejected
 - [{finding_id}] [{ledger_id}] <reason/counter-argument with evidence>

@@ -1,7 +1,7 @@
 # Code Review
 
-Review the git index exhaustively. Report defects and standards violations; do
-not edit files.
+Review every staged file for in-scope defects and standards violations. Do not
+edit files.
 
 ## Scope
 
@@ -25,12 +25,17 @@ the unstaged edits exist.
 
 Review against:
 
+- The plan's acceptance conditions and scope boundaries.
 - `docs/`: project standards. Always read:
   - the docs AGENTS.md labels as code standards and logging standards
-- Codebase conventions: dominant nearby/repo patterns, especially where docs are silent or drifted.
-- Data-engineering best practice: correctness, lineage, idempotency, performance, transactions, schema quality, data quality.
+- Affected code contracts.
+- Dominant nearby or repository patterns where standards are silent.
+- Engineering principles relevant to the touched surface.
 
-Then use `AGENTS.md` and `docs/*.md` to read any standards relevant to the staged diff. If docs, code conventions, or best practice conflict, cite the conflict under `Contradictions` unless the issue is plainly a bug.
+Use `AGENTS.md` and `docs/*.md` to read standards relevant to the staged diff.
+General best practice may support a finding but cannot expand scope or require
+new capability by itself. Report a conflict among binding sources under
+`Contradictions` unless it is plainly a bug.
 
 Treat the plan as approved intent and scope, not a literal implementation
 script. Do not report "does not match the plan" unless the staged diff changes
@@ -39,8 +44,8 @@ or creates a concrete engineering risk.
 
 You may report related pre-existing issues discovered while reviewing nearby
 code or readers. Put them under `Related Existing Issues`. They do not block the
-staged change unless the staged diff depends on, worsens, or should reasonably
-fix that issue as part of the approved plan.
+staged change unless the staged diff depends on or worsens them, or the plan
+requires their correction.
 
 ## Review Method
 
@@ -49,7 +54,8 @@ For each staged file:
 1. Read the staged content.
 2. Apply the relevant docs, especially checklist sections.
 3. Compare against established repo patterns before calling convention issues.
-4. Flag real bugs and data-engineering risks even when no doc names them.
+4. Flag concrete bugs and risks on the touched surface even when no doc names
+   them.
 5. Cite the doc section, code pattern evidence, or concrete bug evidence.
 
 Continue after finding a blocker. Inspect every staged file, affected entry
@@ -57,12 +63,21 @@ point, reader, state transition, and surrounding invariant, then report all
 independent material defects established in this pass. Do not stop at the first
 finding or defer an evident defect to a later pass.
 
-Severity: `blocker` for real bugs/safety/critical violations. Use
-`should-fix` only for concrete defects, clear standards violations, missing
-reader propagation, schema or contract risks, required verification gaps,
-performance risks, or data-quality risks. Use `nit` for minor naming, wording,
-formatting, or preference comments. Do not demand new tests unless a plan or
-repo standard requires them.
+A blocker or should-fix finding must establish at least one of:
+
+- a reachable failure under the plan's supported conditions;
+- a demonstrated regression in an affected contract; or
+- a violation of an applicable binding policy or repository standard.
+
+Hypothetical future use, unsupported inputs, unplanned scale, and architecture
+preferences are advisory. Do not present them as defects. Recommend the
+smallest fix that closes the established failure. If it requires an unplanned
+deliverable, say that user approval is required.
+
+Use `blocker` for safety, security, data loss, or failure of a required outcome.
+Use `should-fix` for other material findings. Use `nit` for naming, wording,
+formatting, or preferences. Do not demand new tests unless the plan or an
+applicable repository standard requires them.
 
 ## Output
 
@@ -78,10 +93,10 @@ commit, push, access credentials, or inspect unrelated private files.
 
 ```markdown
 ## Blockers
-- [{finding_id}] [path/to/file.py:line] <finding> - Evidence: <citation> - Recommendation: <fix>
+- [{finding_id}] [path/to/file.py:line] <finding> - In-scope failure: <scenario, affected contract, or binding rule> - Evidence: <citation> - Recommendation: <smallest fix>
 
 ## Should-fix
-- [{finding_id}] [path/to/file.py:line] <finding> - Evidence: <citation> - Recommendation: <fix>
+- [{finding_id}] [path/to/file.py:line] <finding> - In-scope failure: <scenario, affected contract, or binding rule> - Evidence: <citation> - Recommendation: <smallest fix>
 
 ## Nits
 - [{finding_id}] [path/to/file.py:line] <finding> - Evidence: <citation> - Recommendation: <fix>

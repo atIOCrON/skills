@@ -112,6 +112,16 @@ separate reviewed publication workflow.
 
 ## Rules
 
+- Choose the least-complex change that meets the plan's acceptance conditions
+  and preserves affected binding contracts.
+- Map every changed surface and new component to an acceptance condition,
+  binding policy, or affected contract. Omit anything that cannot be mapped.
+- Do not add architecture, dependencies, configuration, persistence,
+  interfaces, compatibility behavior, supported scenarios, or other
+  deliverables for hypothetical needs. If necessary work is not authorized by
+  the plan, stop for a user decision.
+- Apply engineering standards to in-scope correctness. General best practice
+  does not expand scope.
 - Preserve unrelated dirty work; never stage or revert it.
 - Use the bundled `git-branch-commit-push` component's branch naming and
   commit-message standards, with the current stack head as the parent for each
