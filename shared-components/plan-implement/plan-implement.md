@@ -1,7 +1,8 @@
 # Plan Implement
 
-Implement one approved plan from `plans/` within the assigned file or module
-ownership scope. The plan defines intent and scope. Binding policies, applicable
+Implement one approved feature plan from `plans/in_progress/` within the
+assigned file or module ownership scope. The plan defines intent and scope.
+Binding policies, applicable
 repository standards, and affected contracts govern correctness. General best
 practice informs in-scope work but does not expand it. If no plan path or
 ownership scope is provided, ask.
@@ -23,8 +24,8 @@ ownership scope is provided, ask.
    scenario, identify what requires it. Use a simpler design when it can meet
    the same requirements. Stop if necessary complexity is not authorized.
 6. For a complex or cross-cutting change, write
-   `plans/<plan_slug>.execution/implementation-analysis.md` before editing. Keep
-   it concise and include:
+   `<feature_dir>/<plan_slug>.execution/implementation-analysis.md` before
+   editing. Keep it concise and include:
    - the scope-to-change map;
    - entry points and in-repo readers;
    - relevant state transitions and failure states;

@@ -18,7 +18,7 @@ Require:
 - original and current review commit SHAs,
 - plan path,
 - cross-pass triage ledger path
-  (`plans/<plan_slug>.reviews/code-review-triage-ledger.md`).
+  (`<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`).
 
 ## Scope
 

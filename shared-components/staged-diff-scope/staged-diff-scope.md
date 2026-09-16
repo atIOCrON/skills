@@ -32,7 +32,8 @@ Require:
 - Leave unrelated dirty files unstaged.
 - Do not use broad `git add .`.
 - Do not revert or clean files.
-- Do not stage review or verification artifacts unless the plan includes them.
+- Do not stage plan-stage moves or review, execution, or verification artefacts
+  unless the plan includes them.
 - Do not use the index as the formal review boundary. Commit the approved tree,
   then review the pinned commit against its pinned dependency-parent SHA.
 
