@@ -197,7 +197,6 @@ fi
 [ -n "$(git ls-remote --heads upstream refs/heads/second)" ]
 "$script_dir/delete_branch_if_unreferenced.sh" test upstream second "$second_sha" "$journal" >/dev/null
 [ -z "$(git ls-remote --heads upstream refs/heads/second)" ]
-"$script_dir/delete_branch_if_unreferenced.sh" test upstream first "$first_sha" "$journal" >/dev/null
 reconcile_journal="$tmp_dir/reconcile.jsonl"
 independent_sha="$(git rev-parse upstream/independent)"
 "$script_dir/journal_event.sh" "$reconcile_journal" run-start \
@@ -211,12 +210,25 @@ printf '%s' "$reconcile_output" | jq -e \
   '.action == "force-push" and .branch == "independent" and .status == "not-applied"' >/dev/null
 record="$tmp_dir/cleanup-record"
 printf 'first %s %s %s\n' "$first_sha" "$first_sha" "$squash_sha" > "$record"
+# Exercise retry after an earlier cleanup advanced the local ref but could not
+# delete it, while both source branches remain on the remote.
+git branch recovered "$squash_sha"
+git push upstream "$first_sha:refs/heads/recovered" >/dev/null
+git fetch upstream recovered >/dev/null
+git branch --set-upstream-to=upstream/recovered recovered >/dev/null
+printf 'recovered %s %s %s\n' "$first_sha" "$first_sha" "$squash_sha" >> "$record"
 printf 'dirty\n' > dirty.tmp
 if "$script_dir/cleanup_merged_branches.sh" upstream develop "$record" >/dev/null 2>&1; then
   echo "local cleanup accepted a dirty checkout" >&2
   exit 1
 fi
 rm dirty.tmp
-"$script_dir/cleanup_merged_branches.sh" upstream develop "$record" >/dev/null
+cleanup_output="$("$script_dir/cleanup_merged_branches.sh" upstream develop "$record")"
+[[ "$cleanup_output" == *"deleted: first"* ]]
+[[ "$cleanup_output" == *"deleted: recovered"* ]]
+[ -z "$(git branch --list first recovered)" ]
+[ -n "$(git ls-remote --heads upstream refs/heads/first)" ]
+[ -n "$(git ls-remote --heads upstream refs/heads/recovered)" ]
+"$script_dir/delete_branch_if_unreferenced.sh" test upstream first "$first_sha" "$journal" >/dev/null
 
 echo "merge-stack tests passed"
