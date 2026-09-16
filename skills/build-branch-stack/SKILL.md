@@ -1,6 +1,6 @@
 ---
 name: build-branch-stack
-description: Implement reviewed plans as verified, code-reviewed branches synchronized with origin. Stop before opening change requests.
+description: Build verified, reviewed remote branches, audit their artefacts, and plan worthwhile follow-ups before change requests.
 disable-model-invocation: true
 metadata:
   layer: runner
@@ -19,7 +19,8 @@ Resolve `orchestration_skill_root` to this directory. Read
 `references/git-branch-commit.md` for branch and commit operations,
 `references/git-sync-branch.md` for verified pushes, then
 `references/from-reviewed-plan-to-git-handoff.md`. Read other references when
-their step requires them.
+their step requires them. Read `references/artefact-audit.md` after final stack
+checks and manifest creation.
 
 ## Inputs
 
@@ -128,6 +129,15 @@ Write the stack manifest at the last plan's final evidence path and check every
 recorded plan and artefact path. If a move or manifest write fails, return any
 just-moved features to `in_progress/` and report the blocker.
 
+Audit the selected features' preserved artefacts using
+`references/artefact-audit.md`. Verify candidate follow-ups against the tested
+stack state, record planning decisions in each feature's
+`<slug>.reviews/artefact-audit-ledger.md`, and create backlog plans for distinct
+work still worth doing. On repair runs, reconcile prior decisions and plans
+for affected features. Write these local planning files in the user's primary
+checkout without changing verified branch tips. Report an incomplete audit
+separately from branch readiness.
+
 ## Rules
 
 - Make the least-complex change that satisfies each plan and binding contract.
@@ -152,5 +162,6 @@ dependency evidence, current feature and artefact paths, parent branch and
 pinned SHA, local, upstream, and remote tip and tree SHAs, verification
 commands and result, and clean review SHA and passes. Record final integration
 and protected-pipeline commands, tested SHAs, and results. Report
-`Verified and pushed, ready for human review` or the blocker. This skill
-creates no CR.
+`Verified and pushed, ready for human review` or the blocker, plus each
+feature's audit ledger path, decisions, backlog plans created or reused, and
+any audit work still pending. This skill creates no CR.

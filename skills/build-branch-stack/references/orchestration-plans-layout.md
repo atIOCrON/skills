@@ -39,7 +39,9 @@ change request state and move unmerged features to `review/`.
 
 - `<feature_dir>/<slug>.reviews/` contains `plan-review-pass<N>/`,
   `code-review-pass<N>/`, `code-review-pack/`, and
-  `code-review-triage-ledger.md`.
+  `code-review-triage-ledger.md`. After the branch handoff audit it also
+  contains `artefact-audit-ledger.md`, which records follow-up planning
+  decisions for that feature.
 - `<feature_dir>/<slug>.execution/` contains one-off scripts and execution
   helpers. Keep permanent tests and tooling in their normal repo locations.
 - `<feature_dir>/<slug>.evidence/` contains small test outputs, measurements,
