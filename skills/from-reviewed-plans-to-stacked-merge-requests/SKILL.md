@@ -1,6 +1,7 @@
 ---
 name: from-reviewed-plans-to-stacked-merge-requests
 description: Turn reviewed plans into verified forge change requests, chaining only changes with real dependencies. Use for GitLab merge requests, GitHub pull requests, or another provider with a compatible adapter.
+disable-model-invocation: true
 metadata:
   layer: runner
 ---

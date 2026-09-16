@@ -1,6 +1,7 @@
 ---
 name: merge-stack
 description: Safely squash-merge an approved dependency chain or ordered independent batch on GitLab or GitHub.
+disable-model-invocation: true
 metadata:
   layer: runner
 ---

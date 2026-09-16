@@ -2,3 +2,5 @@ interface:
   display_name: "Write Branch Test Descriptions"
   short_description: "Create operator-ready branch description CSVs"
   default_prompt: "Use $write-branch-problem-solution-test-descriptions to create a problem, solution, and operator-test CSV for these branches."
+policy:
+  allow_implicit_invocation: false

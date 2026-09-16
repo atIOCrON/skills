@@ -1,6 +1,9 @@
 ---
 name: rebuild-staging-from-master
 description: Replace staging with a pinned master commit, preserve its previous history, and deploy to the staging server.
+disable-model-invocation: true
+metadata:
+  layer: runner
 ---
 
 Make the staging branch and deployed application match origin/master.

@@ -1,6 +1,9 @@
 ---
 name: rebuild-staging-with-branches
 description: Build an integration branch from pinned master and selected feature branches, validate it, then replace staging and verify deployment.
+disable-model-invocation: true
+metadata:
+  layer: runner
 ---
 
 Make staging match a tested integration of origin/master and the

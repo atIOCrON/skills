@@ -1,6 +1,7 @@
 ---
 name: write-concisely
 description: Write or revise code, documentation, and user-facing replies to be brief, direct, and precise without losing meaning. Use when the user asks for concise, tightened, no-fluff, plain-language, or Elements of Style-inspired output.
+disable-model-invocation: false
 metadata:
   layer: capability
 ---

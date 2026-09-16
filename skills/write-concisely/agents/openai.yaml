@@ -2,3 +2,5 @@ interface:
   display_name: "Write Concisely"
   short_description: "Make code, docs, and replies concise without losing meaning"
   default_prompt: "Use $write-concisely to revise this for brevity, clarity, and semantic fidelity."
+policy:
+  allow_implicit_invocation: true

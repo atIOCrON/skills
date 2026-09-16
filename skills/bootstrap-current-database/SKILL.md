@@ -1,6 +1,7 @@
 ---
 name: bootstrap-current-database
 description: Build a fresh local SQLite database with the current repository schema and logical seed rows extracted from an operational backup.
+disable-model-invocation: true
 metadata:
   layer: runner
 ---

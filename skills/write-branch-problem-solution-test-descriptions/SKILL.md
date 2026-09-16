@@ -1,6 +1,7 @@
 ---
 name: write-branch-problem-solution-test-descriptions
 description: Create a timestamped Better Battery CSV that explains the operator problem, solution, staging test path, and pass condition for each supplied Git branch. Use when a user provides a list of better-battery-m2 branches and wants branch problem/solution/test descriptions; do not use for implementation plans, code changes, or execution of the tests themselves.
+disable-model-invocation: true
 metadata:
   layer: capability
 ---

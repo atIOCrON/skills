@@ -1,6 +1,9 @@
 ---
 name: magento-composer-patches
 description: Create or revise Composer-managed Magento 2 vendor patches, including patch ordering, regeneration and sequential verification. Excludes Magento setup data and schema patches.
+disable-model-invocation: false
+metadata:
+  layer: capability
 ---
 
 # Magento 2 Patch Guidelines

@@ -1,6 +1,7 @@
 ---
 name: clean-documentation-changes
 description: Review and remove proposed documentation that duplicates executable repository behavior.
+disable-model-invocation: true
 metadata:
   layer: capability
 ---
