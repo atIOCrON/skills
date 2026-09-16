@@ -1,6 +1,9 @@
 ---
 name: integrate-and-test-staging
 description: Combine requested changes, deploy to staging, and verify their behavior.
+disable-model-invocation: true
+metadata:
+  layer: runner
 ---
 
 # Integrate and test staging

@@ -1,6 +1,7 @@
 ---
 name: artefact-audit
 description: Audit implementation and review artefacts for follow-up items, then verify whether each follow-up is still needed in the current codebase. Use when asked to inspect completed implementation artefacts, review folders, worker feedback, or review artefact follow-ups. Read-only unless explicitly asked to create plans or edit code.
+disable-model-invocation: true
 metadata:
   layer: capability
 ---

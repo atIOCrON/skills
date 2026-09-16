@@ -1,6 +1,7 @@
 ---
 name: sync-settings-sheets
 description: Download the configured Google Drive folder of 21 native Google Sheets as CSV and overwrite the matching existing files in data/settings. Use when asked to refresh, sync, or replace repo settings CSVs from the Drive settings Sheets folder.
+disable-model-invocation: true
 metadata:
   layer: runner
 ---

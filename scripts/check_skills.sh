@@ -19,6 +19,7 @@ allowed_layers = {"runner", "capability", "reference"}
 allowed_keys = {
     "name",
     "description",
+    "disable-model-invocation",
     "compatibility",
     "metadata",
     "license",
@@ -26,6 +27,10 @@ allowed_keys = {
 }
 errors = []
 skill_files = sorted(target.glob("*/SKILL.md"))
+implicit_invocation_exceptions = {
+    "magento-composer-patches",
+    "write-concisely",
+}
 
 if not skill_files:
     errors.append(f"no SKILL.md files found under {target}")
@@ -78,6 +83,34 @@ for path in skill_files:
         errors.append(f"{rel}: missing description")
     elif len(description) > 1024:
         errors.append(f"{rel}: description must be 1024 characters or fewer")
+
+    disable_model_invocation = fields.get("disable-model-invocation")
+    if disable_model_invocation is not None and not isinstance(
+        disable_model_invocation, bool
+    ):
+        errors.append(f"{rel}: disable-model-invocation must be a boolean")
+    elif target.name == "skills" and isinstance(name, str):
+        expected = name not in implicit_invocation_exceptions
+        if disable_model_invocation != expected:
+            errors.append(
+                f"{rel}: disable-model-invocation must be {expected!r}"
+            )
+
+        openai_path = path.parent / "agents" / "openai.yaml"
+        if not openai_path.is_file():
+            errors.append(f"{rel}: missing agents/openai.yaml")
+        else:
+            try:
+                openai_fields = yaml.safe_load(openai_path.read_text(encoding="utf-8"))
+            except yaml.YAMLError as exc:
+                errors.append(f"{rel}: invalid agents/openai.yaml: {exc}")
+            else:
+                policy = openai_fields.get("policy") if isinstance(openai_fields, dict) else None
+                actual = policy.get("allow_implicit_invocation") if isinstance(policy, dict) else None
+                if actual is not (not expected):
+                    errors.append(
+                        f"{rel}: policy.allow_implicit_invocation must be {not expected!r}"
+                    )
 
     metadata = fields.get("metadata")
     if not isinstance(metadata, dict):

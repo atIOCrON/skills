@@ -1,6 +1,7 @@
 ---
 name: bootstrap-cs-logical-seed-database
 description: Create a brand-new current-branch SQLite database in better-batt-sql-new by extracting only the authorized CS operational logical seed from an immutable backup. Use for local branch-schema database bootstraps; do not use for full restores, protected seed publication, baseline changes, or pipeline execution.
+disable-model-invocation: true
 metadata:
   layer: runner
 ---
