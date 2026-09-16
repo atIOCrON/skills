@@ -62,8 +62,8 @@ while read -r branch old_remote_sha rebased_head_sha landed_sha extra || [ -n "$
       continue
     fi
     local_sha="$(git rev-parse "refs/heads/$branch")"
-    if [ "$local_sha" != "$old_remote_sha" ]; then
-      echo "skipped: $branch (local SHA $local_sha differs from recorded old_remote_sha $old_remote_sha)"
+    if [ "$local_sha" != "$old_remote_sha" ] && [ "$local_sha" != "$landed_sha" ]; then
+      echo "skipped: $branch (local SHA $local_sha differs from recorded old_remote_sha $old_remote_sha and landed_sha $landed_sha)"
       continue
     fi
     if ! git cat-file -e "${rebased_head_sha}^{commit}" 2>/dev/null ||
@@ -80,10 +80,21 @@ while read -r branch old_remote_sha rebased_head_sha landed_sha extra || [ -n "$
       echo "skipped: $branch (landed commit $landed_sha not merged into $target)"
       continue
     fi
-    if ! git branch -f "$branch" "$landed_sha"; then
-      echo "skipped: $branch (could not advance stale local branch ref)"
-      continue
+    if [ "$local_sha" != "$landed_sha" ]; then
+      if ! git branch -f "$branch" "$landed_sha"; then
+        echo "skipped: $branch (could not advance stale local branch ref)"
+        continue
+      fi
+      echo "advanced: $branch -> $landed_sha"
     fi
-    echo "advanced: $branch -> $landed_sha"
+    # A preserved source branch is not an ancestor of its squash commit. Make
+    # safe deletion compare against the current target instead of that upstream.
+    upstream_ref="$(git for-each-ref --format='%(upstream)' "refs/heads/$branch")"
+    if [ "$upstream_ref" = "refs/remotes/$remote/$branch" ]; then
+      if ! git branch --unset-upstream "$branch"; then
+        echo "skipped: $branch (could not unset source upstream)"
+        continue
+      fi
+    fi
     delete_branch "$branch"
 done < "$record_file"
