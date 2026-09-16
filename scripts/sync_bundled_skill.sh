@@ -36,6 +36,7 @@ shared-components/change-request-description/change-request-description.md|refer
 shared-components/change-request-lifecycle/change-request-lifecycle.md|references/change-request-lifecycle.md
 shared-components/change-request-lifecycle/gitlab.md|references/change-request-providers/gitlab.md
 shared-components/change-request-lifecycle/github.md|references/change-request-providers/github.md
+shared-components/change-request-lifecycle/bitbucket-cloud.md|references/change-request-providers/bitbucket-cloud.md
 shared-components/implementation-dispatch/implementation-dispatch-fix-request.md|references/implementation-dispatch-fix-request.md
 shared-components/implementation-dispatch/implementation-dispatch-plan-invocation.md|references/implementation-dispatch-plan-invocation.md
 shared-components/implementation-dispatch/implementation-dispatch.md|references/implementation-dispatch.md

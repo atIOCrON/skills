@@ -11,6 +11,7 @@ one adapter for the whole CR lifecycle:
 
 - GitLab: `change-request-providers/gitlab.md`
 - GitHub: `change-request-providers/github.md`
+- Bitbucket Cloud (`bitbucket.org`): `change-request-providers/bitbucket-cloud.md`
 - Another forge: `change-request-providers/<provider>.md`, satisfying the
   contract below
 
@@ -25,16 +26,21 @@ and return normalized evidence for:
 
 - provider, CR identifier, URL, state, and draft status;
 - source and target branches plus their current commit SHAs;
-- requested assignee and independent reviewer;
+- requested assignee where supported and independent reviewer; if the provider
+  has no PR assignee, report that explicitly and identify the authenticated
+  author instead;
 - effective squash support: per-CR setting or repository capability; and
 - source-branch deletion policy when the provider exposes it.
 
-Before every mode, require the expected branch, synchronized upstream, fetched
-target, authenticated provider, and no dirty file overlapping the CR diff. Use
-`origin/<target>...HEAD` for log and diff inspection. Require the source SHA to
-equal local `HEAD`, upstream, the verified SHA, and—when ready—the latest clean
-review SHA. Require the target SHA to equal the pinned base and remain an
-ancestor.
+Before every mode, require the expected branch, fetched target, authenticated
+provider, and no dirty file overlapping the CR diff. Use
+`origin/<target>...HEAD` for log and diff inspection. For create, refresh, and
+ready modes, require synchronized upstream; require the source SHA to equal
+local `HEAD`, upstream, the verified SHA, and—when ready—the latest clean review
+SHA. Require the target SHA to equal the pinned base and remain an ancestor.
+For return to draft after detected movement, allow only the SHA or upstream
+mismatch being invalidated; fetch and record the actual refs and preserve CR
+identity before changing readiness. Do not accept the new source SHA as verified.
 
 Create exactly one draft CR with an explicit source and target. Refresh its
 title and description after every accepted source change. Return it and all

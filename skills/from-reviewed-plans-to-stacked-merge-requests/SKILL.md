@@ -1,6 +1,6 @@
 ---
 name: from-reviewed-plans-to-stacked-merge-requests
-description: Turn reviewed plans into verified forge change requests, chaining only changes with real dependencies. Use for GitLab merge requests, GitHub pull requests, or another provider with a compatible adapter.
+description: Turn reviewed plans into verified forge change requests, chaining only changes with real dependencies. Use for GitLab merge requests, GitHub or Bitbucket Cloud pull requests, or another provider with a compatible adapter.
 disable-model-invocation: true
 metadata:
   layer: runner
@@ -27,7 +27,8 @@ active step requires them.
 
 - Ordered reviewed plan filenames or `plans/<file>.md` paths.
 - Forge provider: infer it from `origin` only when unambiguous; otherwise require
-  the user to name it. Use the GitLab or GitHub adapter when applicable.
+  the user to name it. Use the GitLab, GitHub, or Bitbucket Cloud adapter when
+  applicable.
 - Base target branch: the repository default unless the user names another.
 - Starting branch: the base target unless the user names an existing parent.
 - Layout: `auto` by default, or `chained` / `base-targeted` when the user
