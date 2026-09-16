@@ -39,7 +39,7 @@ tree content into the verification worktree.
 
 On failure, send the original worker the command, concise failure, expected
 behavior, owned scope, and rerun command. The worker must create a new candidate
-commit through `staged-diff-scope` and `git-branch-commit-push`; verify that new
+commit through `staged-diff-scope` and `git-branch-commit`; verify that new
 SHA from a new clean worktree. Stop after two failed fix attempts at one
 verification point.
 

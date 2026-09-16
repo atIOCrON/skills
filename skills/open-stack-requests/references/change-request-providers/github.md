@@ -33,6 +33,14 @@ gh pr create \
   --assignee "@me"
 ```
 
+## Read Checks
+
+Use `gh pr checks <number> --json name,state,bucket,workflow` and repository
+branch rules to identify required checks. Wait for required checks on the
+verified `headRefOid`; a failed, pending, canceled, or missing required check
+blocks readiness. Record `none applicable` only if no check applies. Refetch
+`headRefOid` after checking.
+
 ## Refresh Or Change Readiness
 
 Refresh metadata with `gh pr edit <number> --title "<title>" --body

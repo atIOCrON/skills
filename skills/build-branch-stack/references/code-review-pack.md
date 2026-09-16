@@ -19,8 +19,8 @@ deterministic-checks.md
 hash-manifest.sha256
 ```
 
-`index.md` records the plan, dependency-parent branch and pinned base SHA, plan branch,
-review commit and tree SHAs, creation time, draft CR, and evidence paths.
+`index.md` records the plan, dependency-parent branch and pinned base SHA,
+plan branch, review commit and tree SHAs, creation time, and evidence paths.
 `ownership-map.md` maps each changed path to plan scope or owner. Capture each
 deterministic command, exit status, and literal output.
 
@@ -39,8 +39,9 @@ Use explicit object IDs:
 - scope and patch: `git diff <base-sha>...<review-sha>` and `--binary`;
 - identity: `git rev-parse <review-sha>^{commit}` and `^{tree}`;
 - ancestry: `git merge-base --is-ancestor <base-sha> <review-sha>`;
-- pinned base and current CR target SHA equality;
-- local, upstream, CR source, reviewed, and verified SHA equality;
+- pinned base and dependency-parent head equality;
+- local branch tip, upstream, fetched remote tip, reviewed, and verified SHA
+  equality;
 - clean-worktree verification evidence for `<review-sha>`;
 - file identity, strict patch application, and byte comparison where required.
 

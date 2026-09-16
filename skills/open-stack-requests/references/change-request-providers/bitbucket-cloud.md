@@ -92,9 +92,18 @@ descendant. Fetch each PR after its update and require `OPEN` and
 source change was unexpected, leave it draft and follow the lifecycle's user
 confirmation rule before accepting the new SHA.
 
+## Read Checks
+
+List all pages of `GET $api/commit/<source-sha>/statuses` and compare the
+statuses with configured Pipelines and merge checks for the target branch.
+Wait for required statuses to pass. A pending, failed, or missing required
+status blocks readiness. Record `none applicable` only when no status is
+configured for this PR. Refetch the PR source SHA after checking.
+
 ## Mark Ready
 
-Only after `code-review-loop.md` returns `Ready for CR review`, refetch the PR,
+Only after the publication skill confirms the reviewed SHA and applicable
+forge checks, refetch the PR,
 target branch API object, and target Git ref. Require exact source and target
 SHA agreement, `OPEN`, `draft == true`, preserved source branch, and available
 squash. Select a qualified independent reviewer allowed by repository policy;

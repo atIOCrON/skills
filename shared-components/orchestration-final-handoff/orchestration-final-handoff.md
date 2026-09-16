@@ -30,21 +30,21 @@ Include:
 - next recommended bundled component:
   `references/from-reviewed-plan-to-git-handoff.md`.
 
-## Output For Git Handoff
+## Output For Branch Handoff
 
 Include:
 
 - plan path and files changed;
-- pinned base, final commit, upstream, and CR source SHAs;
+- pinned parent and final verified, reviewed, local, and remote branch SHAs;
 - clean-worktree verification commands and status;
 - code-review pass count and one-line outcome per pass;
 - rejected/deferred findings with evidence or recorded reason;
 - reviewer artifact paths, including failures;
 - triage ledger path and terminal-status counts;
 - confirmation no non-terminal ledger entries remain;
-- draft-to-ready CR status, target, forge, URL, and squash evidence;
+- stack manifest path and final stack-check evidence;
 - `## Skill Feedback For User Review` with entries or `- None`;
-- final state: blocker or `Ready for human review`.
+- final state: blocker or `Verified and pushed`.
 
 Keep the handoff concise and cite artifact paths rather than copying large
 review outputs.

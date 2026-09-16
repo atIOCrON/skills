@@ -16,13 +16,13 @@ eval "$("$orchestration_skill_root/scripts/ensure_forge_cli.sh" gitlab)"
 
 ## Provider Preflight
 
-Require authenticated `glab`, the expected current branch, an upstream, and no
+Require authenticated `glab`, the expected local source branch, an upstream, and no
 local/upstream divergence. Fetch and resolve the target, then inspect:
 
 ```bash
-git log --oneline origin/<target-branch>..HEAD
-git diff --stat origin/<target-branch>...HEAD
-git diff --name-only origin/<target-branch>...HEAD
+git log --oneline origin/<target-branch>..refs/heads/<branch-name>
+git diff --stat origin/<target-branch>...refs/heads/<branch-name>
+git diff --name-only origin/<target-branch>...refs/heads/<branch-name>
 ```
 
 Stop if the target is unresolved, the source equals the target, or dirty files
@@ -61,7 +61,7 @@ title and description from the current verified branch diff, then run:
 glab mr update <mr-iid> --title "<title>" --description "<description>"
 ```
 
-Require the MR source SHA, upstream, local `HEAD`, and verified SHA to match
+Require the MR source SHA, upstream, local branch ref, and verified SHA to match
 afterward.
 
 ## Return To Draft
@@ -71,13 +71,24 @@ If a ready MR's source or pinned target head changes, run
 require draft status; also return every ready descendant to draft. Stop if any
 transition fails.
 
+## Read Checks
+
+List branch pipelines through `GET /projects/:id/pipelines?ref=<source-branch>`
+and MR pipelines through `GET /projects/:id/merge_requests/:iid/pipelines`.
+For each pipeline on the exact source SHA, read its jobs and status. Compare
+the result with the source branch's `.gitlab-ci.yml` rules and project merge
+checks for this target. A skipped pipeline is expected only when no jobs
+apply; record `none applicable` in that case. Stop for missing, pending, or
+failed required jobs. Refetch the MR source SHA after checking.
+
 ## Mark Ready
 
-Use this mode only after `code-review-loop` returns `Ready for CR review`.
+Use this mode only after the publication skill confirms the reviewed SHA and
+applicable forge checks.
 Resolve the existing MR and require:
 
 - it is still draft and targets `<target-branch>`;
-- local `HEAD`, upstream, MR source, latest verified SHA, and latest clean-review
+- local branch ref, upstream, MR source, latest verified SHA, and latest clean-review
   SHA are identical;
 - the fetched MR target head equals the pinned base SHA and remains an ancestor;
   and
