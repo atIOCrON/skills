@@ -7,17 +7,23 @@
 # to or fast-forward the target branch.
 set -euo pipefail
 
-if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
-  echo "usage: cleanup_merged_branches.sh <target-branch> [record-file]" >&2
+if [ "$#" -ne 3 ]; then
+  echo "usage: cleanup_merged_branches.sh <remote> <target-branch> <record-file>" >&2
   exit 2
 fi
 
-target="$1"
-record_file="${2:-}"
+remote="$1"
+target="$2"
+record_file="$3"
 
-if [ -n "$record_file" ] && [ ! -f "$record_file" ]; then
+if [ ! -f "$record_file" ]; then
   echo "error: record file not found: $record_file" >&2
   exit 2
+fi
+
+if [ -n "$(git status --porcelain=v1 --untracked-files=all)" ]; then
+  echo "error: local cleanup requires a clean checkout" >&2
+  exit 4
 fi
 
 if ! git switch "$target"; then
@@ -27,12 +33,12 @@ if ! git switch "$target"; then
   exit 3
 fi
 
-if ! git pull --ff-only origin "$target"; then
-  echo "error: cannot fast-forward $target from origin" >&2
+if ! git pull --ff-only "$remote" "$target"; then
+  echo "error: cannot fast-forward $target from $remote" >&2
   exit 3
 fi
 
-git fetch --prune origin
+git fetch --prune "$remote"
 
 delete_branch() {
   if git branch -d "$1"; then
@@ -42,8 +48,7 @@ delete_branch() {
   fi
 }
 
-if [ -n "$record_file" ]; then
-  while read -r branch old_remote_sha rebased_head_sha landed_sha extra || [ -n "${branch:-}" ]; do
+while read -r branch old_remote_sha rebased_head_sha landed_sha extra || [ -n "${branch:-}" ]; do
     [ -n "$branch" ] || continue
     if [ -n "${extra:-}" ] || [ -z "${old_remote_sha:-}" ] || [ -z "${rebased_head_sha:-}" ]; then
       echo "skipped: $branch (malformed cleanup record)"
@@ -81,13 +86,4 @@ if [ -n "$record_file" ]; then
     fi
     echo "advanced: $branch -> $landed_sha"
     delete_branch "$branch"
-  done < "$record_file"
-else
-  for branch in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
-    [ "$branch" = "$target" ] && continue
-    branch_sha="$(git rev-parse "refs/heads/$branch")"
-    if git merge-base --is-ancestor "$branch_sha" "refs/heads/$target"; then
-      delete_branch "$branch"
-    fi
-  done
-fi
+done < "$record_file"

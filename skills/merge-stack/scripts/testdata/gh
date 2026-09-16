@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+case "$1 $2" in
+  "auth status") exit 0 ;;
+  "pr view")
+    jq -n --arg head "${TEST_HEAD:?}" --arg base "${TEST_BASE:?}" '{
+      number:1,url:"https://github.com/example/repo/pull/1",state:"OPEN",
+      headRefName:"feature",headRefOid:$head,baseRefName:"develop",baseRefOid:$base,
+      reviewDecision:"APPROVED",latestReviews:[{state:"APPROVED"}],
+      mergeable:"MERGEABLE",mergeStateStatus:"CLEAN",
+      statusCheckRollup:[{conclusion:"SUCCESS"}],mergeCommit:null,isCrossRepository:false}'
+    ;;
+  "repo view") echo '{"squashMergeAllowed":true,"deleteBranchOnMerge":false}' ;;
+  "api --hostname"|"api -X")
+    args="$*"
+    case "$args" in
+      *pulls/1/reviews*)
+        jq -n --arg head "${TEST_APPROVAL_HEAD:-${TEST_HEAD:?}}" '[[{id:1,submitted_at:"2026-01-01T00:00:00Z",state:"APPROVED",commit_id:$head,user:{login:"reviewer"}}]]'
+        ;;
+      *branches/develop/protection/required_status_checks*)
+        jq -n --argjson strict "${TEST_STRICT_STATUS:-true}" '{strict:$strict}'
+        ;;
+      *branches/develop*) echo '{"protected":true}' ;;
+      *pulls/1/merge*) jq -n --arg head "${TEST_HEAD:?}" '{merged:true,sha:$head}' ;;
+      *) exit 2 ;;
+    esac
+    ;;
+  *) exit 2 ;;
+esac

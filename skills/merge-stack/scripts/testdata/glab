@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+case "$1 $2" in
+  "auth status") exit 0 ;;
+  "mr view") echo '{"iid":1}' ;;
+  "api --hostname")
+    args="$*"
+    case "$args" in
+      *merge_requests/1/approvals*) echo '{"approved":true}' ;;
+      *merge_requests/1*)
+        jq -n --arg head "${TEST_HEAD:?}" '{iid:1,web_url:"https://gitlab.com/example/repo/-/merge_requests/1",
+          state:"opened",source_branch:"feature",target_branch:"develop",sha:$head,
+          source_project_id:1,target_project_id:1,squash_on_merge:true,
+          detailed_merge_status:"mergeable",head_pipeline:{status:"success",sha:$head},
+          squash_commit_sha:null}'
+        ;;
+      *repository/branches/develop*) jq -n --arg base "${TEST_BASE:?}" '{protected:true,commit:{id:$base}}' ;;
+      */approvals*)
+        jq -n --argjson reset "${TEST_RESET_APPROVALS:-true}" \
+          '{reset_approvals_on_push:$reset,merge_requests_disable_committers_approval:true}'
+        ;;
+      *projects/example%2Frepo)
+        jq -n --argjson merged_results "${TEST_MERGED_RESULTS:-true}" \
+          '{only_allow_merge_if_pipeline_succeeds:true,merge_pipelines_enabled:$merged_results}'
+        ;;
+      *) exit 2 ;;
+    esac
+    ;;
+  *) exit 2 ;;
+esac
