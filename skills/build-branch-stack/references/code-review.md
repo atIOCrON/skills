@@ -24,7 +24,9 @@ the resolved objects.
 
 Review against the approved plan, applicable repository standards, affected
 contracts, established nearby patterns, and engineering principles relevant to
-the touched surface. Read `AGENTS.md` and the standards it identifies.
+the touched surface. Read applicable `AGENTS.md` files when present. Otherwise
+use the plan, repository docs and configuration, tests, and affected contracts
+as sources of project-specific standards.
 
 General best practice may support a finding but cannot expand scope. Report a
 binding-source conflict under `Contradictions`. Treat the plan as approved

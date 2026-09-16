@@ -21,6 +21,10 @@ hash-manifest.sha256
 
 `index.md` records the plan, dependency-parent branch and pinned base SHA,
 plan branch, review commit and tree SHAs, creation time, and evidence paths.
+It also records which standards sources were found. If `AGENTS.md` is absent,
+say so and identify the applicable plan, repository docs and configuration,
+affected contracts, tests, and nearby patterns used for review. General
+engineering practice may inform a finding but is not a binding repository rule.
 `ownership-map.md` maps each changed path to plan scope or owner. Capture each
 deterministic command, exit status, and literal output.
 
@@ -52,6 +56,8 @@ A failed check, unexplained delta, or SHA mismatch blocks review.
 Build the pack before pass 1. After a fix commit or restack, refresh the commit,
 diff, hashes, deterministic results, and verification evidence. Do not rebuild
 an unchanged vendor baseline.
+For evidence-only closure, keep the pinned diff and SHAs, refresh the evidence
+links and affected deterministic results, and record what changed in the pack.
 
 Fresh reviewers receive only the pinned diff, approved plan, repository
 standards, reproducible inputs, verification results, and this pack. Exclude

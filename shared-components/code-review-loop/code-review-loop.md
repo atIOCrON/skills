@@ -16,8 +16,18 @@ The cross-pass material concern ledger is
 
 Each numbered pass is a fresh selected-reviewer discovery review of
 `<base-sha>...<review-sha>`. Targeted closure rounds do not count as passes.
-One clean fresh pass is sufficient. After a material fix, close the originating
-findings, then run a fresh pass on the new commit.
+One completed fresh pass plus terminal closure is sufficient when the reviewed
+commit has not changed. After a material fix, close the originating findings,
+then run a fresh pass on the new commit.
+
+When only explanatory or verification evidence changes, confirm the pinned
+base, commit, and tree SHAs are unchanged. Refresh the pack's evidence and
+deterministic checks, then ask only the originating reviewer in its original
+session to assess its finding. Record its closure and update the ledger; mark
+the same SHA clean-reviewed only after all findings are terminal. Do not run
+another discovery pass solely for added evidence. A code change, restack,
+parent change, failed verification, or new contradiction still blocks closure
+and follows the normal review path.
 
 For each pass:
 
@@ -43,16 +53,17 @@ For each pass:
    proposed ledger transitions through the orchestrator; never share another
    reviewer's findings. Use artefact paths from the feature's current stage.
 8. Repeat fixes and targeted closure until those findings close or need a
-   user decision. Use targeted closure for a rejected material finding only
-   when triage is uncertain, evidence conflicts, or the user requests it.
+   user decision. Use targeted closure for a rejected material finding when
+   triage is uncertain, evidence conflicts, new evidence addresses it, or the
+   user requests it.
 9. Resolve recurring escalations with the user before another fresh pass.
 
 ## Completion
 
 Return `Reviewed and pushed` only when:
 
-- at least one fresh pass ran and the newest has no accepted material finding
-  or contradiction;
+- at least one fresh pass ran on the current SHA, and no material finding or
+  contradiction remains unresolved after any targeted closure;
 - all ledger entries are terminal and required closure is complete;
 - the same SHA is the local branch tip, upstream, fetched remote tip, latest
   verified commit, and latest clean-reviewed commit; and

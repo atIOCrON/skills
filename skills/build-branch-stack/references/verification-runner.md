@@ -17,6 +17,11 @@ Require:
 Stop if the plan lacks deterministic verification commands or the commit cannot
 be resolved.
 
+Use the readiness inventory from `SKILL.md` to prepare exact locked
+dependencies, required services and fixtures, and any isolated setup needed to
+exercise components disabled in the default test configuration. Record the
+setup and commands so the clean-worktree result is reproducible.
+
 ## Workflow
 
 1. Resolve the candidate commit to a full SHA.

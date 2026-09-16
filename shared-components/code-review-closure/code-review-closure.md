@@ -28,12 +28,15 @@ Require:
 - This closure is expected to run in the same reviewer conversation/session that
   produced the original review artifact. If it is not the same conversation,
   report that as `Closure blocked` rather than doing a fresh review.
-- For accepted findings, compare the original and current review commits and
-  decide whether the committed fix resolves the finding while preserving its
-  surrounding invariant.
+- For accepted code fixes, compare the original and current review commits
+  and decide whether the committed fix resolves the finding while preserving
+  its surrounding invariant.
 - For rejected findings, decide whether the rejection evidence is sufficient.
+- When the commit and base SHAs are unchanged, assess added evidence only. It
+  may justify rejecting a finding or confirm an already implemented contract;
+  it cannot close a demonstrated code defect that still exists.
 - Use evidence from the pinned commit diff, cited docs, cited code, verification
-  results, or gold-standard data-engineering best practice.
+  results, or applicable engineering principles.
 - Do not write files. Propose ledger transitions for the orchestrator to apply.
 - Do not inspect unrelated files except where needed to validate a changed-code
   contract or cited reader/consumer.

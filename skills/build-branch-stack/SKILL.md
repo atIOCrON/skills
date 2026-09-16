@@ -27,6 +27,8 @@ their step requires them.
   selected legacy `plans/<slug>.md` files to migrate.
 - Base branch: the remote default unless the user names another.
 - Starting branch: the base unless the user names an existing parent.
+- Plan branch: create one by default, or use a user-selected existing branch
+  after validating its parent, existing commits, and remote state.
 - Dependency map: each plan's one required unmerged predecessor, or `none`.
 - For a repair run, the existing stack manifest, affected branches, and the
   publisher's evidence that any affected ready CRs are draft.
@@ -49,6 +51,17 @@ status requires the feature in `review/`, a clean-reviewed, verified final SHA
 matching local, upstream, and remote tips, a pinned parent, preserved artefacts,
 and passed final stack checks. Number review passes; never predict a final pass.
 
+## Readiness
+
+Before moving plans or editing code, inspect repository instructions, selected
+plans, branch refs, and available CI. Identify required verification for each
+touched surface, its prerequisites (such as locked dependencies, services,
+fixtures, or disabled components), and whether CI runs on the target branches.
+Prepare reproducible local checks for requirements CI cannot run. If a required
+gate or prerequisite is missing, resolve its scope and ownership before
+implementation; do not silently add unrelated CI or tooling work. Record the
+intended commands and any agreed gap in plan evidence.
+
 ## Workflow
 
 For a fresh run, move only the selected reviewed feature directories from
@@ -61,14 +74,15 @@ For a selected legacy `plans/<slug>.md`, move it and any sibling
 For each plan:
 
 1. Record why it depends on its parent. Fetch and pin the parent branch and SHA.
-2. Create its local plan branch from that parent, then move its feature from
+2. Create its local plan branch from that parent, or validate the selected
+   existing plan branch with `git-branch-commit.md`, then move its feature from
    `to_do/` to `in_progress/` before implementation. On a repair run, verify
    the existing branch and manifest instead of recreating it; move only
    affected features and descendants back to `in_progress/` when needed.
 3. Follow `from-reviewed-plan-to-git-handoff.md`: selectively stage and review
-   the candidate tree, commit, and verify the exact commit in a clean worktree.
-   Create the remote branch at the first verified commit. Push each verified
-   fix and review the pinned parent-to-commit diff. Keep the feature in
+   any new edits, commit if needed, and verify the exact commit in a clean worktree.
+   Create or update the remote branch at the first verified commit. Push each
+   verified fix and review the pinned parent-to-commit diff. Keep the feature in
    `in_progress/` through all code review passes and fixes. Do not open a CR.
 4. Preserve the feature's `.reviews/`, `.evidence/`, and any `.execution/`
    folders before removing a worktree. Use this branch as a parent only where
@@ -89,9 +103,11 @@ After all plans:
 1. Run deterministic pre-handoff checks on every chain head and independent
    branch. For an ordered independent batch, build an unpushed temporary
    integration commit from the pinned base in merge order and test it. Check
-   that applicable CI covers behavior tests and risk-based lint, type,
-   dependency, secret, and static-security checks; stop if a required class
-   is absent or cannot run.
+   that CI required by the plan, user, or repository policy runs on the target
+   branches and covers applicable behavior tests and risk-based lint, type,
+   dependency, secret, and static checks. Run required checks locally where CI
+   is optional or cannot cover them. Stop if a required check is absent or
+   cannot run.
 2. When `scripts/codex/protected_full_pipeline.py` exists, run it with the
    committed lock-selected seed and baseline:
 

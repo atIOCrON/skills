@@ -7,16 +7,19 @@ pushed commit until clean. Do not create a change request.
 
 Require an approved `<feature_dir>/<slug>.md` in `in_progress/`, implementation
 ownership, plan branch, dependency-parent branch, and pinned parent SHA. The
-caller creates and checks out the plan branch first.
+caller creates or validates and checks out the plan branch first.
 
 ## Route
 
-1. Load `AGENTS.md`, the plan, and required repository standards.
-2. Select the host mapping through `orchestration-runtime.md` and dispatch
-   the initial implementation.
-3. Use `staged-diff-scope.md` for selective staging and self-review. Block
-   staged/unstaged overlap on candidate files.
-4. Use `git-branch-commit.md` to commit the approved candidate tree.
+1. Load the plan, `AGENTS.md` where present, and applicable repository
+   standards and contracts.
+2. Select the host mapping through `orchestration-runtime.md`. Have the initial
+   implementation worker assess any adopted branch tip against the plan and
+   complete remaining implementation.
+3. For new edits, use `staged-diff-scope.md` for selective staging and
+   self-review. Block staged/unstaged overlap on candidate files.
+4. Use `git-branch-commit.md` to commit an approved new candidate tree. If
+   the adopted tip already satisfies the plan, use that commit as candidate.
 5. Use `verification-runner.md` to verify the exact commit in a clean detached
    worktree. Fix failures through new commits and verify each new SHA.
 6. Use `git-sync-branch.md` to create or update the remote branch at the

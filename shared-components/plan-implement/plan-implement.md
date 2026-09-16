@@ -14,8 +14,8 @@ ownership scope is provided, ask.
    file for the referenced symbol, behavior, or nearby text and use the current
    location. Stop only when the claim cannot be verified in the current codebase,
    contradicts current evidence, or would materially change the approved scope.
-3. Read the docs AGENTS.md labels as code standards and logging standards, and
-   any other referenced or relevant `docs/*.md`.
+3. Read applicable `AGENTS.md` files when present and the repository docs,
+   configuration, tests, and contracts relevant to the touched surface.
 4. Make a concise scope-to-change map. Map each changed surface and new
    component to an acceptance condition, binding policy, or affected contract.
    Omit anything that cannot be mapped.
@@ -35,7 +35,7 @@ ownership scope is provided, ask.
 Use the analysis to shape the implementation and verification harness. Do not
 send it to fresh reviewers; they retain an independent perspective.
 
-Use `AGENTS.md` to choose relevant docs.
+Use repository instructions or indexes to choose relevant docs when available.
 
 ## Implementation Rules
 
@@ -56,11 +56,10 @@ Use `AGENTS.md` to choose relevant docs.
   config key, or exported field within your scope.
 - No backward-compatibility shims, deprecation paths, fallback defaults,
   speculative features, or unrelated cleanup.
-- Use the repo primitives named by AGENTS.md as documented in the docs/ files
-  it indexes.
-- When relevant to the touched surface, preserve idempotency, raw/Bronze
-  immutability, deterministic keys, lineage, batch boundaries, observability,
-  and explicit empty, duplicate, and failure handling.
+- Use documented repository primitives and established nearby patterns when
+  applicable.
+- Preserve the existing invariants identified for the touched surface,
+  including state transitions and failure handling.
 - Do not stage files, commit, branch, push, or open a pull request.
 
 ## Verification
