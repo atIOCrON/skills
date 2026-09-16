@@ -23,7 +23,8 @@ their step requires them.
 
 ## Inputs
 
-- Ordered reviewed `plans/<file>.md` paths.
+- Ordered reviewed feature plans at `plans/<stage>/<slug>/<slug>.md`, or
+  selected legacy `plans/<slug>.md` files to migrate.
 - Base branch: the remote default unless the user names another.
 - Starting branch: the base unless the user names an existing parent.
 - Dependency map: each plan's one required unmerged predecessor, or `none`.
@@ -43,32 +44,42 @@ verification changes:
 | Plan | Status | Reviews | Branch | Commit | Next action |
 ```
 
-Use `Queued`, `In progress`, `Blocked`, or `Complete`. `Complete` requires a
-clean-reviewed, verified final SHA matching local, upstream, and remote tips;
-a pinned parent; preserved artefacts; and passed final stack checks. Number
-review passes; never predict a final pass.
+Use `Queued`, `In progress`, `Blocked`, or `Complete`. `Complete` requires the
+feature in `done/`, a clean-reviewed, verified final SHA matching local,
+upstream, and remote tips, a pinned parent, preserved artefacts, and passed
+final stack checks. Number review passes; never predict a final pass.
 
 ## Workflow
+
+For a fresh run, move only the selected reviewed feature directories from
+`backlog/` to `to_do/`. Accept selected features already in `to_do/`. Resolve
+their new plan paths before starting; leave unrelated backlog features alone.
+For a selected legacy `plans/<slug>.md`, move it and any sibling
+`<slug>.reviews/`, `<slug>.execution/`, and `<slug>.evidence/` into
+`plans/to_do/<slug>/` first. Stop on a destination collision.
 
 For each plan:
 
 1. Record why it depends on its parent. Fetch and pin the parent branch and SHA.
-2. Create its local plan branch from that parent before implementation. On a
-   repair run, verify the existing branch and manifest instead of recreating
-   it; change only affected branches and descendants.
+2. Create its local plan branch from that parent, then move its feature from
+   `to_do/` to `in_progress/` before implementation. On a repair run, verify
+   the existing branch and manifest instead of recreating it; move only
+   affected features and descendants back to `in_progress/` when needed.
 3. Follow `from-reviewed-plan-to-git-handoff.md`: selectively stage and review
    the candidate tree, commit, and verify the exact commit in a clean worktree.
    Create the remote branch at the first verified commit. Push each verified
-   fix, review the pinned parent-to-commit diff, and repeat until clean. Do
-   not open a CR.
-4. Preserve its `.reviews/`, `.evidence/`, and any `.execution/` folders before
-   removing a worktree. Use this branch as a parent only where dependency
-   evidence requires it.
+   fix, move the feature to `review/` before code review, and review the
+   pinned parent-to-commit diff. After a pass requiring a fix, move it back to
+   `in_progress/`; repeat until clean. Do not open a CR.
+4. Preserve the feature's `.reviews/`, `.evidence/`, and any `.execution/`
+   folders before removing a worktree. Use this branch as a parent only where
+   dependency evidence requires it.
 
 Before each plan and final handoff, compare every local parent with its pinned
-SHA and refetch any parent already on `origin`. If a parent moved, restack only
-affected descendants and synchronize verified, reviewed tips with explicit
-leases. Classify each delta as `verbatim`, `mechanical regeneration`, or
+SHA and refetch any parent already on `origin`. If a parent moved, move only
+affected descendants to `in_progress/` before restacking; return each verified
+candidate to `review/`. Synchronize reviewed tips with explicit leases.
+Classify each delta as `verbatim`, `mechanical regeneration`, or
 `intentional behavior change`. Verify the first two deterministically, and
 verify and review any changed commit. An unexpected local branch change needs
 a scope decision before it can count as reviewed.
@@ -95,6 +106,12 @@ Keep bulk output outside artefact folders and index concise evidence under
 the last plan. Never publish or refresh protected seed or baseline data here.
 Treat a lock mismatch or unexpected output as a blocker.
 
+After all final checks pass, move selected features still in `review/` to
+`done/`; leave unaffected features already in `done/` there. Write the stack
+manifest at the last plan's final evidence path and check every recorded plan
+and artefact path. If a move or manifest write fails, return any just-moved
+features to `review/` and report the blocker.
+
 ## Rules
 
 - Make the least-complex change that satisfies each plan and binding contract.
@@ -113,10 +130,10 @@ Treat a lock mismatch or unexpected output as a blocker.
 
 ## Handoff
 
-Save a stack manifest under the last plan's `.evidence/` folder. Record the
-base branch and pinned SHA. For each branch, record its plan, dependency
-evidence, parent branch and pinned SHA, local, upstream, and remote tip SHAs,
-tree SHA, verification commands and result, clean review SHA and passes, and
-artefact paths. Record final integration and protected-pipeline commands,
-tested SHAs, and results. Report
+Save a stack manifest under the last plan's `.evidence/` folder in `done/`.
+Record the base branch and pinned SHA. For each branch, record its plan,
+dependency evidence, current feature and artefact paths, parent branch and
+pinned SHA, local, upstream, and remote tip and tree SHAs, verification
+commands and result, and clean review SHA and passes. Record final integration
+and protected-pipeline commands, tested SHAs, and results. Report
 `Verified and pushed` or the blocker. This skill creates no CR.

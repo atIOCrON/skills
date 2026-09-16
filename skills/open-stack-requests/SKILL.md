@@ -20,6 +20,9 @@ intended base branch. Infer the forge from `origin` only when unambiguous. Read
 `references/change-request-lifecycle.md`,
 `references/orchestration-change-requests.md`, and the selected provider
 adapter. Read `references/change-request-description.md` when writing CR text.
+Require each manifest plan path under `plans/done/`. After a repair run,
+reload the manifest from the path reported by `build-branch-stack`; its feature
+directory may have moved during repair.
 
 ## Workflow
 

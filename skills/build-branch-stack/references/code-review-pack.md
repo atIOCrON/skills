@@ -1,8 +1,8 @@
 # Code Review Pack
 
 Build a neutral, commit-pinned pack at
-`plans/<plan_slug>.reviews/code-review-pack/`. Every fresh reviewer in a pass
-uses the same immutable review boundary.
+`<feature_dir>/<plan_slug>.reviews/code-review-pack/`. Every fresh reviewer in
+a pass uses the same immutable review boundary.
 
 ## Contents
 

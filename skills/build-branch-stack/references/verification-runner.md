@@ -28,7 +28,7 @@ be resolved.
    regression tests for changed behavior even when the plan omits them.
 5. Keep bulk output outside plan artefact folders. Save commands, exit status,
    concise results, candidate SHA, and evidence links under
-   `plans/<plan_slug>.evidence/` in the primary checkout.
+   `<feature_dir>/<plan_slug>.evidence/` in the primary checkout.
 6. Remove only the explicit temporary worktree after capturing evidence.
 7. Return `verification-passed` only for that SHA.
 

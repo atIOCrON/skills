@@ -19,7 +19,9 @@ name tools, models, assistants, or bots in a branch.
    `git switch -c <branch-name> <parent-sha>`.
 
 Allow unrelated dirty files only when they cannot be overwritten or carry
-ambiguous implementation state. Do not implement on the dependency parent.
+ambiguous implementation state. Feature stage moves are workflow state; keep
+them and their artefacts out of candidate commits. Do not implement on the
+dependency parent.
 
 ## Candidate Commit
 
@@ -45,8 +47,10 @@ restack, verification, review, and synchronized push.
 
 ## Restack
 
-Require a clean implementation tree. If a change request exists, the
-publication skill must return it and ready descendants to draft first.
+Require a clean implementation tree. Use a clean worktree if preserved feature
+stage moves prevent a clean restack; never discard them. If a change request
+exists, the publication skill must return it and ready descendants to draft
+first.
 
 1. Record old base and branch tips, any old remote tip, and the new parent
    SHA. Create a recoverable backup ref for the old tip.

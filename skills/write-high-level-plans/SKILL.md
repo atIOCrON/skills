@@ -8,9 +8,15 @@ metadata:
 
 # Write High-Level Plans
 
-Create or update the requested plan in the project’s `plans/` folder.
+Create new plans at `plans/backlog/<plan_name>/<plan_name>.md`. The feature
+directory and plan file share the same name. For an update, find the existing
+plan under `backlog`, `to_do`, `in_progress`, `review`, or `done` and edit it in
+place. Check the legacy `plans/<plan_name>.md` path before creating a new plan;
+if found, update it in place and report its legacy layout. Never make a
+duplicate or change an existing plan's stage. If an update changes an approved
+plan, report that its approval and review need refreshing.
 
-- Use `plans/<plan_name>.md`, with a lowercase `snake_case` plan name: words separated by single underscores, using only `a-z`, `0-9`, and `_`, with no leading or trailing underscore. Do not use hyphens or spaces.
+- Use a lowercase `snake_case` plan name: words separated by single underscores, using only `a-z`, `0-9`, and `_`, with no leading or trailing underscore. Do not use hyphens or spaces.
 - Keep the plan name to a maximum of 40 characters, including underscores but excluding the `.md` extension and directory path. Choose a concise, descriptive name and check its length before saving; for example, `supplier_stock_sync`.
 - Inspect relevant code, documentation, and existing conventions first.
 
