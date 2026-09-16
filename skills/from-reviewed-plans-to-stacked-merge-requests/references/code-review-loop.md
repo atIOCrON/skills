@@ -1,13 +1,13 @@
 # Code Review Loop
 
 Review successive verified commits until one clean pass covers the exact pushed
-revision in the draft merge request.
+revision in the draft change request.
 
 ## Inputs
 
 Require the repository, host mapping, plan and slug, implementation scope,
 dependency-parent branch and pinned base SHA, plan branch, current candidate commit,
-draft MR, neutral pack, reviewer preflight status, and verification evidence for
+draft CR, neutral pack, reviewer preflight status, and verification evidence for
 the candidate SHA.
 
 The cross-pass material concern ledger is
@@ -22,8 +22,8 @@ findings, then run a fresh pass on the new commit.
 
 For each pass:
 
-1. Confirm the review commit equals local `HEAD`, upstream, the draft MR source
-   SHA, and the latest verified SHA. Confirm the MR target head still equals the
+1. Confirm the review commit equals local `HEAD`, upstream, the draft CR source
+   SHA, and the latest verified SHA. Confirm the CR target head still equals the
    pinned base SHA and remains an ancestor.
 2. Refresh `code-review-pack` for the base and review SHAs.
 3. Create `plans/<plan_slug>.reviews/code-review-pass<N>/`.
@@ -37,7 +37,7 @@ For each pass:
    - create a new commit through `git-branch-commit-push`;
    - verify the new SHA through `verification-runner` in a clean worktree;
    - push it without force;
-   - refresh the draft MR description for the new SHA;
+   - refresh the draft CR description for the new SHA;
    - refresh the neutral pack.
 7. Resume each originating reviewer once with its findings, original and current
    review SHAs, applied changes, and verification evidence. Apply proposed ledger
@@ -50,22 +50,22 @@ For each pass:
 
 ## Completion
 
-Return `Ready for MR review` only when:
+Return `Ready for CR review` only when:
 
 - at least one fresh pass ran and the newest has no accepted material finding
   or contradiction;
 - all ledger entries are terminal and required closure is complete;
-- the same SHA is local `HEAD`, upstream, MR source, latest verified commit, and
+- the same SHA is local `HEAD`, upstream, CR source, latest verified commit, and
   latest clean-reviewed commit;
-- the MR target head equals the pinned base SHA and remains an ancestor; and
-- the MR remains draft with the correct dependency-parent target.
+- the CR target head equals the pinned base SHA and remains an ancestor; and
+- the CR remains draft with the correct dependency-parent target.
 
 Any fix commit, restack, target change, or SHA mismatch invalidates completion
 and requires verification plus a fresh pass. An unexpected source change blocks
-until the user accepts its scope; then return the MR to draft before review.
+until the user accepts its scope; then return the CR to draft before review.
 
 ## Output
 
 Report pass outcomes and SHAs, closure rounds, fixes, verification, rejected or
 deferred findings, artefact paths, ledger counts, identity checks, skill
-feedback, and either a blocker or `Ready for MR review`.
+feedback, and either a blocker or `Ready for CR review`.

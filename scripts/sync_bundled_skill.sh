@@ -32,8 +32,10 @@ shared-components/code-review/code-review.md|references/code-review.md
 shared-components/from-reviewed-plan-to-git-handoff/from-reviewed-plan-to-git-handoff.md|references/from-reviewed-plan-to-git-handoff.md
 shared-components/git-branch-commit-push/git-branch-commit-push.md|references/git-branch-commit-push.md
 shared-components/git-commit-message/git-commit-message.md|references/git-commit-message.md
-shared-components/gitlab-create-mr/gitlab-create-mr.md|references/gitlab-create-mr.md
-shared-components/gitlab-mr-description/gitlab-mr-description.md|references/gitlab-mr-description.md
+shared-components/change-request-description/change-request-description.md|references/change-request-description.md
+shared-components/change-request-lifecycle/change-request-lifecycle.md|references/change-request-lifecycle.md
+shared-components/change-request-lifecycle/gitlab.md|references/change-request-providers/gitlab.md
+shared-components/change-request-lifecycle/github.md|references/change-request-providers/github.md
 shared-components/implementation-dispatch/implementation-dispatch-fix-request.md|references/implementation-dispatch-fix-request.md
 shared-components/implementation-dispatch/implementation-dispatch-plan-invocation.md|references/implementation-dispatch-plan-invocation.md
 shared-components/implementation-dispatch/implementation-dispatch.md|references/implementation-dispatch.md
@@ -42,7 +44,7 @@ shared-components/orchestration-conventions/orchestration-conventions.md|referen
 shared-components/orchestration-conventions/orchestration-definitions.md|references/orchestration-definitions.md
 shared-components/orchestration-conventions/orchestration-finding-ids.md|references/orchestration-finding-ids.md
 shared-components/orchestration-conventions/orchestration-plans-layout.md|references/orchestration-plans-layout.md
-shared-components/orchestration-conventions/orchestration-stacked-mrs.md|references/orchestration-stacked-mrs.md
+shared-components/orchestration-conventions/orchestration-change-requests.md|references/orchestration-change-requests.md
 shared-components/orchestration-conventions/orchestration-triage-ledger-protocol.md|references/orchestration-triage-ledger-protocol.md
 shared-components/orchestration-final-handoff/orchestration-final-handoff.md|references/orchestration-final-handoff.md
 shared-components/orchestration-runtime/orchestration-runtime.md|references/orchestration-runtime.md
@@ -50,7 +52,7 @@ shared-components/plan-implement/plan-implement.md|references/plan-implement.md
 shared-components/reviewer-preflight/reviewer-preflight.md|references/reviewer-preflight.md
 shared-components/staged-diff-scope/staged-diff-scope.md|references/staged-diff-scope.md
 shared-components/verification-runner/verification-runner.md|references/verification-runner.md
-shared-components/gitlab-cli/scripts/ensure_glab.sh|scripts/ensure_glab.sh
+shared-components/forge-cli/scripts/ensure_forge_cli.sh|scripts/ensure_forge_cli.sh
 shared-components/multi-review-pass-runner/scripts/launch_claude_review.sh|scripts/launch_claude_review.sh
 shared-components/multi-review-pass-runner/scripts/launch_codex_review.sh|scripts/launch_codex_review.sh
 shared-components/multi-review-pass-runner/scripts/launch_cursor_review.sh|scripts/launch_cursor_review.sh

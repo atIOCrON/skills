@@ -1,7 +1,7 @@
-# GitLab MR Description
+# Change Request Description
 
-Compose a GitLab merge request title and description for a pushed branch.
-Read-only: do not create merge requests, push, commit, or edit files.
+Compose a forge-neutral change request title and description for a pushed branch.
+Read-only: do not create change requests, push, commit, or edit files.
 
 ## Inputs
 

@@ -1,14 +1,14 @@
 ---
 name: from-reviewed-plans-to-stacked-merge-requests
-description: Turn reviewed plans into verified GitLab merge requests, chaining only changes with real dependencies.
+description: Turn reviewed plans into verified forge change requests, chaining only changes with real dependencies. Use for GitLab merge requests, GitHub pull requests, or another provider with a compatible adapter.
 metadata:
   layer: runner
 ---
 
-# From Reviewed Plans To Stacked Merge Requests
+# From Reviewed Plans To Change Requests
 
 Use when the user provides reviewed plans to implement, verify, review, commit,
-push, and publish as dependent or independent GitLab merge requests.
+push, and publish as dependent or independent change requests (CRs).
 
 ## Resources
 
@@ -18,20 +18,23 @@ read `references/orchestration-runtime.md` and
 `references/git-branch-commit-push.md` to start its branch, then
 `references/from-reviewed-plan-to-git-handoff.md`.
 
-The route also uses `references/gitlab-create-mr.md`. Read other references only
-when the active step requires them.
+The route also uses `references/change-request-lifecycle.md`. Read its provider
+adapter only after selecting the forge. Read other references only when the
+active step requires them.
 
 ## Inputs
 
 - Ordered reviewed plan filenames or `plans/<file>.md` paths.
+- Forge provider: infer it from `origin` only when unambiguous; otherwise require
+  the user to name it. Use the GitLab or GitHub adapter when applicable.
 - Base target branch: the repository default unless the user names another.
 - Starting branch: the base target unless the user names an existing parent.
 - Layout: `auto` by default, or `chained` / `base-targeted` when the user
   explicitly selects one.
 - Dependency map: each plan's one required unmerged predecessor, or `none`.
 
-Terms are defined in `references/orchestration-stacked-mrs.md`. In `auto` mode,
-target the nearest unmerged branch the plan needs; otherwise target the base.
+Terms are defined in `references/orchestration-change-requests.md`. In `auto`
+mode, target the nearest unmerged branch the plan needs; otherwise target the base.
 Input order alone does not establish a dependency. Split independent roots into
 separate chains rather than creating a multi-root merge run. If one plan needs
 multiple unmerged predecessors, stop: merge a prerequisite first or redesign
@@ -47,9 +50,9 @@ restack, or verification changes:
 ```
 
 Use `Queued`, `In progress`, `Blocked`, or `Complete`. `Complete` requires a
-verified and clean-reviewed final SHA, synchronized branch and MR source,
-preserved artefacts, correct MR target, ready status, and effective
-squash-on-merge. Number review passes; never predict a final pass.
+verified and clean-reviewed final SHA, synchronized branch and CR source,
+preserved artefacts, correct CR target, ready status, and effective squash
+support. Number review passes; never predict a final pass.
 
 ## Workflow
 
@@ -64,28 +67,29 @@ For each plan, in order:
    - block staged/unstaged overlap on candidate files;
    - commit before formal review;
    - verify the exact commit in a clean detached worktree;
-   - push and open a draft MR against the dependency parent;
+   - push and open a draft CR against the dependency parent;
    - review the pinned parent-to-commit diff;
    - create, verify, push, and re-review new commits after material fixes;
-   - prove local, upstream, MR, verified, and reviewed SHAs match, the MR target
+   - prove local, upstream, CR, verified, and reviewed SHAs match, the CR target
      branch is the dependency parent, and its head equals the pinned parent
      SHA; and
-   - mark the MR ready only after a clean review.
-4. Confirm the MR's effective `squash_on_merge` is true.
+   - mark the CR ready only after a clean review.
+4. Confirm squash is enabled for the CR when the forge supports a per-CR
+   setting, or available in repository settings otherwise.
 5. Preserve the plan's `.reviews/`, `.evidence/`, and any `.execution/` folders
    before removing a worktree.
 6. Record the branch as a parent only for plans that depend on it.
 
 Before each plan, every ready transition, and final handoff, refetch every
 dependency branch and compare it with the recorded SHAs. On movement, return
-the affected MR and its ready descendants to draft. Accept an unexpected source
+the affected CR and its ready descendants to draft. Accept an unexpected source
 change only with user confirmation. Then refresh metadata, restack only its
 descendants, verify, and review the new commits before restoring ready status.
 
 After all plans:
 
 1. Run deterministic pre-handoff checks on every dependency-chain head and
-   independent MR head. For an ordered independent batch, build an unpushed
+   independent CR head. For an ordered independent batch, build an unpushed
    temporary integration commit from the pinned base in merge order and test
    that combined state. Confirm applicable CI includes behavior tests and
    risk-based lint, type, dependency, secret, and static-security checks; stop
@@ -112,7 +116,7 @@ a lock mismatch or unexpected output as a blocker.
 - Map every changed surface to plan scope or a binding contract. Stop for user
   approval before adding an unplanned deliverable.
 - Preserve unrelated dirty work; never broadly stage, clean, or revert it.
-- Use explicit dependency-parent and MR-target branches; never rely on defaults.
+- Use explicit dependency-parent and CR-target branches; never rely on defaults.
 - Chain only genuine dependencies. Independent branches start from and target
   the base branch.
 - Review immutable commits, not the index. The index is only a candidate-tree
@@ -126,14 +130,14 @@ a lock mismatch or unexpected output as a blocker.
 - During restacking, classify every delta as `verbatim`, `mechanical
   regeneration`, or `intentional behavior change`. Verify the first two
   deterministically; implement, verify, and review the third normally.
-- Do not merge MRs, delete branches, or leave squash-on-merge disabled.
+- Do not merge CRs or delete branches. Require effective squash support.
 - Stop for failed verification, unresolved findings, unsafe commit creation,
-  revision mismatch, wrong MR target, failed push, or unpreserved artefacts.
+  revision mismatch, wrong CR target, failed push, or unpreserved artefacts.
 - Do not skip the final full-pipeline export test unless the user cancels it.
 
 ## Final Response
 
-Return each dependency group and independent MR with its dependency evidence,
+Return each dependency group and independent CR with its dependency evidence,
 branch, pinned parent, target, final SHA, verification, review passes, ready
-status, squash value, artefacts, restack evidence, final pipeline status, and
-confirmation that nothing was merged.
+status, forge URL, squash evidence, artefacts, restack evidence, final pipeline
+status, and confirmation that nothing was merged.

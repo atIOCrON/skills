@@ -1,7 +1,7 @@
 # Git Branch Commit Push
 
 Create the plan branch before implementation, then commit and push verified
-candidate revisions. Do not edit implementation files or create merge requests.
+candidate revisions. Do not edit implementation files or create change requests.
 
 Base branch `<base-branch>` defaults to the repository's remote default;
 chained mode must pass the dependency parent. Branch names describe the change
@@ -57,7 +57,7 @@ After `staged-diff-scope` approves a candidate tree:
    is pushed.
 
 Create a new commit for every accepted review-fix batch. Do not amend or
-force-push a revision already published to the draft merge request.
+force-push a revision already published to the draft change request.
 
 ## Push Verified Commit
 
@@ -74,7 +74,7 @@ Stop if `HEAD` differs from the verified commit SHA. After the push, require
 
 ## Reviewed-Revision Gate
 
-Before marking the merge request ready, require all of these SHAs to match:
+Before marking the change request ready, require all of these SHAs to match:
 
 - current `HEAD`;
 - upstream branch head;
@@ -87,7 +87,7 @@ review of the resulting commit.
 
 ## Restack A Published Draft
 
-Use this only when the MR is draft and its dependency parent advanced. Require a
+Use this only when the CR is draft and its dependency parent advanced. Require a
 clean implementation tree, no staged changes, and an exact old remote tip.
 
 1. Record the old base, old local and remote tips, and new parent SHA. Create a
@@ -107,10 +107,10 @@ clean implementation tree, no staged changes, and an exact old remote tip.
      origin <branch-name>
    ```
 
-6. Update the pinned base SHA, refresh the draft MR and review pack, and run a
+6. Update the pinned base SHA, refresh the draft CR and review pack, and run a
    fresh review of the new base-to-tip range.
 
-Never use an unqualified force push. Stop if the MR is ready, the lease fails,
+Never use an unqualified force push. Stop if the CR is ready, the lease fails,
 the source changed unexpectedly, or a delta cannot be classified.
 
 ## Stop Conditions
