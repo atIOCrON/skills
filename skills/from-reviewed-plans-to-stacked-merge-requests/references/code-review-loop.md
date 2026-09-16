@@ -1,121 +1,71 @@
 # Code Review Loop
 
-Focused loop for staged-diff code review and material finding closure.
-
-Delegate reviewer launch, staged-diff preparation, triage, closure,
-implementation fixes, and verification to their bundled components.
-
-## Delegated Components
-
-Read the plan path now. Read each bundled component at the Pass Policy step
-that first invokes it, not up front:
-
-- `references/code-review.md`;
-- `references/code-review-pack.md`;
-- `references/code-review-triage.md`;
-- `references/code-review-closure.md`;
-- `references/multi-review-pass-runner.md`;
-- `references/staged-diff-scope.md`;
-- `references/implementation-dispatch.md`;
-- `references/verification-runner.md`.
+Review successive verified commits until one clean pass covers the exact pushed
+revision in the draft merge request.
 
 ## Inputs
 
-Require:
+Require the repository, host mapping, plan and slug, implementation scope,
+stack-parent branch and pinned base SHA, plan branch, current candidate commit,
+draft MR, neutral pack, reviewer preflight status, and verification evidence for
+the candidate SHA.
 
-- repository root;
-- host provider and provider-to-transport mapping;
-- plan path;
-- plan slug;
-- intended implementation files or modules;
-- neutral review-pack path;
-- preflight status for both external CLI reviewers;
-- passed initial verification, unless the route is explicitly starting at
-  staged changes and verification will run first.
-
-## Ledger
-
-The cross-pass material concern ledger lives at:
-
-```text
-plans/<plan_slug>.reviews/code-review-triage-ledger.md
-```
-
-Triage creates and maintains it per
-`references/orchestration-triage-ledger-protocol.md`.
+The cross-pass material concern ledger is
+`plans/<plan_slug>.reviews/code-review-triage-ledger.md`.
 
 ## Pass Policy
 
-Run numbered fresh code-review passes. A pass is a clean-room three-provider
-discovery review; targeted closure rounds do not count as passes. One clean
-fresh pass is sufficient. After any accepted material fix, complete targeted
-closure, then run another fresh pass. Here, clean means triage accepted no
-material finding and left no contradiction unresolved; advisory nits do not
-prevent a clean pass.
+Each numbered pass is a fresh three-provider discovery review of
+`<base-sha>...<review-sha>`. Targeted closure rounds do not count as passes. One
+clean fresh pass is sufficient. After any material fix, close the originating
+findings, then run a fresh pass on the new commit.
 
 For each pass:
 
-1. Use `staged-diff-scope` to stage and confirm only intended files.
-2. Refresh the staged-state and verification portions of `code-review-pack`.
-   Never add review history, triage, or fix narratives.
+1. Confirm the review commit equals local `HEAD`, upstream, the draft MR source
+   SHA, and the latest verified SHA. Confirm the MR target head still equals the
+   pinned base SHA and remains an ancestor.
+2. Refresh `code-review-pack` for the base and review SHAs.
 3. Create `plans/<plan_slug>.reviews/code-review-pass<N>/`.
-4. Read `references/code-review.md`, include its operational instructions in
-   each reviewer prompt, then use `multi-review-pass-runner` with
-   `references/code-review-loop-code-review-invocation.md`
-   as the prompt envelope. Start all three reviewers fresh and in parallel.
-   Each must complete an exhaustive pass after finding a blocker.
-5. Run `references/code-review-triage.md` once on all reviewer outputs. Batch
-   all accepted blockers and should-fix findings for the same implementer into
-   one fix request. Do not routinely fix or close nits.
-6. If fixes were accepted, resume the original implementation worker once with
-   the batch, then run `verification-runner`, restage through
-   `staged-diff-scope`, and refresh the neutral review pack.
-7. Resume every reviewer who originated an accepted material finding. Send one
-   closure request per reviewer containing all of that reviewer's accepted
-   finding IDs, applied changes, verification evidence, and artifact paths.
-   Read `references/code-review-closure.md`, include its operational
-   instructions in the closure prompt, then render
-   `references/code-review-loop-closure-invocation.md`
-   for closure prompts. `{triage_ledger_path}` renders to
-   `plans/<plan_slug>.reviews/code-review-triage-ledger.md`.
-   Do not send one reviewer another reviewer's findings or conclusions.
-8. If targeted closure leaves a material finding open, batch the remaining
-   fixes to the same implementer, verify once, and resume only the affected
-   reviewers. Repeat targeted closure until those findings close or require a
-   user decision. Preserve each closure round as a separate artifact and apply
-   its proposed ledger transitions through the orchestrator.
+4. Run `multi-review-pass-runner` with `code-review.md` and
+   `code-review-loop-code-review-invocation.md`. Start all reviewers fresh and
+   require exhaustive review after the first blocker.
+5. Triage all outputs once. Batch accepted blocker and should-fix findings for
+   the original implementation worker; do not routinely fix nits.
+6. For accepted fixes, resume that worker, then:
+   - prepare an exact tree through `staged-diff-scope`;
+   - create a new commit through `git-branch-commit-push`;
+   - verify the new SHA through `verification-runner` in a clean worktree;
+   - push it without force;
+   - refresh the draft MR description for the new SHA;
+   - refresh the neutral pack.
+7. Resume each originating reviewer once with its findings, original and current
+   review SHAs, applied changes, and verification evidence. Apply proposed ledger
+   transitions through the orchestrator; never share another reviewer's findings.
+8. Repeat fixes and targeted closure until those findings close or require a
+   user decision.
 9. Use targeted closure for a rejected material finding only when triage is
    uncertain, evidence conflicts, or the user requests it.
-10. Resolve `recurring-escalation` ledger entries with explicit user decisions
-    before starting the next fresh pass.
+10. Resolve recurring escalations with the user before another fresh pass.
 
-## Completion Condition
+## Completion
 
-Stop as `Ready for git handoff` only when:
+Return `Ready for MR review` only when:
 
-- at least one fresh code-review pass ran;
-- the newest fresh pass reported no accepted material findings;
-- plan verification and focused checks pass;
-- no unresolved blocker, should-fix, contradiction, or accepted material fix
-  remains;
-- no material ledger entry is in a non-terminal status (per
-  `references/orchestration-triage-ledger-protocol.md`);
-- required closure is complete.
+- at least one fresh pass ran and the newest has no accepted material finding
+  or contradiction;
+- all ledger entries are terminal and required closure is complete;
+- the same SHA is local `HEAD`, upstream, MR source, latest verified commit, and
+  latest clean-reviewed commit;
+- the MR target head equals the pinned base SHA and remains an ancestor; and
+- the MR remains draft with the correct stack-parent target.
 
-Nits are advisory unless triage finds them material (see
-`references/orchestration-definitions.md`). If a fix creates an independent
-concern, leave its discovery to the next fresh pass; closure checks only the
-original finding and its surrounding invariant.
+Any fix commit, restack, target change, or SHA mismatch invalidates completion
+and requires verification plus a fresh pass. An unexpected source change blocks
+until the user accepts its scope; then return the MR to draft before review.
 
 ## Output
 
-Report:
-
-- fresh pass count and one-line outcome per pass;
-- targeted closure rounds and originating reviewers;
-- accepted fixes and verification status;
-- rejected/deferred findings with evidence;
-- reviewer artifact paths, including failures;
-- ledger path and terminal-status counts;
-- unresolved blocker or `Ready for git handoff`;
-- skill feedback.
+Report pass outcomes and SHAs, closure rounds, fixes, verification, rejected or
+deferred findings, artefact paths, ledger counts, identity checks, skill
+feedback, and either a blocker or `Ready for MR review`.

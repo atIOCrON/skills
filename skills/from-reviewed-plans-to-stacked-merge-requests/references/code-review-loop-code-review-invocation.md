@@ -3,6 +3,8 @@ Reviewer slug: {reviewer_slug}
 Repo root: {repo_root}
 Plan path: {plan_path}
 Review label: {review_label}
+Review base SHA: {review_base_sha}
+Review commit SHA: {review_commit_sha}
 Neutral review pack: {review_pack_path}
 
 Follow the bundled code-review instructions included in this prompt.

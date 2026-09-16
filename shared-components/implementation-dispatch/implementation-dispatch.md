@@ -15,6 +15,7 @@ Require:
 - owned files or modules;
 - fix requests or verification failures for non-initial dispatches;
 - relevant artifact paths.
+- reviewed or failed commit SHA for fix dispatches.
 
 For every dispatch, include the contents of
 `references/orchestration-plans-layout.md` in the worker prompt and assign
@@ -48,6 +49,8 @@ For verification or code-review fixes:
    accepted findings for the same worker into one request.
 5. Include relevant artifact paths, not long copied transcripts unless needed.
 6. Preserve owned-file boundaries.
+7. Require edits on the current plan branch; the orchestrator creates a new
+   commit after the worker returns.
 
 ## Guardrails
 

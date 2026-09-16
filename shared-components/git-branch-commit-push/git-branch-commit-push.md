@@ -1,108 +1,124 @@
 # Git Branch Commit Push
 
-Automate local Git publication only. Do not edit files, stage files, or create a pull request.
+Create the plan branch before implementation, then commit and push verified
+candidate revisions. Do not edit implementation files or create merge requests.
 
-Base branch `<base-branch>`: `develop` unless an orchestrating workflow supplies
-one (stack mode passes the stack parent branch; see
-`references/orchestration-stacked-mrs.md`).
-Branch names must describe the change only: no tool, model, assistant,
-`codex/`, `ai/`, or `bot/` references.
+Base branch `<base-branch>` defaults to `develop`; stack mode must pass the
+stack parent. Branch names describe the change and use the repository policy or
+one of: `fix/` for incorrect behavior, `feature/` for new behavior, `docs/` for
+documentation only, `refactor/` for structural changes without intended
+behavior changes, or `chore/` for other maintenance. Never name tools, models,
+assistants, or bots in a branch.
 
-Allowed prefixes: `feature/`, `fix/`, `docs/`, `refactor/`, `chore/`.
+## Branch Start
 
-Follow the repository's branch-naming policy when one exists. Otherwise choose
-the prefix by the type of change:
+Before implementation:
 
-- `fix/`: correct existing behavior that is incorrect, crashes, loses data,
-  violates an external schema, or contradicts documented settings. This
-  includes independently reproducible vendor defects and promised compatibility
-  that does not work as intended.
-- `feature/`: add new behavior, an integration, a capability, or compatibility
-  that was not previously supported.
-- `docs/`: change documentation only.
-- `refactor/`: restructure implementation without an intended behavior change.
-- `chore/`: perform maintenance not covered by another prefix.
+1. Run `git status --short` and `git branch --show-current`.
+2. Fetch and prune `origin`.
+3. Resolve `<base-branch>` locally and remotely. Stop if it cannot be fetched
+   or fast-forwarded.
+4. Stop if `<branch-name>` exists locally or on `origin`.
+5. Switch to `<base-branch>`, fast-forward it, then create `<branch-name>`:
 
-Default to a fresh branch from a fresh `<base-branch>`. Continue on an
-existing non-`develop` branch only when the user explicitly asks to continue
-that branch in the current request.
+   ```bash
+   git switch <base-branch>
+   git pull --ff-only origin <base-branch>
+   git switch -c <branch-name>
+   ```
 
-## Preflight
+Unrelated dirty files are allowed only when these operations do not overwrite
+or carry ambiguous implementation state. Record the pinned base SHA immediately
+after branch creation. Do not start implementation on the stack parent.
 
-Run:
+## Candidate Commit
 
-```bash
-git status --short
-git branch --show-current
-git diff --cached --stat
-git diff --cached --name-only
-git diff --name-only
-git ls-files --others --exclude-standard
-git diff --cached
-```
+After `staged-diff-scope` approves a candidate tree:
 
-If nothing is staged, stop.
+1. Confirm the current branch is `<branch-name>`.
+2. Run:
 
-Unstaged or untracked files are allowed when unrelated. Check overlap with staged files:
+   ```bash
+   git status --short
+   git diff --cached --stat
+   git diff --cached --name-only
+   git diff --name-only
+   git ls-files --others --exclude-standard
+   git diff --cached
+   ```
 
-```bash
-comm -12 \
-  <({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u) \
-  <(git diff --cached --name-only | sort -u)
-```
+3. Stop if nothing is staged, a staged path is outside scope, or a staged path
+   also has unstaged edits.
+4. Assert `git write-tree` equals the approved candidate tree SHA.
+5. Compose the message with `references/git-commit-message.md` and commit.
+6. Assert `git rev-parse HEAD^{tree}` equals the approved candidate tree SHA.
+7. Return the commit SHA. Verification must run on this exact commit before it
+   is pushed.
 
-If overlap exists, ask whether to continue. If no overlap exists, proceed and mention unrelated local changes in the final response.
+Create a new commit for every accepted review-fix batch. Do not amend or
+force-push a revision already published to the draft merge request.
 
-## Workflow
+## Push Verified Commit
 
-1. If on a non-`develop` branch without an explicit caller-supplied
-   `<base-branch>` and without the user explicitly asking to continue it,
-   stop and report the current branch.
-
-2. Fetch and prune remote refs:
-
-```bash
-git fetch --prune origin
-```
-
-3. Stop if the branch name already exists locally or on `origin`:
+Push only a commit that `verification-runner` verified in a clean detached
+worktree:
 
 ```bash
-git show-ref --verify --quiet refs/heads/<branch-name>
-git ls-remote --exit-code --heads origin <branch-name>
+git push -u origin <branch-name> # first push
+git push                         # later commits
 ```
 
-4. If creating a new branch, switch to `<base-branch>`, fast-forward it from
-   origin, and create the new branch:
+Stop if `HEAD` differs from the verified commit SHA. After the push, require
+`@{u}...HEAD` to report `0 0`.
 
-```bash
-git switch <base-branch>
-git pull --ff-only origin <base-branch>
-git switch -c <branch-name>
-```
+## Reviewed-Revision Gate
 
-   Stop if `<base-branch>` cannot be fetched, resolved, or fast-forwarded.
+Before marking the merge request ready, require all of these SHAs to match:
 
-5. Compose the commit message with
-   `references/git-commit-message.md`.
+- current `HEAD`;
+- upstream branch head;
+- latest clean review commit;
+- latest verified commit.
 
-6. Commit only the staged changes:
+Also require the fetched stack-parent head to equal the pinned base SHA and
+remain an ancestor. A changed parent requires restacking, verification, and
+review of the resulting commit.
 
-```bash
-git commit -m "<subject>" -m "<body>"
-```
+## Restack A Published Draft
 
-7. Push and set upstream:
+Use this only when the MR is draft and its stack parent advanced. Require a
+clean implementation tree, no staged changes, and an exact old remote tip.
 
-```bash
-git push -u origin <branch-name>
-```
+1. Record the old base, old local and remote tips, and new parent SHA. Create a
+   recoverable backup ref for the old tip.
+2. Rebase the plan commits with
+   `git rebase --onto <new-base-sha> <old-base-sha> <branch-name>`. Abort and
+   stop on conflicts; conflict resolution is an intentional behavior change.
+3. Compare old and new commit ranges with `git range-diff` and deterministic
+   patch, tree, and generated-output checks. Classify every delta as `verbatim`,
+   `mechanical regeneration`, or `intentional behavior change`.
+4. Verify the new tip in a clean detached worktree. Send intentional changes
+   through normal implementation scope, verification, and review.
+5. Push only with an explicit lease on the recorded remote tip:
+
+   ```bash
+   git push --force-with-lease=refs/heads/<branch-name>:<old-remote-sha> \
+     origin <branch-name>
+   ```
+
+6. Update the pinned base SHA, refresh the draft MR and review pack, and run a
+   fresh review of the new base-to-tip range.
+
+Never use an unqualified force push. Stop if the MR is ready, the lease fails,
+the source changed unexpectedly, or a delta cannot be classified.
 
 ## Stop Conditions
 
-Stop if switching branches or pulling would overwrite local work, dirty files overlap staged files, the branch name already exists, the commit fails, or the push fails.
+Stop if switching branches would overwrite work, a name already exists, staged
+and unstaged changes overlap, the candidate tree changed, commit or push fails,
+or any revision identity or restack check fails.
 
-## Final Response
+## Output
 
-Report the chosen base branch, branch, commit hash, push result, and unrelated
-uncommitted files. On Codex, also emit its supported Git UI directives.
+Report the base branch and SHA, plan branch, candidate tree SHA, commit SHA,
+verification status, push status, and unrelated local files.

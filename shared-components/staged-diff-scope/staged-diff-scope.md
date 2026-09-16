@@ -1,6 +1,7 @@
-# Staged Diff Scope
+# Staged Commit Scope
 
-Scope guard for staged-diff review workflows.
+Prepare one exact candidate tree for commit. This is a scope and self-review
+gate, not the authoritative code review.
 
 ## Inputs
 
@@ -9,7 +10,8 @@ Require:
 - repository root;
 - plan path;
 - intended file paths or module ownership list;
-- reason: `initial-review`, `post-fix-review`, or `staged-changes-entry`.
+- reason: `initial-candidate`, `post-fix-candidate`, or
+  `staged-changes-entry`.
 
 ## Workflow
 
@@ -19,17 +21,20 @@ Require:
    `git add <path>` commands.
 4. Run `git diff --cached --name-only`.
 5. Stop if staged files include paths outside the intended scope.
-6. Run `git diff --cached --stat` and keep the output for the review handoff.
-7. If a staged file also has unstaged edits, note it and use staged-content
-   inspection commands such as `git show :<path>` in later review/triage.
+6. Stop if any staged path also has unstaged edits. The committed, tested, and
+   reviewed content must not differ.
+7. Inspect `git diff --cached --stat`, `git diff --cached`, and
+   `git diff --cached --check`.
+8. Record the candidate tree with `git write-tree`.
 
 ## Scope Rules
 
 - Leave unrelated dirty files unstaged.
 - Do not use broad `git add .`.
 - Do not revert or clean files.
-- Do not stage review artifacts unless the user explicitly includes them in the
-  implementation scope.
+- Do not stage review or verification artifacts unless the plan includes them.
+- Do not use the index as the formal review boundary. Commit the approved tree,
+  then review the pinned commit against its pinned stack-parent SHA.
 
 ## Output
 
@@ -38,5 +43,6 @@ Report:
 - staged file list;
 - unrelated dirty file list;
 - staged diff stat;
+- candidate tree SHA;
 - scope status: `in-scope` or `blocked`;
 - blocker reason when blocked.

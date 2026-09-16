@@ -15,6 +15,7 @@ Require:
 - rejection evidence for any selected rejected material finding,
 - verification evidence paths,
 - neutral review-pack path,
+- original and current review commit SHAs,
 - plan path,
 - cross-pass triage ledger path
   (`plans/<plan_slug>.reviews/code-review-triage-ledger.md`).
@@ -27,13 +28,14 @@ Require:
 - This closure is expected to run in the same reviewer conversation/session that
   produced the original review artifact. If it is not the same conversation,
   report that as `Closure blocked` rather than doing a fresh review.
-- For accepted findings, decide whether the staged fix resolves the finding and
-  preserves its surrounding invariant.
+- For accepted findings, compare the original and current review commits and
+  decide whether the committed fix resolves the finding while preserving its
+  surrounding invariant.
 - For rejected findings, decide whether the rejection evidence is sufficient.
-- Use evidence from the staged diff, cited docs, cited code, verification
+- Use evidence from the pinned commit diff, cited docs, cited code, verification
   results, or gold-standard data-engineering best practice.
 - Do not write files. Propose ledger transitions for the orchestrator to apply.
-- Do not inspect unrelated files except where needed to validate a staged-diff
+- Do not inspect unrelated files except where needed to validate a changed-code
   contract or cited reader/consumer.
 - Do not perform a fresh code review or introduce new findings. New concerns
   noticed during closure are out of scope: surface them as procedural feedback
@@ -69,7 +71,7 @@ mismatch under `## Skill Feedback` so the orchestrator can correct triage.
 
 ```markdown
 ## Resolved
-- [{finding_id}] [{ledger_id}] <why the staged fix resolves it>
+- [{finding_id}] [{ledger_id}] <why the committed fix resolves it>
 
 ## Rejection Accepted
 - [{finding_id}] [{ledger_id}] <why the rejection evidence is sufficient>

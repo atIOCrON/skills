@@ -15,6 +15,7 @@ Require:
 - prompt envelope path;
 - artifact directory;
 - neutral review-pack path;
+- pinned review base and commit SHAs;
 - reviewer instructions supplied by the owning loop from
   `references/code-review.md`;
 - placeholder values required by the prompt envelope.
@@ -121,8 +122,12 @@ For closure, resume the native reviewer through the host or run:
 - The CLI launch scripts must treat zero-byte stdout as a launcher failure even
   when the reviewer exits `0`; they retry once and write a populated failure
   artifact if the retry does not produce output.
-- Reviewers are read-only. Snapshot `git status --porcelain` before and after
-  each reviewer; stop if it changes.
+- Reviewers are read-only and use explicit commit SHAs. Write prompts, then hash
+  the neutral pack and every pre-existing artefact. Snapshot repository state
+  before launching the parallel group. Exclude only the exact output files each
+  launcher is expected to create, not whole artefact directories. After all
+  reviewers finish, verify the new-file allowlist, pre-existing hashes, and all
+  other tracked and untracked state. Stop on any unexplained change.
 - Do not leave failed reviewer processes running.
 
 ## Failure Artifact

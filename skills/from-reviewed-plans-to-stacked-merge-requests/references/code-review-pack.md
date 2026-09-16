@@ -1,8 +1,8 @@
 # Code Review Pack
 
-Build one neutral evidence pack at
-`plans/<plan_slug>.reviews/code-review-pack/`. All fresh reviewers in a pass use
-the same pack instead of reconstructing deterministic facts.
+Build a neutral, commit-pinned pack at
+`plans/<plan_slug>.reviews/code-review-pack/`. Every fresh reviewer in a pass
+uses the same immutable review boundary.
 
 ## Contents
 
@@ -10,60 +10,53 @@ Create or refresh:
 
 ```text
 index.md
-staged-files.txt
-staged-stat.txt
-staged.diff
+changed-files.txt
+diff-stat.txt
+changes.diff
 ownership-map.md
 verification-summary.md
 deterministic-checks.md
 hash-manifest.sha256
 ```
 
-`index.md` records the plan, repository commit, staged-tree hash, creation time,
-and paths to the pack files and verification evidence. `ownership-map.md` maps
-each staged path to its plan scope or owner. Capture command, exit status, and
-literal output for deterministic checks.
+`index.md` records the plan, stack-parent branch and pinned base SHA, plan branch,
+review commit and tree SHAs, creation time, draft MR, and evidence paths.
+`ownership-map.md` maps each changed path to plan scope or owner. Capture each
+deterministic command, exit status, and literal output.
 
-For Composer patches or other vendor-derived changes, also record:
+After a restack, link its old/new ranges, `range-diff`, delta classifications,
+and deterministic evidence from `index.md`.
 
-- the exact package version, source reference or archive hash, and lockfile
-  evidence;
-- paths to pristine before and strictly patched after trees;
-- complete before and after hash manifests;
-- the strict apply command, exit status, and log, with fuzz and offsets
-  disabled;
-- any verbatim-output comparison required by the plan.
-
-Keep large reconstructed trees outside review artefact folders and link their
-absolute paths from `index.md`. A failed strict apply, offset, fuzz, unexpected
-hash, or unexplained file delta blocks review.
+For vendor-derived changes, also record the exact package version or archive
+hash, lockfile evidence, pristine and patched trees, complete hash manifests,
+strict apply results without fuzz or offsets, and required byte comparisons.
+Keep large trees outside review artefacts and link them from `index.md`.
 
 ## Deterministic Checks
 
-Use Git and comparison tools—not reviewer inference—to establish:
+Use explicit object IDs:
 
-- staged scope and patch bytes: `git diff --cached` and
-  `git diff --cached --binary`;
-- commit and ancestry: `git rev-parse` and `git merge-base --is-ancestor`;
-- file and tree identity: SHA-256 manifests;
-- verbatim equality: `cmp` or `diff --no-index`;
-- patch applicability: the repository's strict dry-run/apply procedure with no
-  fuzz or offsets.
+- scope and patch: `git diff <base-sha>...<review-sha>` and `--binary`;
+- identity: `git rev-parse <review-sha>^{commit}` and `^{tree}`;
+- ancestry: `git merge-base --is-ancestor <base-sha> <review-sha>`;
+- pinned base and current MR target SHA equality;
+- local, upstream, MR source, reviewed, and verified SHA equality;
+- clean-worktree verification evidence for `<review-sha>`;
+- file identity, strict patch application, and byte comparison where required.
 
-Use the repository's documented commands when they are stricter.
+A failed check, unexplained delta, or SHA mismatch blocks review.
 
 ## Refresh Policy
 
-Build the pack before the first fresh pass. After a code fix or restack, refresh
-only staged-state, hashes, deterministic results, and verification evidence
-that changed; do not reconstruct an unchanged vendor baseline.
+Build the pack before pass 1. After a fix commit or restack, refresh the commit,
+diff, hashes, deterministic results, and verification evidence. Do not rebuild
+an unchanged vendor baseline.
 
-Fresh review prompts may receive only neutral inputs: the current staged diff,
-approved plan, repository standards, exact vendor baseline, reproducible
-commands, verification results, and this pack. Exclude prior findings, triage,
-fix narratives, reviewer conclusions, and hints about difficult areas.
+Fresh reviewers receive only the pinned diff, approved plan, repository
+standards, reproducible inputs, verification results, and this pack. Exclude
+prior findings, triage, fix narratives, conclusions, and review hints.
 
 ## Output
 
-Report the pack path, staged-tree hash, refreshed files, deterministic check
+Report the pack path, base and review SHAs, refreshed files, deterministic-check
 status, and any blocker.
