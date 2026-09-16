@@ -178,21 +178,24 @@ For each ordered branch:
 
 ## Cleanup
 
-The merge succeeds independently of cleanup. The default is `none`: preserve
-remote branches, local branches, stashes, and the original checkout. Remote
-deletion is a separate opt-in action described above. For optional local
-cleanup, keep the journal updated and write one record per branch:
+The merge succeeds independently of cleanup. The default is `local-if-clean`:
+after all changes have merged, clean up local branches and update the original
+checkout if it is clean at cleanup time. If it is dirty, skip local cleanup and
+leave it untouched. Preserve remote branches and stashes; remote
+deletion is a separate opt-in action described above. Allow an explicit `none`
+override. For local cleanup, keep the journal updated and write one record per
+branch:
 
 ```text
 branch old_remote_sha rebased_head_sha landed_sha
 ```
 
 Remove only a clean temporary worktree created by this workflow. Run local
-cleanup only when the user selects `local-if-clean` and the original checkout
-is clean. This skill never creates or applies stashes.
+cleanup by default when the original checkout is clean, unless the user selects
+`none`. This skill never creates or applies stashes.
 
 Read `references/post-merge-cleanup.md` before either local mode. Run only from
-a clean checkout:
+the clean original checkout:
 
 ```bash
 scripts/cleanup_merged_branches.sh "$remote" "$base" <record-file>

@@ -11,13 +11,13 @@ never push, force-delete branches, or touch remote state beyond fetch and prune.
   whitespace-separated record per line, as written by the squash-aware
   merge-stack workflow. Legacy triples remain accepted for non-squash merges
   and treat `rebased_head_sha` as `landed_sha`.
-- Mode: `none` (default) or `local-if-clean`.
+- Mode: `local-if-clean` (default) or `none` (explicit override).
 
 ## Workflow
 
-For `none`, stop and leave the checkout untouched. For `local-if-clean`, skip
-cleanup when the checkout is dirty. This workflow never creates, applies, or
-drops a stash.
+For `none`, stop and leave the checkout untouched. For `local-if-clean`, run
+cleanup when the original checkout is clean; otherwise skip it and leave that
+checkout untouched. This workflow never creates, applies, or drops a stash.
 
 Then run:
 
