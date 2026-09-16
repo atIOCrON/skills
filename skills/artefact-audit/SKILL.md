@@ -15,11 +15,11 @@ Ledger, material, and artefact terms are defined in
 
 ## Scope
 
-- Audit completed features under `plans/done/<slug>/` by default. Audit a
-  named feature or stage when the user asks, including ongoing reviews.
+- Audit features awaiting human review under `plans/review/<slug>/` by default.
+  Audit a named feature or stage when the user asks, including merged features.
 - Each feature contains `<slug>.md` and any `<slug>.reviews/`,
-  `<slug>.execution/`, and `<slug>.evidence/` folders. A review folder alone
-  does not establish completion.
+  `<slug>.execution/`, and `<slug>.evidence/` folders. Placement in `review/`
+  does not replace checking the review evidence.
 - Do not edit files unless the user explicitly asks for plans or fixes after the audit.
 
 ## Method
@@ -28,8 +28,8 @@ Ledger, material, and artefact terms are defined in
 2. List candidate artefact folders in the selected stage:
 
 ```bash
-find plans/done -mindepth 2 -maxdepth 2 -type d -name "*.reviews" | sort
-find plans/done -mindepth 2 -maxdepth 2 -type f -name "*.md" | sort
+find plans/review -mindepth 2 -maxdepth 2 -type d -name "*.reviews" | sort
+find plans/review -mindepth 2 -maxdepth 2 -type f -name "*.md" | sort
 ```
 
 Use the requested stage instead for other audits. Check that it exists before

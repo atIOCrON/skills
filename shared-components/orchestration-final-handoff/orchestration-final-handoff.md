@@ -44,7 +44,7 @@ Include:
 - confirmation no non-terminal ledger entries remain;
 - stack manifest path and final stack-check evidence;
 - `## Skill Feedback For User Review` with entries or `- None`;
-- final state: blocker or `Verified and pushed`.
+- final state: blocker or `Verified and pushed, ready for human review`.
 
 Keep the handoff concise and cite artifact paths rather than copying large
 review outputs.
