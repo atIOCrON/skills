@@ -3,8 +3,9 @@
 Create the plan branch before implementation, then commit and push verified
 candidate revisions. Do not edit implementation files or create merge requests.
 
-Base branch `<base-branch>` defaults to `develop`; stack mode must pass the
-stack parent. Branch names describe the change and use the repository policy or
+Base branch `<base-branch>` defaults to the repository's remote default;
+chained mode must pass the dependency parent. Branch names describe the change
+and use the repository policy or
 one of: `fix/` for incorrect behavior, `feature/` for new behavior, `docs/` for
 documentation only, `refactor/` for structural changes without intended
 behavior changes, or `chore/` for other maintenance. Never name tools, models,
@@ -29,7 +30,7 @@ Before implementation:
 
 Unrelated dirty files are allowed only when these operations do not overwrite
 or carry ambiguous implementation state. Record the pinned base SHA immediately
-after branch creation. Do not start implementation on the stack parent.
+after branch creation. Do not start implementation on the dependency parent.
 
 ## Candidate Commit
 
@@ -80,13 +81,13 @@ Before marking the merge request ready, require all of these SHAs to match:
 - latest clean review commit;
 - latest verified commit.
 
-Also require the fetched stack-parent head to equal the pinned base SHA and
+Also require the fetched dependency-parent head to equal the pinned base SHA and
 remain an ancestor. A changed parent requires restacking, verification, and
 review of the resulting commit.
 
 ## Restack A Published Draft
 
-Use this only when the MR is draft and its stack parent advanced. Require a
+Use this only when the MR is draft and its dependency parent advanced. Require a
 clean implementation tree, no staged changes, and an exact old remote tip.
 
 1. Record the old base, old local and remote tips, and new parent SHA. Create a

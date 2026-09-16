@@ -24,7 +24,8 @@ be resolved.
    mutable implementation checkout.
 3. Confirm the temporary worktree is clean and its `HEAD` is the candidate SHA.
 4. Run every required plan command from the temporary worktree root. Add focused
-   checks when touched-surface risk justifies them.
+   checks when touched-surface risk justifies them. Require proportionate
+   regression tests for changed behavior even when the plan omits them.
 5. Keep bulk output outside plan artefact folders. Save commands, exit status,
    concise results, candidate SHA, and evidence links under
    `plans/<plan_slug>.evidence/` in the primary checkout.

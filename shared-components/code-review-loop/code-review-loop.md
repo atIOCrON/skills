@@ -6,7 +6,7 @@ revision in the draft merge request.
 ## Inputs
 
 Require the repository, host mapping, plan and slug, implementation scope,
-stack-parent branch and pinned base SHA, plan branch, current candidate commit,
+dependency-parent branch and pinned base SHA, plan branch, current candidate commit,
 draft MR, neutral pack, reviewer preflight status, and verification evidence for
 the candidate SHA.
 
@@ -15,9 +15,9 @@ The cross-pass material concern ledger is
 
 ## Pass Policy
 
-Each numbered pass is a fresh three-provider discovery review of
+Each numbered pass is a fresh selected-reviewer discovery review of
 `<base-sha>...<review-sha>`. Targeted closure rounds do not count as passes. One
-clean fresh pass is sufficient. After any material fix, close the originating
+clean fresh pass is sufficient. After a material fix, close the originating
 findings, then run a fresh pass on the new commit.
 
 For each pass:
@@ -58,7 +58,7 @@ Return `Ready for MR review` only when:
 - the same SHA is local `HEAD`, upstream, MR source, latest verified commit, and
   latest clean-reviewed commit;
 - the MR target head equals the pinned base SHA and remains an ancestor; and
-- the MR remains draft with the correct stack-parent target.
+- the MR remains draft with the correct dependency-parent target.
 
 Any fix commit, restack, target change, or SHA mismatch invalidates completion
 and requires verification plus a fresh pass. An unexpected source change blocks

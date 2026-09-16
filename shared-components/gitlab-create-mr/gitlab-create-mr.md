@@ -3,9 +3,11 @@
 Create a draft GitLab merge request for the first verified commit, then mark it
 ready only after commit-pinned review passes. Do not edit, commit, push, or merge.
 
-Target `<target-branch>` defaults to `develop`; stack mode must pass the stack
-parent. Use the authenticated user as assignee and reviewer, preserve stack
-branches, and require squash-on-merge.
+Target `<target-branch>` defaults to the repository default; chained mode must
+pass the dependency parent. Use the authenticated user as assignee, preserve
+dependency branches, and require squash-on-merge. Reviewers must be qualified,
+independent, and allowed by repository approval policy; never request the author
+or a committer merely because they are authenticated.
 
 Before every `glab` command, load the bundled non-interactive PATH setup:
 
@@ -83,15 +85,15 @@ Resolve the existing MR and require:
   and
 - effective squash-on-merge is true.
 
-Then run:
+Resolve the required reviewers or Code Owners from repository policy. Then run:
 
 ```bash
-glab mr update <mr-iid> --ready --reviewer "<gitlab-username>"
+glab mr update <mr-iid> --ready --reviewer "<independent-reviewer>"
 ```
 
-Refresh the MR and target ref again. Require non-draft status, the requested
-reviewer and target, the same source SHA, effective squash-on-merge, and target
-head equality with the pinned base. If the target moved during readiness,
+Refresh the MR and target ref again. Require non-draft status, the independent
+reviewer or applicable Code Owner, the same source SHA, effective squash, and
+target-head equality with the pinned base. If the target moved during readiness,
 immediately return this MR and every ready descendant to draft, then require the
 ordered invalidation and restack workflow.
 

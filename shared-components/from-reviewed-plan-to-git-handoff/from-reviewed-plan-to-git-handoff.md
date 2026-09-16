@@ -7,7 +7,7 @@ review.
 ## Inputs
 
 Require an approved `plans/<slug>.md`, implementation ownership, plan branch,
-stack-parent branch, and pinned stack-parent SHA. The caller must create and
+dependency-parent branch, and pinned parent SHA. The caller must create and
 check out the plan branch before this route starts.
 
 ## Route
@@ -21,14 +21,14 @@ check out the plan branch before this route starts.
 6. Use `verification-runner.md` to verify that commit in a clean detached
    worktree. Fix failures through new commits and verify each new SHA.
 7. Push the verified commit, then use `gitlab-create-mr.md` to create the draft
-   MR against the stack-parent branch.
+   MR against the dependency-parent branch.
 8. Build the neutral commit-pinned review pack.
-9. Run reviewer preflight for both non-host providers.
+9. Run reviewer preflight for the selected non-host providers.
 10. Run `code-review-loop.md`. Every accepted fix becomes a new verified and
     pushed commit on the draft MR.
 11. Confirm the latest clean-reviewed SHA equals local `HEAD`, upstream, MR
     source, and latest verified SHA; confirm the MR target head still equals the
-    pinned stack-parent SHA.
+    pinned parent SHA.
 12. Use `gitlab-create-mr.md` to mark the MR ready and request review.
 13. Produce the concise final handoff.
 
