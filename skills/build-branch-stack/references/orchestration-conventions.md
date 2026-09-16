@@ -23,7 +23,8 @@ Load only the reference file needed for the current task.
 
 ## Inline Conventions
 
-`AGENTS.md` is the repo-root docs index of the consuming project.
+Use applicable `AGENTS.md` files when present; they may point to further
+repository standards. Their absence does not block the workflow.
 
 The literal token `ORCHESTRATE_SESSION_SMOKE` proves session resume in
 `reviewer-preflight`.

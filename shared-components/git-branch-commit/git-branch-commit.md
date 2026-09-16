@@ -1,7 +1,7 @@
 # Git Branch Commit
 
-Create local plan branches and commit approved candidate trees. Do not push or
-create change requests.
+Create or adopt local plan branches and commit approved candidate trees. Do not
+push or create change requests.
 
 Base branch `<base-branch>` defaults to the remote default; chained mode passes
 the local dependency parent. Name branches by repository policy, or use `fix/`,
@@ -14,9 +14,17 @@ name tools, models, assistants, or bots in a branch.
 2. Fetch and prune `origin`. Resolve the parent locally. If it exists on
    `origin`, require the local parent to equal the fetched remote tip. A local
    stack parent need not exist on `origin`.
-3. Stop if the new branch name exists locally or on `origin`.
-4. Record the pinned parent SHA, then run
+3. For a new plan branch, stop if its name exists locally or on `origin`.
+   Record the pinned parent SHA, then run
    `git switch -c <branch-name> <parent-sha>`.
+4. For a user-selected existing plan branch, record its initial local and
+   fetched remote tips. If only the remote branch exists, create a local
+   tracking branch at that tip. Require the pinned parent SHA to be an ancestor
+   of the branch tip. If both tips exist, require the remote tip to be an
+   ancestor of the local tip; stop on divergence or an unexpected remote-ahead
+   state. Inspect the full parent-to-tip range and map its commits and changed
+   paths to the selected plan. Stop for unrelated or unaccounted work. Do not
+   reset, recreate, or rebase the branch merely to fit the plan.
 
 Allow unrelated dirty files only when they cannot be overwritten or carry
 ambiguous implementation state. Feature stage moves are workflow state; keep
@@ -35,8 +43,10 @@ After `staged-diff-scope` approves a candidate tree:
 5. Require `HEAD^{tree}` to equal the approved tree SHA. Verify this exact
    commit before review.
 
-Create a new commit for every accepted fix batch. Changing a reviewed commit
-invalidates its review. Never amend a published commit.
+An adopted tip that already contains the requested work needs no empty commit;
+verify and review its exact SHA. Create a new commit for every accepted fix
+batch. Changing a reviewed commit invalidates its review. Never amend a
+published commit.
 
 ## Reviewed Revision
 
