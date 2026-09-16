@@ -8,7 +8,7 @@ Read-only: do not create merge requests, push, commit, or edit files.
 Require:
 
 - pushed branch;
-- target branch, defaulting to `develop`.
+- target branch, defaulting to the repository's remote default.
 
 ## Workflow
 

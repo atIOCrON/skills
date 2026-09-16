@@ -34,7 +34,7 @@ Require:
 - Do not revert or clean files.
 - Do not stage review or verification artifacts unless the plan includes them.
 - Do not use the index as the formal review boundary. Commit the approved tree,
-  then review the pinned commit against its pinned stack-parent SHA.
+  then review the pinned commit against its pinned dependency-parent SHA.
 
 ## Output
 

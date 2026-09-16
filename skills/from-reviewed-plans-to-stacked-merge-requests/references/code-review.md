@@ -1,7 +1,7 @@
 # Code Review
 
-Review one pinned plan-branch commit against its pinned stack-parent SHA. Do not
-edit files.
+Review one pinned plan-branch commit against its pinned dependency-parent SHA.
+Do not edit files.
 
 ## Scope
 
@@ -48,8 +48,9 @@ preferences are advisory. Recommend the smallest sufficient fix; identify any
 unplanned deliverable that needs user approval.
 
 Use `blocker` for safety, security, data loss, or failure of a required outcome;
-`should-fix` for other material defects; and `nit` for preferences. Do not demand
-tests unless the plan or an applicable standard requires them.
+`should-fix` for other material defects; and `nit` for preferences. Require
+proportionate regression tests for changed behavior even when the plan omits
+them; do not demand unrelated coverage expansion.
 
 ## Output
 

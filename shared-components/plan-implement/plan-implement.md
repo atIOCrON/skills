@@ -65,7 +65,8 @@ Use `AGENTS.md` to choose relevant docs.
 ## Verification
 
 Run preliminary verification named by the plan when practical for the owned surface.
-Run the planned adversarial checks for complex or cross-cutting work. Report
+Add proportionate regression tests for changed behavior even when the plan omits
+them. Run planned adversarial checks for complex or cross-cutting work. Report
 failures honestly; if verification is impossible here, say why.
 
 ## Output

@@ -19,7 +19,7 @@ deterministic-checks.md
 hash-manifest.sha256
 ```
 
-`index.md` records the plan, stack-parent branch and pinned base SHA, plan branch,
+`index.md` records the plan, dependency-parent branch and pinned base SHA, plan branch,
 review commit and tree SHAs, creation time, draft MR, and evidence paths.
 `ownership-map.md` maps each changed path to plan scope or owner. Capture each
 deterministic command, exit status, and literal output.

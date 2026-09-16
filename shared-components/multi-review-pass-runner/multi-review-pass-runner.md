@@ -22,9 +22,10 @@ Require:
 
 ## Reviewers
 
-Run `claude`, `codex`, and `cursor` in fresh parallel contexts. Use the host's
-native sub-agent for its matching reviewer and CLI sessions for the other two.
-Reviewer slugs are defined in `references/orchestration-finding-ids.md`.
+Run `claude`, `codex`, and `cursor` for every pass. Use fresh parallel contexts,
+the host's native sub-agent for its matching reviewer, and CLI sessions for the
+other two. Reviewer slugs are defined in
+`references/orchestration-finding-ids.md`.
 
 Combine the supplied bundled reviewer instructions with the same rendered
 prompt envelope for each reviewer. Replace the envelope's existing
