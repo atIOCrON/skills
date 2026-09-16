@@ -1,8 +1,8 @@
 # Change Request Lifecycle
 
-Publish and maintain one verified branch as a draft change request (CR), then
-mark it ready only after commit-pinned review passes. Do not edit, commit, push,
-merge, or delete branches.
+Publish one locally verified and clean-reviewed branch as a draft change
+request (CR), then mark it ready after applicable forge checks pass. Do not
+edit, commit, push, merge, or delete branches.
 
 ## Select The Provider
 
@@ -20,8 +20,8 @@ adapter or authenticated API is available, stop and report the missing support.
 
 ## Adapter Contract
 
-An adapter must support four modes: `create draft`, `refresh draft`, `return
-to draft`, and `mark ready`. It must query the provider after every mutation
+An adapter must support `create draft`, `refresh draft`, `return to draft`,
+`read checks`, and `mark ready`. It must query the provider after every mutation
 and return normalized evidence for:
 
 - provider, CR identifier, URL, state, and draft status;
@@ -32,21 +32,31 @@ and return normalized evidence for:
 - effective squash support: per-CR setting or repository capability; and
 - source-branch deletion policy when the provider exposes it.
 
-Before every mode, require the expected branch, fetched target, authenticated
+`read checks` is read-only. Match branch-push and CR pipelines or statuses to
+the exact source SHA and distinguish passed, failed, pending, skipped, and
+absent. Inspect repository CI and approval policy to identify expected checks;
+an absent or skipped expected check blocks readiness. Record `none applicable`
+only when no check is configured for that source and CR target.
+
+Before every mode, require the local source branch, fetched target, authenticated
 provider, and no dirty file overlapping the CR diff. Use
-`origin/<target>...HEAD` for log and diff inspection. For create, refresh, and
-ready modes, require synchronized upstream; require the source SHA to equal
-local `HEAD`, upstream, the verified SHA, and—when ready—the latest clean review
-SHA. Require the target SHA to equal the pinned base and remain an ancestor.
+`origin/<target>...refs/heads/<source>` for log and diff inspection. For create,
+refresh, and ready modes, require synchronized upstream; require the source
+SHA to equal the local branch ref, upstream, and verified SHA. When ready, also
+require the latest clean review SHA. Require the target SHA to equal the pinned
+base and remain an ancestor.
 For return to draft after detected movement, allow only the SHA or upstream
 mismatch being invalidated; fetch and record the actual refs and preserve CR
 identity before changing readiness. Do not accept the new source SHA as verified.
 
 Create exactly one draft CR with an explicit source and target. Refresh its
 title and description after every accepted source change. Return it and all
-ready descendants to draft before reviewing a changed source or target. Mark it
-ready only after `code-review-loop.md` returns `Ready for CR review`, then
-request a qualified independent reviewer allowed by repository policy.
+ready descendants to draft before a changed source or target is reviewed.
+Mark it ready only when the stack manifest's final checks, verified and
+clean-reviewed SHA, current source and target SHAs, and applicable forge checks
+agree. Then request a qualified independent reviewer allowed by repository
+policy. A skipped pipeline does not count as a pass; record when no CR checks
+apply.
 
 Compose metadata with `change-request-description.md`. Never merge the CR,
 delete its branch, or change repository-wide settings. Stop for duplicate CRs,

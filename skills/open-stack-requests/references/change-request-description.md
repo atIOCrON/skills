@@ -7,15 +7,16 @@ Read-only: do not create change requests, push, commit, or edit files.
 
 Require:
 
-- pushed branch;
+- pushed source branch;
 - target branch, defaulting to the repository's remote default.
 
 ## Workflow
 
 1. Run `git fetch origin <target>`.
-2. Inspect `git log --oneline --decorate origin/<target>...HEAD`.
-3. Inspect `git diff --stat origin/<target>...HEAD`.
-4. Inspect `git diff origin/<target>...HEAD` when needed for accurate scope.
+2. Inspect `git log --oneline --decorate origin/<target>...refs/heads/<source>`.
+3. Inspect `git diff --stat origin/<target>...refs/heads/<source>`.
+4. Inspect `git diff origin/<target>...refs/heads/<source>` when needed for
+   accurate scope.
 5. Stop with a clear message if the branch or target is missing.
 
 ## Composition
