@@ -18,11 +18,13 @@ Require the stack manifest, its plan and evidence paths, local and remote
 branches, pinned parent SHAs, verified and clean-reviewed tip SHAs, and
 intended base branch. Infer the forge from `origin` only when unambiguous. Read
 `references/change-request-lifecycle.md`,
-`references/orchestration-change-requests.md`, and the selected provider
+`references/orchestration-change-requests.md`,
+`references/orchestration-plans-layout.md`, and the selected provider
 adapter. Read `references/change-request-description.md` when writing CR text.
-Require each manifest plan path under `plans/done/`. After a repair run,
-reload the manifest from the path reported by `build-branch-stack`; its feature
-directory may have moved during repair.
+Require each branch being published to have a manifest plan path under
+`plans/review/`. Exclude confirmed merged branches under `plans/done/`. After a
+repair run, reload the manifest from the path reported by `build-branch-stack`;
+its feature directory may have moved during repair.
 
 ## Workflow
 

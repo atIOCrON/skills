@@ -44,10 +44,10 @@ verification changes:
 | Plan | Status | Reviews | Branch | Commit | Next action |
 ```
 
-Use `Queued`, `In progress`, `Blocked`, or `Complete`. `Complete` requires the
-feature in `done/`, a clean-reviewed, verified final SHA matching local,
-upstream, and remote tips, a pinned parent, preserved artefacts, and passed
-final stack checks. Number review passes; never predict a final pass.
+Use `Queued`, `In progress`, `Blocked`, or `Ready for human review`. The last
+status requires the feature in `review/`, a clean-reviewed, verified final SHA
+matching local, upstream, and remote tips, a pinned parent, preserved artefacts,
+and passed final stack checks. Number review passes; never predict a final pass.
 
 ## Workflow
 
@@ -68,17 +68,17 @@ For each plan:
 3. Follow `from-reviewed-plan-to-git-handoff.md`: selectively stage and review
    the candidate tree, commit, and verify the exact commit in a clean worktree.
    Create the remote branch at the first verified commit. Push each verified
-   fix, move the feature to `review/` before code review, and review the
-   pinned parent-to-commit diff. After a pass requiring a fix, move it back to
-   `in_progress/`; repeat until clean. Do not open a CR.
+   fix and review the pinned parent-to-commit diff. Keep the feature in
+   `in_progress/` through all code review passes and fixes. Do not open a CR.
 4. Preserve the feature's `.reviews/`, `.evidence/`, and any `.execution/`
    folders before removing a worktree. Use this branch as a parent only where
    dependency evidence requires it.
 
 Before each plan and final handoff, compare every local parent with its pinned
 SHA and refetch any parent already on `origin`. If a parent moved, move only
-affected descendants to `in_progress/` before restacking; return each verified
-candidate to `review/`. Synchronize reviewed tips with explicit leases.
+affected descendants to `in_progress/` before restacking; keep each candidate
+there through verification and code review. Synchronize reviewed tips with
+explicit leases.
 Classify each delta as `verbatim`, `mechanical regeneration`, or
 `intentional behavior change`. Verify the first two deterministically, and
 verify and review any changed commit. An unexpected local branch change needs
@@ -106,11 +106,11 @@ Keep bulk output outside artefact folders and index concise evidence under
 the last plan. Never publish or refresh protected seed or baseline data here.
 Treat a lock mismatch or unexpected output as a blocker.
 
-After all final checks pass, move selected features still in `review/` to
-`done/`; leave unaffected features already in `done/` there. Write the stack
-manifest at the last plan's final evidence path and check every recorded plan
-and artefact path. If a move or manifest write fails, return any just-moved
-features to `review/` and report the blocker.
+After all final checks pass, move selected features still in `in_progress/` to
+`review/`; leave unaffected features already in `review/` or `done/` there.
+Write the stack manifest at the last plan's final evidence path and check every
+recorded plan and artefact path. If a move or manifest write fails, return any
+just-moved features to `in_progress/` and report the blocker.
 
 ## Rules
 
@@ -130,10 +130,11 @@ features to `review/` and report the blocker.
 
 ## Handoff
 
-Save a stack manifest under the last plan's `.evidence/` folder in `done/`.
+Save a stack manifest under the last plan's `.evidence/` folder in `review/`.
 Record the base branch and pinned SHA. For each branch, record its plan,
 dependency evidence, current feature and artefact paths, parent branch and
 pinned SHA, local, upstream, and remote tip and tree SHAs, verification
 commands and result, and clean review SHA and passes. Record final integration
 and protected-pipeline commands, tested SHAs, and results. Report
-`Verified and pushed` or the blocker. This skill creates no CR.
+`Verified and pushed, ready for human review` or the blocker. This skill
+creates no CR.

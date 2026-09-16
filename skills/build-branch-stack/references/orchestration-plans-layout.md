@@ -22,14 +22,18 @@ so stage moves preserve them.
 - `backlog`: a newly written plan, not yet selected for implementation.
 - `to_do`: a reviewed plan selected for the current implementation batch.
   Move only selected plans from `backlog`.
-- `in_progress`: implementation or an accepted review fix is underway.
-- `review`: a verified candidate is awaiting or undergoing code review. Return
-  it to `in_progress` after a review pass if a fix or restack is needed.
-- `done`: clean review and final stack checks passed. The change request may
-  still be unmerged. Write final manifest paths after moving features here.
+- `in_progress`: implementation, code review, fixes, restacks, and final stack
+  checks are underway. Keep the feature here throughout the code review loop.
+- `review`: the branch passed code review and final stack checks and is ready
+  for human review. Keep it here while its change request is open. Return it to
+  `in_progress` if a fix or restack is needed.
+- `done`: the change request was merged and its landed commit confirmed. Move
+  the feature here after confirmation and update recorded paths.
 
 For repair runs, move only affected features and descendants back to
 `in_progress` when changes are needed. Leave unaffected features in place.
+For features already in `done/` under the earlier stage convention, verify the
+change request state and move unmerged features to `review/`.
 
 ## Artefacts
 

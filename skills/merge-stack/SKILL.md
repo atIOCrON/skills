@@ -21,13 +21,20 @@ fork-based change requests.
 Read `references/stacked-change-requests.md` before classifying the layout.
 Read `references/provider-contract.md` when adding or debugging a provider and
 `references/run-journal.md` before mutation. Read
-`references/post-merge-cleanup.md` only after every change merges.
+`references/orchestration-plans-layout.md` for a stack built by
+`build-branch-stack`. Read `references/post-merge-cleanup.md` only after every
+change merges.
 
 ## Inputs and Preflight
 
 Accept branch names, change-request URLs, or provider IDs. Also accept provider,
 remote, base, layout, cleanup, and journal overrides. Chained inputs may be in
 any order. Independent base-targeted inputs require an explicit order.
+
+For a stack built by `build-branch-stack`, load its manifest and map each source
+branch to one feature before merging. Require unmerged features under
+`plans/review/`; allow confirmed merged features already under `plans/done/`
+when resuming. Stop on a missing or ambiguous mapping or a destination collision.
 
 ```bash
 provider=<gitlab|github|auto>
@@ -201,6 +208,13 @@ the clean original checkout:
 scripts/cleanup_merged_branches.sh "$remote" "$base" <record-file>
 ```
 
+After merge attempts and any applicable cleanup, move each confirmed merged
+feature still in `plans/review/` to `plans/done/`, including after a partial run.
+Leave unmerged features in `review/`. Refresh the manifest's plan and artefact
+paths, including its own path if moved, and verify them. If a move or manifest
+update fails, report the confirmed merges and remaining stage work; do not undo
+a merge.
+
 ## Invariants
 
 - Preserve unrelated work; never stash, revert, or stage it during merging.
@@ -219,4 +233,5 @@ scripts/cleanup_merged_branches.sh "$remote" "$base" <record-file>
 
 Return provider, remote, base, layout and dependency evidence, ordered changes,
 targets, approval/check SHAs, rebases, landed SHAs, journal path, resulting base
-SHA, remote-deletion and local-cleanup status, and unattempted branches.
+SHA, feature stages, remote-deletion and local-cleanup status, and unattempted
+branches.

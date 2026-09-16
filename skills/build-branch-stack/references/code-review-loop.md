@@ -31,14 +31,13 @@ For each pass:
    require exhaustive review after the first blocker.
 5. Triage all outputs once. Batch accepted blocker and should-fix findings
    for the original implementation worker; do not routinely fix nits.
-6. For accepted fixes, move the feature to `in_progress/`, resolve its new
-   paths, and resume that worker, then:
+6. For accepted fixes, keep the feature in `in_progress/` and resume that
+   worker, then:
    - prepare an exact tree through `staged-diff-scope`;
    - create a new commit through `git-branch-commit`;
    - verify the new SHA through `verification-runner` in a clean worktree;
    - push it through `git-sync-branch` and check remote SHA equality;
-   - move the feature back to `review/`, resolve its paths, and refresh the
-     neutral pack.
+   - refresh the neutral pack at the current feature path.
 7. Resume each originating reviewer once with its findings, original and
    current review SHAs, applied changes, and verification evidence. Apply
    proposed ledger transitions through the orchestrator; never share another

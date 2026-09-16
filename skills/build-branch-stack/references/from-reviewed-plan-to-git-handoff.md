@@ -21,9 +21,8 @@ caller creates and checks out the plan branch first.
    worktree. Fix failures through new commits and verify each new SHA.
 6. Use `git-sync-branch.md` to create or update the remote branch at the
    verified SHA.
-7. Move the feature to `review/` and resolve its new plan and artefact paths.
-   Build the neutral commit-pinned review pack and run reviewer preflight for
-   the selected non-host providers.
+7. Keep the feature in `in_progress/`. Build the neutral commit-pinned review
+   pack and run reviewer preflight for the selected non-host providers.
 8. Run `code-review-loop.md`. Verify, push, and review every accepted fix
    commit.
 9. Require the local branch tip, upstream, remote, latest verified SHA, and

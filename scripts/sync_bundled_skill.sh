@@ -8,6 +8,7 @@ case "$mode" in --write|--check) ;; *) echo "usage: sync_bundled_skill.sh [--wri
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 branch_bundle="$repo_root/skills/build-branch-stack"
 publish_bundle="$repo_root/skills/open-stack-requests"
+merge_bundle="$repo_root/skills/merge-stack"
 failed=0
 
 sync_one() {
@@ -69,7 +70,11 @@ shared-components/change-request-lifecycle/gitlab.md|references/change-request-p
 shared-components/change-request-lifecycle/github.md|references/change-request-providers/github.md
 shared-components/change-request-lifecycle/bitbucket-cloud.md|references/change-request-providers/bitbucket-cloud.md
 shared-components/orchestration-conventions/orchestration-change-requests.md|references/orchestration-change-requests.md
+shared-components/orchestration-conventions/orchestration-plans-layout.md|references/orchestration-plans-layout.md
 shared-components/forge-cli/scripts/ensure_forge_cli.sh|scripts/ensure_forge_cli.sh
 EOF
+
+sync_one shared-components/orchestration-conventions/orchestration-plans-layout.md \
+  "$merge_bundle" references/orchestration-plans-layout.md
 
 exit "$failed"
