@@ -1,7 +1,6 @@
-# GitLab Create MR
+# GitLab Change Request Adapter
 
-Create a draft GitLab merge request for the first verified commit, then mark it
-ready only after commit-pinned review passes. Do not edit, commit, push, or merge.
+Implement `change-request-lifecycle.md` for GitLab merge requests (MRs).
 
 Target `<target-branch>` defaults to the repository default; chained mode must
 pass the dependency parent. Use the authenticated user as assignee, preserve
@@ -12,10 +11,10 @@ or a committer merely because they are authenticated.
 Before every `glab` command, load the bundled non-interactive PATH setup:
 
 ```bash
-eval "$("$orchestration_skill_root/scripts/ensure_glab.sh")"
+eval "$("$orchestration_skill_root/scripts/ensure_forge_cli.sh" gitlab)"
 ```
 
-## Shared Preflight
+## Provider Preflight
 
 Require authenticated `glab`, the expected current branch, an upstream, and no
 local/upstream divergence. Fetch and resolve the target, then inspect:
@@ -32,10 +31,9 @@ Resolve and validate the authenticated username with `glab api user` and `jq`.
 
 ## Create Draft
 
-Use this mode immediately after the first candidate commit is verified and
-pushed. Stop if any MR already exists for the source branch.
+Stop if any open MR already exists for the source branch.
 
-Compose the title and description with `gitlab-mr-description.md`, then run:
+Compose the title and description with `change-request-description.md`, then run:
 
 ```bash
 glab mr create \
@@ -75,7 +73,7 @@ transition fails.
 
 ## Mark Ready
 
-Use this mode only after `code-review-loop` returns `Ready for MR review`.
+Use this mode only after `code-review-loop` returns `Ready for CR review`.
 Resolve the existing MR and require:
 
 - it is still draft and targets `<target-branch>`;

@@ -18,7 +18,7 @@ Load only the reference file needed for the current task.
 - `references/orchestration-finding-ids.md`:
   plan-review and code-review finding ID formats, reviewer slugs, and canonical
   finding line format.
-- `references/orchestration-stacked-mrs.md`:
+- `references/orchestration-change-requests.md`:
   dependency-parent, chained, and base-targeted change-request layouts.
 
 ## Inline Conventions
