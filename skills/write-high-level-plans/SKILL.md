@@ -8,6 +8,12 @@ metadata:
 
 # Write High-Level Plans
 
+Resolve all `plans/...` paths against the user's primary local checkout of the
+target repository, or another local directory they explicitly designate. Do
+not use a separate agent worktree as the plan root merely because it is the
+current working directory. Create and update the plan in the selected local
+directory, and report its absolute path.
+
 Create new plans at `plans/backlog/<plan_name>/<plan_name>.md`. The feature
 directory and plan file share the same name. For an update, find the existing
 plan under `backlog`, `to_do`, `in_progress`, `review`, or `done` and edit it in
