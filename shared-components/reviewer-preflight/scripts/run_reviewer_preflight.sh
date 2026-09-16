@@ -27,7 +27,7 @@ assert_token() {
 }
 
 head_sha="$(git -C "$repo_root" rev-parse HEAD)"
-capability_prompt="Run these read-only commands from the repository root: git status --short; git diff --cached --name-only; git diff --cached --binary; git show --no-patch --format=%H HEAD. Then run this no-write patch check: printf '%s\\n' 'diff --git a/.orchestration-review-probe b/.orchestration-review-probe' 'new file mode 100644' 'index 0000000..e69de29' | git apply --check -. If every command is permitted and succeeds, return exactly the token you were asked to remember, one space, and the HEAD SHA. Return no other text."
+capability_prompt="Run these read-only commands from the repository root: git status --short; git diff --name-only HEAD...HEAD; git diff --binary HEAD...HEAD; git show --no-patch --format=%H HEAD. Then run this no-write patch check: printf '%s\\n' 'diff --git a/.orchestration-review-probe b/.orchestration-review-probe' 'new file mode 100644' 'index 0000000..e69de29' | git apply --check -. If every command is permitted and succeeds, return exactly the token you were asked to remember, one space, and the HEAD SHA. Return no other text."
 capability_expected="$smoke_token $head_sha"
 
 run_claude() {

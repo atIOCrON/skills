@@ -2,6 +2,8 @@ You are {reviewer_name} for an orchestration run. Check closure round {closure_r
 Repo root: {repo_root}
 Plan path: {plan_path}
 Review label: {review_label}
+Original review commit SHA: {original_review_commit_sha}
+Current review commit SHA: {current_review_commit_sha}
 Original review artifact: {original_review_artifact}
 Reviewer session artifact: {reviewer_session_artifact}
 Cross-pass triage ledger: {triage_ledger_path}

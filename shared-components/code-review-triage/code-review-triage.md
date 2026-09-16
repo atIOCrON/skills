@@ -1,142 +1,78 @@
 # Code Review Triage
 
-Turn staged-diff review feedback into accepted fix requests or concise
-rebuttals. Use this during `code-review-loop` passes. Do not edit
-files.
+Turn commit-pinned review feedback into accepted fix requests or concise
+rebuttals. Do not edit implementation files.
 
 ## Inputs
 
-Expect one or more review responses, the plan path when available, the current
-pass number, the list of intended implementation files, and the cross-pass
-triage ledger path
-(`plans/<plan_slug>.reviews/code-review-triage-ledger.md`). If review responses
-or the pass number are missing, ask for them.
-
-Material finding and root cause are defined in
-references/orchestration-definitions.md.
+Require reviewer responses, plan path, pass number, intended implementation
+scope, review base and commit SHAs, neutral pack, and cross-pass ledger path:
+`plans/<plan_slug>.reviews/code-review-triage-ledger.md`.
 
 ## Read First
 
-1. Read the staged review scope:
-   - `git diff --cached --stat`
-   - `git diff --cached --name-only`
-   - `git diff --cached`
-2. Run `git status --short` and identify unrelated dirty files.
-3. Read changed staged content with `git show :<path>` when a staged file also
-   has unstaged edits.
-4. Read the docs AGENTS.md labels as code standards and logging standards, and
-   any `docs/` files directly relevant to the feedback.
-5. Inspect nearby code patterns before accepting style or architecture claims.
-6. Read the cross-pass triage ledger when it exists. On the first code-review
-   pass of an orchestration run the ledger may not yet exist; in that case,
-   create it with the schema header defined in
-   `references/orchestration-triage-ledger-protocol.md`
-   before adding entries.
+1. Confirm the pack's SHAs, ancestry, diff, verification evidence, and branch
+   identity checks.
+2. Read `git diff <base-sha>...<review-sha>` and committed content at
+   `<review-sha>`; ignore the index and working tree.
+3. Read applicable standards and nearby patterns.
+4. Read or initialize the ledger using
+   `references/orchestration-triage-ledger-protocol.md`.
 
-Primary evidence is the staged diff. Do not inspect unstaged work unless the
-user explicitly included it in the handoff or it is one of the intended
-implementation files that may need an implementation-worker fix request.
+## Rules
 
-## Triage Rules
+- Treat comments as hypotheses; deduplicate them before acting.
+- Accept only findings that meet the material-finding definition.
+- Reject claims based only on unsupported inputs, hypothetical scale, future
+  use, or architecture preference.
+- General best practice cannot establish a defect alone.
+- A pre-existing issue blocks only when this commit depends on or worsens it,
+  or the plan requires its correction.
+- Recommend the smallest in-scope fix. Ask the user before adding an unplanned
+  deliverable or complexity.
+- Batch material findings for one implementer. Do not routinely fix nits.
+- Do not stage, commit, push, or inspect unrelated dirty work.
 
-- Treat reviewer comments as hypotheses, not instructions.
-- Deduplicate overlapping comments before acting.
-- Accept a finding only when its evidence meets the material-finding definition
-  in `references/orchestration-definitions.md`.
-- Reject findings that depend only on hypothetical future use,
-  unsupported inputs, unplanned scale, or architecture preference.
-- Cite conflicts among binding sources under `Contradictions` unless the
-  finding is plainly wrong.
-- Treat `Related Existing Issues` as non-blocking follow-ups unless the staged
-  diff depends on, worsens, or should reasonably fix the issue as part of the
-  approved plan.
-- The plan's scope does not excuse a concrete defect in changed code, but a
-  finding cannot add requirements beyond the approved acceptance conditions,
-  binding rules, or affected contracts.
-- General best practice may support a finding but cannot establish one alone.
-- Do not add backward-compatibility shims, fallback defaults, speculative
-  refactors, or unrelated cleanup.
-- For accepted findings, write the smallest fix request that resolves the issue
-  and preserves the implementer's intent.
-- If a fix needs an unplanned deliverable or unauthorized complexity, pause for
-  a user decision instead of sending it to the worker.
-- Batch all accepted material findings for the same implementer into one
-  handoff. Do not routinely accept, fix, or close nits.
-- Leave unrelated dirty files unstaged.
+Resolve source conflicts in this order: safety, security, legal, and policy;
+approved scope; repository standards; affected contracts; nearby conventions;
+general best practice. Ask the user when a higher-ranked conflict or scope
+expansion remains.
 
-Resolve contradictions in this order: binding safety, security, legal, and
-policy requirements; approved acceptance conditions and scope; applicable
-repository standards; affected contracts; nearby conventions. General best
-practice is advisory. Ask the user when higher-ranked sources conflict or a
-resolution would expand scope.
+## Ledger And Handoff
 
-## Cross-Pass Triage Ledger
-
-Create or update the ledger at
-`plans/<plan_slug>.reviews/code-review-triage-ledger.md` every pass. The
-ledger schema, status vocabulary, identity matching, recurrence,
-consolidation, and writer rules are defined in
-`references/orchestration-triage-ledger-protocol.md`;
-surface re-opened entries under `## Re-opened Concerns` and recurring escalations under
-`## Recurring Escalations` in this pass's triage output.
-
-## Handoff
-
-Do not apply fixes, edit code or doc files, run formatters, stage files, or
-restage files. The cross-pass triage ledger
-(`plans/<plan_slug>.reviews/code-review-triage-ledger.md`) is the only file
-triage may write; treat that as a triage artifact, not a code change. Accepted
-fixes are sent to the implementation worker through `implementation-dispatch`.
-
-For each accepted finding, identify:
-
-- finding ID and reviewer,
-- intended file or module owner,
-- required change,
-- evidence that the change is needed,
-- verification or focused check that should run after the worker applies it.
+The ledger is the only file triage may write. Apply its canonical identity,
+status, recurrence, and consolidation rules. Send accepted fixes through
+`implementation-dispatch`, including finding ID, owner, required change,
+evidence, and the verification check. The worker must produce a new candidate
+commit; fixes never mutate the reviewed SHA.
 
 ## Output
 
-Keep it short.
-
 ```markdown
 ## Accepted Fix Requests
-- [{finding_id}] [{ledger_id}] <file/module owner> - <required worker change> - In-scope failure: <scenario, affected contract, or binding rule> - Evidence: <citation> - Verify: <command/check>
+- [{finding_id}] [{ledger_id}] <owner> - <required change> - In-scope failure: <scenario, contract, or rule> - Evidence: <citation> - Verify: <check>
 
 ## Rejected
-- [{finding_id}] [{ledger_id}] <reason/counter-argument with evidence>
+- [{finding_id}] [{ledger_id}] <reason with evidence>
 
 ## Contradictions
-- [{finding_id}] [{ledger_id}] <docs/convention/best-practice conflict> - <evidence/resolution>
+- [{finding_id}] [{ledger_id}] <conflict> - <evidence/resolution>
 
 ## Re-opened Concerns
-- [{ledger_id}] <prior terminal status> - <why this pass re-opened it>
+- [{ledger_id}] <prior status> - <reason>
 
 ## Recurring Escalations
-- [{ledger_id}] first_pass=<p> last_pass=<p> - <one-line user-decision prompt>
+- [{ledger_id}] first_pass=<p> last_pass=<p> - <user-decision prompt>
 
 ## Ledger Writes This Pass
 - added: <ledger_id>, ...
 - updated: <ledger_id> (<old_status> -> <new_status>), ...
-- consolidation groups: <name>: <ledger_id>, ...
-- recurring escalations: <ledger_id>, ...
 
 ## Worker Handoff
-- <concise payload to send through references/implementation-dispatch-fix-request.md, or None>
+- <concise fix payload, or None>
 ```
 
-Use `- None` under any section that has no entries this pass. Use
-`[no-ledger]` in place of `[{ledger_id}]` for rejected nits, advisory
-comments, non-material plan mismatches, and non-blocking related existing
-issues. Do not edit files other than the
-cross-pass triage ledger; ledger updates are the only file write triage
-performs.
-
-End with exactly one:
-
-- `Resolve contradictions`
-- `Ready for worker fixes`
-- `Partial - blocker encountered`
-- `Recurring escalations - user decision required`
-- `No code changes needed`
+Use `- None` for empty sections and `[no-ledger]` for non-material items. End
+with exactly one: `Resolve contradictions`, `Ready for worker fixes`,
+`Partial - blocker encountered`, `Recurring escalations - user decision
+required`, or `No code changes needed`.

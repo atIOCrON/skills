@@ -8,7 +8,7 @@ Require:
 
 - route and final state;
 - plan path;
-- files changed or staged file list;
+- changed files and reviewed commit SHA;
 - verification summary;
 - review pass summaries;
 - reviewer artifact paths;
@@ -35,17 +35,16 @@ Include:
 Include:
 
 - plan path and files changed;
-- verification commands and status;
+- pinned base, final commit, upstream, and MR source SHAs;
+- clean-worktree verification commands and status;
 - code-review pass count and one-line outcome per pass;
 - rejected/deferred findings with evidence or recorded reason;
 - reviewer artifact paths, including failures;
 - triage ledger path and terminal-status counts;
-- confirmation no non-terminal ledger entries remain before saying
-  `Ready for git handoff`;
+- confirmation no non-terminal ledger entries remain;
+- draft-to-ready MR status and target;
 - `## Skill Feedback For User Review` with entries or `- None`;
-- final state: blocker, `Ready for code review`, or `Ready for git handoff`;
-- next recommended bundled component:
-  `references/git-branch-commit-push.md` when ready for git handoff.
+- final state: blocker or `Ready for human review`.
 
 Keep the handoff concise and cite artifact paths rather than copying large
 review outputs.

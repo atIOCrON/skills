@@ -3,6 +3,7 @@ You are an implementation worker for an orchestration run. Apply accepted fixes.
 Repo root: {repo_root}
 Plan path: {plan_path}
 Fix label: {fix_label}
+Reviewed commit SHA: {reviewed_commit_sha}
 Owned files or modules:
 {owned_files_or_modules}
 
@@ -13,3 +14,6 @@ Accepted fixes or verification failures to address:
 
 Relevant review or verification artifacts:
 {fix_context_artifacts}
+
+Edit the current plan branch only. Do not amend the reviewed commit; the
+orchestrator will create and verify a new commit.

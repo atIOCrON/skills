@@ -28,7 +28,7 @@ Pass only when:
 - the provider CLI resolves and can create a session;
 - the first smoke prompt's normalized token line returns exactly
   `REVIEWER_SMOKE_OK`;
-- the resumed session can run `git status`, staged `git diff`, `git show`, and a
+- the resumed session can run `git status`, commit-to-commit `git diff`, `git show`, and a
   synthetic `git apply --check` without changing the worktree;
 - the resumed session's normalized token line returns
   `ORCHESTRATE_SESSION_SMOKE <HEAD_SHA>` with the actual repository HEAD.

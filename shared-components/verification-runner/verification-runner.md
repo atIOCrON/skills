@@ -1,54 +1,49 @@
 # Verification Runner
 
-Verification execution and bounded repair handoff for orchestration workflows.
+Verify one committed revision in a clean detached worktree and hand bounded
+failures back to its implementation worker.
 
 ## Inputs
 
 Require:
 
 - repository root;
-- plan path;
-- verification commands from the plan;
+- plan path and verification commands;
+- exact candidate commit SHA;
 - touched files or modules;
 - implementation worker reference when available;
-- verification point label, such as `post-implementation` or
-  `post-code-review-fix`.
+- verification point, such as `initial-candidate` or `post-review-fix`.
 
-Stop if the plan lacks deterministic verification commands.
+Stop if the plan lacks deterministic verification commands or the commit cannot
+be resolved.
 
 ## Workflow
 
-1. Read the plan verification section.
-2. Run every required plan verification command from the repository root.
-3. Add focused checks for touched surfaces when risk justifies them.
-4. Save commands, exit status, and concise results under
-   `plans/<plan_slug>.evidence/` and update its index; follow
-   `references/orchestration-plans-layout.md` for retention.
-5. If verification passes, return `verification-passed`.
-6. If verification fails, classify the failure and send a concrete fix request
-   through `implementation-dispatch`.
-7. Rerun verification after the worker applies a fix.
-8. Stop after two failed fix attempts for the same verification point.
+1. Resolve the candidate commit to a full SHA.
+2. Create a temporary detached Git worktree at that SHA. Do not verify the
+   mutable implementation checkout.
+3. Confirm the temporary worktree is clean and its `HEAD` is the candidate SHA.
+4. Run every required plan command from the temporary worktree root. Add focused
+   checks when touched-surface risk justifies them.
+5. Keep bulk output outside plan artefact folders. Save commands, exit status,
+   concise results, candidate SHA, and evidence links under
+   `plans/<plan_slug>.evidence/` in the primary checkout.
+6. Remove only the explicit temporary worktree after capturing evidence.
+7. Return `verification-passed` only for that SHA.
 
-## Failure Fix Requests
+Pass required non-versioned inputs by explicit path. Never copy dirty working
+tree content into the verification worktree.
 
-Each verification fix request must include:
+## Failure Repair
 
-- failing command;
-- failure summary;
-- relevant output excerpt;
-- expected behavior;
-- owned file or module boundary;
-- command to rerun.
+On failure, send the original worker the command, concise failure, expected
+behavior, owned scope, and rerun command. The worker must create a new candidate
+commit through `staged-diff-scope` and `git-branch-commit-push`; verify that new
+SHA from a new clean worktree. Stop after two failed fix attempts at one
+verification point.
 
 ## Output
 
-Report:
-
-- verification point label;
-- commands run;
-- pass/fail status per command;
-- focused checks run;
-- fix attempts used;
-- blocker reason if stopped;
-- final status: `verification-passed` or `verification-blocked`.
+Report the commit SHA, commands and status, focused checks, evidence paths, fix
+attempts, cleanup status, and final `verification-passed` or
+`verification-blocked`.

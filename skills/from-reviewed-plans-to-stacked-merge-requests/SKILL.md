@@ -1,99 +1,86 @@
 ---
 name: from-reviewed-plans-to-stacked-merge-requests
-description: Run an ordered list of reviewed plans through implementation, verification, pushed stacked branches, and GitLab merge requests without merging. Bundles all reusable orchestration components required by the route.
+description: Run ordered reviewed plans through branch-first implementation, commit-pinned verification and review, pushed stacked branches, and ready GitLab merge requests without merging.
 metadata:
   layer: runner
 ---
 
 # From Reviewed Plans To Stacked Merge Requests
 
-Use when the user provides one or more reviewed plan filenames and wants each
-plan implemented, reviewed, committed, pushed, and opened as a GitLab merge
-request stacked on the previous plan branch.
+Use when the user provides reviewed plans to implement, verify, review, commit,
+push, and publish as a true GitLab MR stack.
 
-## Bundled Resources
+## Resources
 
-Supporting workflow instructions are under `references/`, and executable
-helpers are under `scripts/`. They are bundled resources, not separately
-installed or discoverable skills.
+Resolve `orchestration_skill_root` to this directory. Before processing plans,
+read `references/orchestration-runtime.md` and
+`references/orchestration-plans-layout.md`. For each plan, read
+`references/git-branch-commit-push.md` to start its branch, then
+`references/from-reviewed-plan-to-git-handoff.md`.
 
-Resolve `orchestration_skill_root` to this skill directory. Before processing
-plans, read `references/orchestration-runtime.md` and select the host mapping.
-Read `references/orchestration-plans-layout.md` for review, execution, and
-evidence paths and retention rules.
-
-Read each reference only when the workflow reaches the step that needs it. For
-each plan, begin with `references/from-reviewed-plan-to-git-handoff.md`.
-Direct stack operations additionally use:
-
-- `references/git-branch-commit-push.md`;
-- `references/gitlab-create-mr.md`.
+The route also uses `references/gitlab-create-mr.md`. Read other references only
+when the active step requires them.
 
 ## Inputs
 
 - Ordered reviewed plan filenames or `plans/<file>.md` paths.
 - Base target branch: `develop` unless the user names another.
-- Starting branch: the base target branch unless the user names an existing
-  stack head to continue from.
+- Starting branch: the base target unless the user names an existing stack head.
 
-Stacked-MR terms (base target branch, stack parent branch, MR target branch,
-true stacked MR chain) are defined in
-`references/orchestration-stacked-mrs.md`. This
-route creates a true stacked MR chain.
+Terms are defined in `references/orchestration-stacked-mrs.md`. This route
+creates a true stack: each MR targets the preceding branch.
 
-## Progress Reporting
+## Progress
 
-Keep one compact commentary table and replace ordinary progress narration with
-it where practical:
+Keep one compact table and update it only for state, review-pass, commit,
+restack, or verification changes:
 
 ```text
 | Plan | Status | Reviews | Branch | Commit | Next action |
 ```
 
-Use only `Queued`, `In progress`, `Blocked`, or `Complete`. Show completed versus
-currently required fresh review passes, increasing the requirement after a
-material-fix pass. Show the branch and short commit SHA. Update the table only
-when a plan changes state, a review pass finishes, a commit is created,
-restacking completes, or verification changes the outcome.
-
-`Complete` means the plan is committed, pushed, verified, fully reviewed,
-correctly restacked when applicable, and has its required MR. Never predict or
-announce a “final pass”; identify passes by number and let the completion gates
-decide when review ends.
+Use `Queued`, `In progress`, `Blocked`, or `Complete`. `Complete` requires a
+verified and clean-reviewed final SHA, synchronized branch and MR source,
+preserved artefacts, correct MR target, ready status, and effective
+squash-on-merge. Number review passes; never predict a final pass.
 
 ## Workflow
 
 For each plan, in order:
 
-1. Start from the current stack head. The first plan's stack parent branch is
-   the starting branch; every later plan's stack parent branch is the
-   previous plan's branch.
-2. Read and follow `references/from-reviewed-plan-to-git-handoff.md`.
-3. Run any stack-level or final verification not already covered by the
-   git-handoff route.
-4. Stage intended files only, then read and follow
-   `references/git-branch-commit-push.md`
-   for branch, commit, and push. Explicitly pass the plan's stack parent branch as
-   `<base-branch>`; never rely on the helper's `develop` default in stack
-   mode.
-5. After the branch is pushed, read and follow
-   `references/gitlab-create-mr.md` to
-   create a true stacked MR. Explicitly pass the plan's stack parent branch as
-   `<target-branch>`. The first plan's MR therefore targets the base target
-   branch and every later MR targets the previous stack branch. Require the
-   created MR's effective `squash_on_merge` value to be `true` before moving
-   on.
-6. Before moving on, verify `plans/<slug>.reviews/` contains the review
-   artefacts and `plans/<slug>.evidence/` contains indexed verification evidence.
-   Preserve these folders, any `plans/<slug>.execution/` folder, and ignored plans
-   in the user's main checkout before deleting or abandoning a worktree.
-7. Stay on the pushed branch before starting the next plan.
+1. Set its stack parent to the current stack head and pin that branch's SHA.
+2. Before implementation, use `git-branch-commit-push.md` to create and check out
+   the plan branch from that parent.
+3. Follow `from-reviewed-plan-to-git-handoff.md`. It must:
+   - stage selectively and self-review the candidate tree;
+   - block staged/unstaged overlap on candidate files;
+   - commit before formal review;
+   - verify the exact commit in a clean detached worktree;
+   - push and open a draft MR against the stack parent;
+   - review the pinned parent-to-commit diff;
+   - create, verify, push, and re-review new commits after material fixes;
+   - prove local, upstream, MR, verified, and reviewed SHAs match, the MR target
+     branch is the stack parent, and its head equals the pinned parent SHA; and
+   - mark the MR ready only after a clean review.
+4. Confirm the MR's effective `squash_on_merge` is true.
+5. Preserve the plan's `.reviews/`, `.evidence/`, and any `.execution/` folders
+   before removing a worktree.
+6. Stay on the pushed plan branch; it becomes the next stack parent.
 
-After all plan branches are committed and pushed, verify the clean final stack
-head:
+Before each plan, every ready transition, and final handoff, refetch every stack
+branch and compare it with the recorded SHAs. On any movement, immediately
+return the affected MR and every ready descendant to draft and mark them
+`In progress`. Accept an unexpected source change only with user confirmation,
+then refresh its MR metadata, verify, and review it. Restack descendants in order
+through the git component, update each pinned parent, and rerun verification and
+fresh review before restoring ready status.
 
-1. Run the repository's documented deterministic pre-handoff checks.
-2. When `scripts/codex/protected_full_pipeline.py` exists, run:
+After all plans:
+
+1. Run the repository's deterministic pre-handoff checks on the clean final
+   stack-head commit.
+2. When `scripts/codex/protected_full_pipeline.py` exists, run it with the
+   committed lock-selected seed and baseline:
 
    ```bash
    python -m scripts.codex.protected_full_pipeline \
@@ -102,57 +89,34 @@ head:
      --output-dir <verification-artifact-directory>
    ```
 
-Keep bulk verification output outside artefact folders. Index the final check's
-summary and small evidence under the last plan's `.evidence/` folder.
-
-Protected verification must use the committed lock-selected seed and baseline.
-Never publish or refresh either during this route. Treat a lock mismatch or
-unexpected output as a blocker; seed or baseline transitions require their
-separate reviewed publication workflow.
+Keep bulk output outside artefact folders and index concise evidence under the
+last plan. Never publish or refresh protected seed or baseline data here. Treat
+a lock mismatch or unexpected output as a blocker.
 
 ## Rules
 
-- Choose the least-complex change that meets the plan's acceptance conditions
-  and preserves affected binding contracts.
-- Map every changed surface and new component to an acceptance condition,
-  binding policy, or affected contract. Omit anything that cannot be mapped.
-- Do not add architecture, dependencies, configuration, persistence,
-  interfaces, compatibility behavior, supported scenarios, or other
-  deliverables for hypothetical needs. If necessary work is not authorized by
-  the plan, stop for a user decision.
-- Apply engineering standards to in-scope correctness. General best practice
-  does not expand scope.
-- Preserve unrelated dirty work; never stage or revert it.
-- Use the bundled `git-branch-commit-push` component's branch naming and
-  commit-message standards, with the current stack head as the parent for each
-  plan branch.
-- Pass explicit `<base-branch>` and `<target-branch>` values to the bundled git
-  components for every stack item; do not rely on their defaults.
-- Use a clean worktree for `gitlab-create-mr` if unrelated dirty work would
-  fail its glab preflight (distinct from the reviewer preflight that the
-  git-handoff route runs via `reviewer-preflight`).
-- Do not use deprecated `git-branch-and-merge`.
-- Do not merge any merge request, clean up, or delete branches.
-- Do not leave a created MR with squash-on-merge disabled.
-- Do not finish until every plan's artefact folders are preserved, or report
-  an explicit preservation blocker.
-- Stop and report blockers if tests fail, export output is unexpected, or a
-  clean commit cannot be created safely.
-- Do not skip the final full-pipeline export test unless the user explicitly
-  cancels it.
-- Use deterministic commands for patch application, hashes, byte comparisons,
-  changed-file scope, and branch ancestry. Do not ask a reviewer to infer facts
-  a command can establish.
-- Before a restack, classify every delta from the prior stack state as
-  `verbatim`, `mechanical regeneration`, or `intentional behavior change`.
-  Record each delta and its evidence. Verify the first two deterministically;
-  send the third through normal implementation, verification, and review.
+- Make the least-complex change that satisfies the plan and affected contracts.
+- Map every changed surface to plan scope or a binding contract. Stop for user
+  approval before adding an unplanned deliverable.
+- Preserve unrelated dirty work; never broadly stage, clean, or revert it.
+- Use explicit stack-parent and MR-target branches; never rely on defaults.
+- Review immutable commits, not the index. The index is only a candidate-tree
+  scope gate.
+- Do not amend published commits. Restacks may rewrite a draft branch only
+  through the explicit force-with-lease procedure.
+- Use deterministic commands for scope, identity, hashes, ancestry, and restack
+  checks; do not ask reviewers to infer them.
+- During restacking, classify every delta as `verbatim`, `mechanical
+  regeneration`, or `intentional behavior change`. Verify the first two
+  deterministically; implement, verify, and review the third normally.
+- Do not merge MRs, delete branches, or leave squash-on-merge disabled.
+- Stop for failed verification, unresolved findings, unsafe commit creation,
+  revision mismatch, wrong MR target, failed push, or unpreserved artefacts.
+- Do not skip the final full-pipeline export test unless the user cancels it.
 
 ## Final Response
 
-Return the ordered branch stack with branch name, stack parent branch, MR
-target branch, commit SHA, push status, verification summary, per-plan
-export-test status, final full-pipeline export-test status, merge-request
-status and effective squash-on-merge value, review and execution folders,
-evidence indexes, any restack classification evidence, and confirmation that no
-merge was performed.
+Return the ordered stack with each branch, pinned parent, MR target, final SHA,
+push and verification status, review passes, draft-to-ready MR status, effective
+squash value, artefact and evidence paths, restack evidence, final pipeline
+status, and confirmation that nothing was merged.

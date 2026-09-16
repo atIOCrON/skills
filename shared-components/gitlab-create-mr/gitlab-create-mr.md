@@ -1,116 +1,101 @@
 # GitLab Create MR
 
-Create a GitLab GUI-visible merge request using `glab`. Do not commit, push, or edit files.
+Create a draft GitLab merge request for the first verified commit, then mark it
+ready only after commit-pinned review passes. Do not edit, commit, push, or merge.
 
-Defaults:
+Target `<target-branch>` defaults to `develop`; stack mode must pass the stack
+parent. Use the authenticated user as assignee and reviewer, preserve stack
+branches, and require squash-on-merge.
 
-- Target branch `<target-branch>`: `develop` unless the caller supplies one.
-  Stack mode passes the stack parent branch (see
-  `references/orchestration-stacked-mrs.md`); do
-  not infer a non-default target.
-- Assignee: authenticated GitLab username
-- Reviewer: authenticated GitLab username
-- Merge option: remove source branch when merged
-- Squash option: squash commits when merged
-
-## Preflight
-
-A child process cannot change this shell's PATH, so begin every shell
-invocation that runs `glab` with
-`eval "$("$orchestration_skill_root/scripts/ensure_glab.sh")"`; the script
-resolves `glab` and `jq` for non-interactive shells that did not load the
-user's profile. Then run:
+Before every `glab` command, load the bundled non-interactive PATH setup:
 
 ```bash
 eval "$("$orchestration_skill_root/scripts/ensure_glab.sh")"
-glab auth status
-git branch --show-current
-git status --short
-git rev-parse --abbrev-ref --symbolic-full-name @{u}
-git rev-list --left-right --count @{u}...HEAD
 ```
 
-Stop if `ensure_glab.sh` reports an error, `glab` is unauthenticated, the current branch is `<target-branch>`, the branch has not been pushed, or `@{u}...HEAD` is not `0 0`.
+## Shared Preflight
 
-Resolve the GitLab username:
-
-```bash
-eval "$("$orchestration_skill_root/scripts/ensure_glab.sh")"
-username="$(glab api user | jq -r '.username')"
-test -n "$username" && test "$username" != "null"
-```
-
-## Inputs
-
-Inspect the pushed branch against `<target-branch>`. Stop if the target
-branch cannot be fetched or resolved:
+Require authenticated `glab`, the expected current branch, an upstream, and no
+local/upstream divergence. Fetch and resolve the target, then inspect:
 
 ```bash
-git fetch origin <target-branch>
 git log --oneline origin/<target-branch>..HEAD
 git diff --stat origin/<target-branch>...HEAD
 git diff --name-only origin/<target-branch>...HEAD
 ```
 
-Dirty worktree changes are allowed when unrelated because `glab mr create` uses pushed branch refs, not unstaged files. Check for overlap:
+Stop if the target is unresolved, the source equals the target, or dirty files
+overlap the branch diff. Unrelated dirty files may remain and must be reported.
+Resolve and validate the authenticated username with `glab api user` and `jq`.
+
+## Create Draft
+
+Use this mode immediately after the first candidate commit is verified and
+pushed. Stop if any MR already exists for the source branch.
+
+Compose the title and description with `gitlab-mr-description.md`, then run:
 
 ```bash
-comm -12 \
-  <({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u) \
-  <(git diff --name-only origin/<target-branch>...HEAD | sort -u)
-```
-
-If dirty/untracked files overlap with branch diff files or would affect MR metadata generation, ask whether to continue. If they do not overlap, proceed and mention the unrelated local changes in the final response.
-
-Check for an existing merge request for the source branch, with any target:
-
-```bash
-eval "$("$orchestration_skill_root/scripts/ensure_glab.sh")"
-glab mr list --source-branch "<branch-name>"
-```
-
-Stop if an MR already exists; if its target branch differs from the requested
-`<target-branch>`, report both targets in the blocker.
-
-Compose the title and description with
-`references/gitlab-mr-description.md`, passing `<target-branch>` as
-its target branch.
-
-## Workflow
-
-Create the merge request:
-
-```bash
-eval "$("$orchestration_skill_root/scripts/ensure_glab.sh")"
 glab mr create \
+  --draft \
   --source-branch "<branch-name>" \
   --target-branch "<target-branch>" \
   --title "<title>" \
   --description "<description>" \
   --assignee "<gitlab-username>" \
-  --reviewer "<gitlab-username>" \
   --squash-before-merge=true \
-  --remove-source-branch \
+  --remove-source-branch=false \
   --yes
 ```
 
-Prefer explicit title and description over `--fill`.
-After creation, refresh the MR and verify the requested target and effective
-squash setting; project settings can override the requested MR value:
+Refresh the MR. Require exactly one open MR with the requested source and target,
+draft status, source SHA equal to the verified local and upstream SHA, and
+effective `squash_on_merge == true`.
+
+## Refresh Draft
+
+After every accepted source change, including a fix or restack, regenerate the
+title and description from the current verified branch diff, then run:
 
 ```bash
-eval "$("$orchestration_skill_root/scripts/ensure_glab.sh")"
-mr_json="$(glab mr list --source-branch "<branch-name>" --output json)"
-printf '%s\n' "$mr_json" |
-  jq -e --arg target "<target-branch>" \
-    'length == 1 and .[0].target_branch == $target and .[0].squash_on_merge == true'
+glab mr update <mr-iid> --title "<title>" --description "<description>"
 ```
 
-Stop if the refresh does not return exactly one open MR for the source branch,
-if its target is wrong, or if effective `squash_on_merge` is not `true`.
+Require the MR source SHA, upstream, local `HEAD`, and verified SHA to match
+afterward.
 
-## Final Response
+## Return To Draft
 
-Report the source branch, target branch, merge request URL, assignee, reviewer,
-effective squash-on-merge value, and remove-source-branch setting. On Codex,
-also emit its supported MR UI directive.
+If a ready MR's source or pinned target head changes, run
+`glab mr update <mr-iid> --draft` before new verification or review. Refresh and
+require draft status; also return every ready descendant to draft. Stop if any
+transition fails.
+
+## Mark Ready
+
+Use this mode only after `code-review-loop` returns `Ready for MR review`.
+Resolve the existing MR and require:
+
+- it is still draft and targets `<target-branch>`;
+- local `HEAD`, upstream, MR source, latest verified SHA, and latest clean-review
+  SHA are identical;
+- the fetched MR target head equals the pinned base SHA and remains an ancestor;
+  and
+- effective squash-on-merge is true.
+
+Then run:
+
+```bash
+glab mr update <mr-iid> --ready --reviewer "<gitlab-username>"
+```
+
+Refresh the MR and target ref again. Require non-draft status, the requested
+reviewer and target, the same source SHA, effective squash-on-merge, and target
+head equality with the pinned base. If the target moved during readiness,
+immediately return this MR and every ready descendant to draft, then require the
+ordered invalidation and restack workflow.
+
+## Output
+
+Report the mode, source and target branches, MR URL and status, source SHA,
+assignee, reviewer, effective squash setting, and preserved-source setting.

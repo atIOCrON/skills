@@ -64,7 +64,7 @@ Use `AGENTS.md` to choose relevant docs.
 
 ## Verification
 
-Run the verification named by the plan when practical for the owned surface.
+Run preliminary verification named by the plan when practical for the owned surface.
 Run the planned adversarial checks for complex or cross-cutting work. Report
 failures honestly; if verification is impossible here, say why.
 
