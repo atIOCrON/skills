@@ -35,7 +35,7 @@ an independently installed skill.
 ## Artifacts
 
 `<artifact_dir>` is created by the owning loop at
-`plans/<plan_slug>.reviews/<phase>-pass<N>/`.
+`<feature_dir>/<plan_slug>.reviews/<phase>-pass<N>/`.
 
 Persist for each reviewer:
 

@@ -1,7 +1,7 @@
 # Cross-Pass Triage Ledger Protocol
 
 The code-review orchestration run maintains a single cross-pass ledger of
-material concerns at `plans/<plan_slug>.reviews/code-review-triage-ledger.md`
+material concerns at `<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`
 with one row per distinct material concern:
 
 ```text

@@ -15,19 +15,25 @@ Ledger, material, and artefact terms are defined in
 
 ## Scope
 
-- Treat an implementation as completed when `plans/<slug>.md` has a sibling artefact folder such as `plans/<slug>.reviews/`.
-- Exclude `plans/done/`; audit only root-level `plans/<slug>.md` files with sibling artefact folders.
+- Audit completed features under `plans/done/<slug>/` by default. Audit a
+  named feature or stage when the user asks, including ongoing reviews.
+- Each feature contains `<slug>.md` and any `<slug>.reviews/`,
+  `<slug>.execution/`, and `<slug>.evidence/` folders. A review folder alone
+  does not establish completion.
 - Do not edit files unless the user explicitly asks for plans or fixes after the audit.
 
 ## Method
 
 1. Read `AGENTS.md`, then only the docs relevant to the artefacts found.
-2. List candidate artefact folders:
+2. List candidate artefact folders in the selected stage:
 
 ```bash
-find plans -maxdepth 2 -type d -name "*.reviews" | sort
-find plans -maxdepth 2 -type f | sort
+find plans/done -mindepth 2 -maxdepth 2 -type d -name "*.reviews" | sort
+find plans/done -mindepth 2 -maxdepth 2 -type f -name "*.md" | sort
 ```
+
+Use the requested stage instead for other audits. Check that it exists before
+running `find`.
 
 3. For each in-scope artefact folder, inspect:
    - `code-review-triage-ledger.md`

@@ -10,7 +10,7 @@ dependency-parent branch and pinned base SHA, plan branch, candidate commit,
 neutral pack, reviewer preflight status, and verification evidence.
 
 The cross-pass material concern ledger is
-`plans/<plan_slug>.reviews/code-review-triage-ledger.md`.
+`<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`.
 
 ## Pass Policy
 
@@ -25,22 +25,24 @@ For each pass:
    remote tip, and latest verified SHA. Confirm the dependency-parent head
    still equals the pinned base SHA and remains an ancestor.
 2. Refresh `code-review-pack` for the base and review SHAs.
-3. Create `plans/<plan_slug>.reviews/code-review-pass<N>/`.
+3. Create `<feature_dir>/<plan_slug>.reviews/code-review-pass<N>/`.
 4. Run `multi-review-pass-runner` with `code-review.md` and
    `code-review-loop-code-review-invocation.md`. Start all reviewers fresh and
    require exhaustive review after the first blocker.
 5. Triage all outputs once. Batch accepted blocker and should-fix findings
    for the original implementation worker; do not routinely fix nits.
-6. For accepted fixes, resume that worker, then:
+6. For accepted fixes, move the feature to `in_progress/`, resolve its new
+   paths, and resume that worker, then:
    - prepare an exact tree through `staged-diff-scope`;
    - create a new commit through `git-branch-commit`;
    - verify the new SHA through `verification-runner` in a clean worktree;
    - push it through `git-sync-branch` and check remote SHA equality;
-   - refresh the neutral pack.
+   - move the feature back to `review/`, resolve its paths, and refresh the
+     neutral pack.
 7. Resume each originating reviewer once with its findings, original and
    current review SHAs, applied changes, and verification evidence. Apply
    proposed ledger transitions through the orchestrator; never share another
-   reviewer's findings.
+   reviewer's findings. Use artefact paths from the feature's current stage.
 8. Repeat fixes and targeted closure until those findings close or need a
    user decision. Use targeted closure for a rejected material finding only
    when triage is uncertain, evidence conflicts, or the user requests it.

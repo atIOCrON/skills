@@ -7,7 +7,7 @@ rebuttals. Do not edit implementation files.
 
 Require reviewer responses, plan path, pass number, intended implementation
 scope, review base and commit SHAs, neutral pack, and cross-pass ledger path:
-`plans/<plan_slug>.reviews/code-review-triage-ledger.md`.
+`<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`.
 
 ## Read First
 
