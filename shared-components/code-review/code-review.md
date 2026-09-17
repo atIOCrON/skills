@@ -16,7 +16,8 @@ git merge-base --is-ancestor <base-sha> <review-sha>
 ```
 
 Use only explicit SHAs. Ignore the index and working tree. Read committed file
-content with `git show <review-sha>:<path>` when needed. Stop if the diff is
+content with `git show "${R}:path/to/file"` after setting `R` to the full review
+SHA; quote the entire object expression in zsh. Stop if the diff is
 empty, either SHA is unresolved, ancestry is wrong, or the pack does not match
 the resolved objects.
 

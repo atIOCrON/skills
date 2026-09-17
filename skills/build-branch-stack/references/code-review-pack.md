@@ -15,6 +15,8 @@ diff-stat.txt
 changes.diff
 ownership-map.md
 verification-summary.md
+evidence-manifest.json
+acceptance-gates.md
 deterministic-checks.md
 hash-manifest.sha256
 ```
@@ -28,6 +30,34 @@ engineering practice may inform a finding but is not a binding repository rule.
 `ownership-map.md` maps each changed path to plan scope or owner. Capture each
 deterministic command, exit status, and literal output.
 
+Include the smallest pinned chain that determines changed behavior: the
+component, its caller or theme consumer, relevant layout or DI binding, and
+locked vendor method when applicable. Put targeted excerpts or Git object IDs
+and SHA-256 hashes in `index.md` or a linked context file. Identify each source
+path and revision; explain omitted links. Do not copy whole vendor trees into
+the pack. For package provenance, identify the exact lock entry and package or
+archive used to establish what the vendor ships.
+
+In `evidence-manifest.json`, record the review SHA and one entry per required
+check: `id`, `kind` (`agent` or `external`), `required`, `last_run_sha` (full
+commit SHA or `null`), `command`, `runtime`, `result` (`passed`, `failed`,
+`pending`, or `blocked_by_environment`), `log_path`, and `log_sha256`. Use
+`null` paths and hashes when no log exists. A result from an older SHA must
+remain visible with its old `last_run_sha`; it cannot count as a passed required
+agent check on the current SHA. Link each log from `verification-summary.md`.
+Link supporting files with local Markdown links. Run
+`scripts/validate_review_pack.py <pack-dir> <repo-root>` after creating or
+refreshing the manifest; it checks local Markdown links, file hashes, check
+fields, and log hashes. Fix errors before review. Include every pack file except
+`hash-manifest.sha256` in the hash manifest; never hash the hash manifest itself.
+
+In `acceptance-gates.md`, list each human or external gate separately from code
+review findings. Record `passed`, `pending`, or `blocked by environment`, the
+tested SHA or release, owner, procedure, and evidence location. State what
+prevents a pending check and what will unblock it. A pending external gate does
+not become a code-review defect merely because it cannot run here; retain its
+required status for the later acceptance or production decision.
+
 After a restack, link its old/new ranges, `range-diff`, delta classifications,
 and deterministic evidence from `index.md`.
 
@@ -35,6 +65,12 @@ For vendor-derived changes, also record the exact package version or archive
 hash, lockfile evidence, pristine and patched trees, complete hash manifests,
 strict apply results without fuzz or offsets, and required byte comparisons.
 Keep large trees outside review artefacts and link them from `index.md`.
+Run `scripts/strict_patch_replay.sh <tree> <patch> <log> <strip-level>` for each
+patch in registered order on an isolated tree. The
+script requires GNU patch, uses `--fuzz=0`, rejects reported fuzz or offsets,
+and saves the raw apply output even on failure. Link each log and its hash from
+the pack. Do not infer strict application from a successful `patch --fuzz=0`
+exit alone.
 
 ## Deterministic Checks
 
@@ -57,7 +93,8 @@ Build the pack before pass 1. After a fix commit or restack, refresh the commit,
 diff, hashes, deterministic results, and verification evidence. Do not rebuild
 an unchanged vendor baseline.
 For evidence-only closure, keep the pinned diff and SHAs, refresh the evidence
-links and affected deterministic results, and record what changed in the pack.
+links, manifest, hashes, and affected deterministic results, and record what
+changed in the pack. Rerun the validator after each refresh.
 
 Fresh reviewers receive only the pinned diff, approved plan, repository
 standards, reproducible inputs, verification results, and this pack. Exclude
