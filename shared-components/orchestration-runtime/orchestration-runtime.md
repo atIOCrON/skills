@@ -13,9 +13,9 @@ These automated reviews are pre-review evidence, not repository approval. A
 qualified independent reviewer or required Code Owner must approve the final
 SHA under repository policy.
 
-Native execution must support start, wait, resume, and final-output capture.
+Use native execution's start, wait, resume, and final-output capture operations.
 Persist native output and session metadata in the same artifact shape as CLI
-reviewers. Stop if the host cannot provide those operations.
+reviewers.
 
 Resolve `orchestration_skill_root` to the directory containing the active
 `SKILL.md`. Invoke bundled scripts with absolute paths under that directory.
