@@ -43,6 +43,8 @@ Include:
 - triage ledger path and terminal-status counts;
 - confirmation no non-terminal ledger entries remain;
 - stack manifest path and final stack-check evidence;
+- pending human or external acceptance checks, their procedures and owners,
+  and any authorized limitation decisions;
 - `## Skill Feedback For User Review` with entries or `- None`;
 - final state: blocker or `Verified and pushed, ready for human review`.
 

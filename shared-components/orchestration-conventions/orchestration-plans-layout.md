@@ -22,18 +22,28 @@ so stage moves preserve them.
 - `backlog`: a newly written plan, not yet selected for implementation.
 - `to_do`: a reviewed plan selected for the current implementation batch.
   Move only selected plans from `backlog`.
-- `in_progress`: implementation, code review, fixes, restacks, and final stack
-  checks are underway. Keep the feature here throughout the code review loop.
-- `review`: the branch passed code review and final stack checks and is ready
-  for human review. Keep it here while its change request is open. Return it to
-  `in_progress` if a fix or restack is needed.
-- `done`: the change request was merged and its landed commit confirmed. Move
-  the feature here after confirmation and update recorded paths.
+- `in_progress`: implementation, fixes, CLI code review loops, commits,
+  restacks, or agent-run checks are underway, or a check found a defect. Keep
+  the feature here throughout the code review loop.
+- `review`: the branch is committed and verified, code review findings are
+  resolved, agent-run implementation and final stack checks pass, and remaining
+  human or external acceptance checks are recorded with procedures and owners.
+  Keep it here while those checks are pending or its change request is open.
+  Return it to `in_progress` if a check finds a defect or a fix or restack is
+  needed. An unavailable sandbox wallet can leave Google Pay acceptance
+  pending here; a failed wallet test sends the feature back for a fix and fresh
+  verification and review.
+- `done`: every human or external acceptance check passed or its limitation
+  was explicitly accepted by an authorized decision maker. The change request
+  must also be merged and its landed commit confirmed. Move the feature here
+  after those conditions are met and update recorded paths.
 
 For repair runs, move only affected features and descendants back to
 `in_progress` when changes are needed. Leave unaffected features in place.
 For features already in `done/` under the earlier stage convention, verify the
-change request state and move unmerged features to `review/`.
+change request and acceptance evidence. Move features with pending acceptance
+or unmerged change requests to `review/`; a failed acceptance check needing a
+fix sends the feature to `in_progress/`.
 
 ## Artefacts
 

@@ -50,7 +50,9 @@ verification changes:
 Use `Queued`, `In progress`, `Blocked`, or `Ready for human review`. The last
 status requires the feature in `review/`, a clean-reviewed, verified final SHA
 matching local, upstream, and remote tips, a pinned parent, preserved artefacts,
-and passed final stack checks. Number review passes; never predict a final pass.
+passed agent-run implementation and final stack checks, and a recorded list of
+remaining human or external acceptance checks. Pending external acceptance does
+not make the branch `Blocked`. Number review passes; never predict a final pass.
 
 ## Readiness
 
@@ -59,9 +61,11 @@ plans, branch refs, and available CI. Identify required verification for each
 touched surface, its prerequisites (such as locked dependencies, services,
 fixtures, or disabled components), and whether CI runs on the target branches.
 Prepare reproducible local checks for requirements CI cannot run. If a required
-gate or prerequisite is missing, resolve its scope and ownership before
-implementation; do not silently add unrelated CI or tooling work. Record the
-intended commands and any agreed gap in plan evidence.
+agent-run gate or prerequisite is missing, resolve its scope and ownership before
+implementation; do not silently add unrelated CI or tooling work. Distinguish
+checks the agent can run from human or external acceptance (such as a sandbox
+wallet test). Record intended commands, any agreed gate gap, and each external
+check's procedure, owner, and pending result in plan evidence.
 
 ## Workflow
 
@@ -106,9 +110,10 @@ After all plans:
    integration commit from the pinned base in merge order and test it. Check
    that CI required by the plan, user, or repository policy runs on the target
    branches and covers applicable behavior tests and risk-based lint, type,
-   dependency, secret, and static checks. Run required checks locally where CI
-   is optional or cannot cover them. Stop if a required check is absent or
-   cannot run.
+   dependency, secret, and static checks. Run required agent-run checks locally
+   where CI is optional or cannot cover them. Stop if a required agent-run check
+   is absent, cannot run, or fails; record human or external acceptance as
+   pending with its procedure and owner when it cannot yet be performed.
 2. When `scripts/codex/protected_full_pipeline.py` exists, run it with the
    committed lock-selected seed and baseline:
 
@@ -123,8 +128,13 @@ Keep bulk output outside artefact folders and index concise evidence under
 the last plan. Never publish or refresh protected seed or baseline data here.
 Treat a lock mismatch or unexpected output as a blocker.
 
-After all final checks pass, move selected features still in `in_progress/` to
-`review/`; leave unaffected features already in `review/` or `done/` there.
+After all agent-run implementation and final stack checks pass, code review
+findings are resolved, and remaining human or external acceptance checks are
+recorded, move selected features still in `in_progress/` to `review/`; leave
+unaffected features already in `review/` or `done/` there. Pending external
+acceptance alone does not delay this move or the subsequent artefact audit.
+If acceptance later reveals a defect, return the affected feature and
+descendants to `in_progress/` for a fix, fresh verification, and code review.
 Write the stack manifest at the last plan's final evidence path and check every
 recorded plan and artefact path. If a move or manifest write fails, return any
 just-moved features to `in_progress/` and report the blocker.
@@ -153,6 +163,12 @@ separately from branch readiness.
 - Stop for failed verification, unresolved findings, unsafe commits, revision
   mismatch, or unpreserved artefacts. When the full-pipeline export test
   exists, do not skip it unless the user cancels it.
+- Do not mark a feature `done/` while external acceptance is pending or a
+  failure remains unresolved. Record passed checks or an authorized decision
+  explicitly accepting each limitation before `done/`; retain the confirmed
+  merge requirement in `references/orchestration-plans-layout.md`.
+- Pending external acceptance also blocks a production decision unless an
+  authorized decision explicitly accepts the limitation.
 
 ## Handoff
 
@@ -161,7 +177,9 @@ Record the base branch and pinned SHA. For each branch, record its plan,
 dependency evidence, current feature and artefact paths, parent branch and
 pinned SHA, local, upstream, and remote tip and tree SHAs, verification
 commands and result, and clean review SHA and passes. Record final integration
-and protected-pipeline commands, tested SHAs, and results. Report
+and protected-pipeline commands, tested SHAs, and results. Include outstanding
+human or external acceptance checks, their owners and procedures, and any
+authorized limitation decisions. Report
 `Verified and pushed, ready for human review` or the blocker, plus each
 feature's audit ledger path, decisions, backlog plans created or reused, and
 any audit work still pending. This skill creates no CR.

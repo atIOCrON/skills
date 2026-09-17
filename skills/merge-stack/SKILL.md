@@ -35,6 +35,10 @@ For a stack built by `build-branch-stack`, load its manifest and map each source
 branch to one feature before merging. Require unmerged features under
 `plans/review/`; allow confirmed merged features already under `plans/done/`
 when resuming. Stop on a missing or ambiguous mapping or a destination collision.
+For each mapped feature, confirm that its human or external acceptance checks
+passed or an authorized decision explicitly accepted each limitation. Record
+`none applicable` if there are no such checks. Pending acceptance blocks the
+merge and the move to `done/`.
 
 ```bash
 provider=<gitlab|github|auto>
@@ -142,6 +146,11 @@ For each ordered branch:
 4. Refresh state and squash-merge the exact approved and checked head against
    the recorded target and base:
 
+   For a mapped feature, require the acceptance evidence or authorized
+   limitation decision to apply to this exact head. After a rebase, refresh
+   that evidence or record why the prior result still applies. Stop if its
+   applicability cannot be established.
+
    ```bash
      scripts/merge_stack_change.sh \
      "$provider" "$remote" <id> <head-sha> <target> <base-sha> \
@@ -209,7 +218,8 @@ scripts/cleanup_merged_branches.sh "$remote" "$base" <record-file>
 ```
 
 After merge attempts and any applicable cleanup, move each confirmed merged
-feature still in `plans/review/` to `plans/done/`, including after a partial run.
+feature with completed or explicitly accepted acceptance checks from
+`plans/review/` to `plans/done/`, including after a partial run.
 Leave unmerged features in `review/`. Refresh the manifest's plan and artefact
 paths, including its own path if moved, and verify them. If a move or manifest
 update fails, report the confirmed merges and remaining stage work; do not undo
