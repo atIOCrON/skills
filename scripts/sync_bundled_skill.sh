@@ -9,6 +9,8 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 branch_bundle="$repo_root/skills/build-branch-stack"
 publish_bundle="$repo_root/skills/open-stack-requests"
 merge_bundle="$repo_root/skills/merge-stack"
+rebuild_bundle="$repo_root/skills/rebuild-staging-with-branches"
+integration_bundle="$repo_root/skills/integrate-and-test-staging"
 failed=0
 
 sync_one() {
@@ -61,6 +63,8 @@ shared-components/multi-review-pass-runner/scripts/resume_review.sh|scripts/resu
 shared-components/multi-review-pass-runner/scripts/test_launch_reviewers.sh|scripts/test_launch_reviewers.sh
 shared-components/multi-review-pass-runner/scripts/test_runtime_launchers.sh|scripts/test_runtime_launchers.sh
 shared-components/reviewer-preflight/scripts/run_reviewer_preflight.sh|scripts/run_reviewer_preflight.sh
+shared-components/release-manifest/release-manifest.md|references/release-manifest.md
+shared-components/release-manifest/scripts/validate_release_manifest.py|scripts/validate_release_manifest.py
 EOF
 
 while IFS='|' read -r source target; do
@@ -74,9 +78,25 @@ shared-components/change-request-lifecycle/bitbucket-cloud.md|references/change-
 shared-components/orchestration-conventions/orchestration-change-requests.md|references/orchestration-change-requests.md
 shared-components/orchestration-conventions/orchestration-plans-layout.md|references/orchestration-plans-layout.md
 shared-components/forge-cli/scripts/ensure_forge_cli.sh|scripts/ensure_forge_cli.sh
+shared-components/release-manifest/release-manifest.md|references/release-manifest.md
+shared-components/release-manifest/scripts/validate_release_manifest.py|scripts/validate_release_manifest.py
 EOF
 
 sync_one shared-components/orchestration-conventions/orchestration-plans-layout.md \
   "$merge_bundle" references/orchestration-plans-layout.md
+sync_one shared-components/release-manifest/release-manifest.md \
+  "$merge_bundle" references/release-manifest.md
+sync_one shared-components/release-manifest/scripts/validate_release_manifest.py \
+  "$merge_bundle" scripts/validate_release_manifest.py
+
+sync_one shared-components/release-manifest/release-manifest.md \
+  "$rebuild_bundle" references/release-manifest.md
+sync_one shared-components/release-manifest/scripts/validate_release_manifest.py \
+  "$rebuild_bundle" scripts/validate_release_manifest.py
+
+sync_one shared-components/release-manifest/release-manifest.md \
+  "$integration_bundle" references/release-manifest.md
+sync_one shared-components/release-manifest/scripts/validate_release_manifest.py \
+  "$integration_bundle" scripts/validate_release_manifest.py
 
 exit "$failed"

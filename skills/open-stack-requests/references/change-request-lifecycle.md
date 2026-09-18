@@ -1,8 +1,9 @@
 # Change Request Lifecycle
 
 Publish one locally verified and clean-reviewed branch as a draft change
-request (CR), then mark it ready after applicable forge checks pass. Do not
-edit, commit, push, merge, or delete branches.
+request (CR) as soon as it is stable, then mark it ready after frozen-release
+and forge checks pass. Update only the canonical manifest; do not edit product
+code, commit, push, merge, or delete branches.
 
 ## Select The Provider
 
@@ -43,20 +44,25 @@ provider, and no dirty file overlapping the CR diff. Use
 `origin/<target>...refs/heads/<source>` for log and diff inspection. For create,
 refresh, and ready modes, require synchronized upstream; require the source
 SHA to equal the local branch ref, upstream, and verified SHA. When ready, also
-require the latest clean review SHA. Require the target SHA to equal the pinned
-base and remain an ancestor.
+require all three latest clean review SHAs or their equal-range-diff mappings.
+Require the target SHA to equal the pinned base and remain an ancestor.
 For return to draft after detected movement, allow only the SHA or upstream
 mismatch being invalidated; fetch and record the actual refs and preserve CR
 identity before changing readiness. Do not accept the new source SHA as verified.
 
-Create exactly one draft CR with an explicit source and target. Refresh its
-title and description after every accepted source change. Return it and all
-ready descendants to draft before a changed source or target is reviewed.
-Mark it ready only when the stack manifest's final checks, verified and
-clean-reviewed SHA, current source and target SHAs, and applicable forge checks
-agree. Then request a qualified independent reviewer allowed by repository
-policy. A skipped pipeline does not count as a pass; record when no CR checks
-apply.
+Create exactly one draft CR with the manifest source and target. Generate its
+title and description from current manifest and branch evidence; refresh them
+after every accepted source or target change. Record its URL and state in the
+manifest. Return it and all ready descendants to draft before a changed source
+or target is reviewed. A proven equal-range-diff mechanical restack may retain
+all three reviews, but the CR must still point at the verified new SHA.
+
+Mark it ready only when the frozen manifest's final checks, verified SHA, clean
+reviews from all three providers or their equal-range-diff mappings, current
+source and target SHAs, and applicable forge checks agree. Then request a
+qualified independent reviewer allowed by repository policy. A skipped
+pipeline does not count as a pass;
+record when no CR checks apply.
 
 Compose metadata with `change-request-description.md`. Never merge the CR,
 delete its branch, or change repository-wide settings. Stop for duplicate CRs,

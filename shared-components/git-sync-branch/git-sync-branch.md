@@ -22,10 +22,11 @@ For a later verified fix, require the fetched remote tip to equal the recorded
 tip and be an ancestor of the new local commit. Push with the same explicit
 refspec without `-u`.
 
-For a reviewed restack, require a recoverable backup ref, a clean review of
-the new tip, and the recorded old remote tip. If a change request exists, the
-publication skill must return it and ready descendants to draft before the
-restack. Push only with:
+For a reviewed restack, require a recoverable backup ref, the recorded old
+remote tip, and either clean reviews from all three reviewers on the new tip or
+proven equal-range-diff mappings from all three prior reviews. If a change
+request exists, the publication skill must return it and ready descendants to
+draft before the restack. Push only with:
 
 ```bash
 git push --force-with-lease=refs/heads/<branch-name>:<old-remote-sha> \
@@ -34,5 +35,6 @@ git push --force-with-lease=refs/heads/<branch-name>:<old-remote-sha> \
 
 Never use an unqualified force push. After each push, fetch and require local,
 upstream, remote, and verified SHAs to match. At final branch handoff, also
-require the latest clean-reviewed SHA. Stop for a failed push, lease mismatch,
-unexpected remote change, or revision drift.
+require all three clean reviews on the final SHA or their recorded
+equal-range-diff mappings. Stop for a failed push, lease mismatch, unexpected
+remote change, or revision drift.

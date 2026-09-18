@@ -35,14 +35,16 @@ Include:
 Include:
 
 - plan path and files changed;
-- pinned parent and final verified, reviewed, local, and remote branch SHAs;
+- pinned parent and final verified, local, and remote branch SHAs, plus the
+  three clean-review SHAs or their equal-range-diff review mappings;
 - clean-worktree verification commands and status;
 - code-review pass count and one-line outcome per pass;
 - rejected/deferred findings with evidence or recorded reason;
 - reviewer artifact paths, including failures;
 - triage ledger path and terminal-status counts;
 - confirmation no non-terminal ledger entries remain;
-- stack manifest path and final stack-check evidence;
+- canonical release-manifest path, validation result, freeze state, and final
+  stack-check evidence;
 - pending human or external acceptance checks, their procedures and owners,
   and any authorized limitation decisions;
 - `## Skill Feedback For User Review` with entries or `- None`;

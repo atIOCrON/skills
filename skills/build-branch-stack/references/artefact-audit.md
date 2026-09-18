@@ -1,8 +1,8 @@
 # Artefact Audit at Branch Handoff
 
 Audit the selected features after their agent-run branch and stack checks pass,
-their artefacts are preserved under `plans/review/<slug>/`, and the stack
-manifest records the reviewed and tested SHAs. On a repair run, re-audit
+their artefacts are preserved under `plans/review/<slug>/`, and the canonical
+release manifest records the reviewed and tested SHAs. On a repair run, re-audit
 affected features and descendants whose evidence or code snapshot changed.
 Human or external acceptance may still be pending; record it separately from
 the audit's follow-up planning decisions.
