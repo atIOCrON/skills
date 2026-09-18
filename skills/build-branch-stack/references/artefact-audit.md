@@ -25,8 +25,9 @@ or the tested temporary integration commit for an ordered independent batch.
 Use an exact verified feature tip when no combined snapshot exists. Record the
 SHA actually checked and mark a cross-branch question pending if no tested
 snapshot can resolve it. Do not describe unmerged branch code as merged code.
-Check existing plans across all stages and legacy `plans/<slug>.md` files in
-the tested snapshot and primary checkout for an equivalent outcome.
+Check existing specifications, slice maps, plans across all stages, and legacy
+`plans/<slug>.md` files in the tested snapshot and primary checkout for an
+equivalent outcome.
 
 Create a new plan only when the work is still needed, specific enough to
 define an outcome, substantial enough for the planning workflow, and not
@@ -48,27 +49,29 @@ audit snapshot SHA, audit date, artefact paths reviewed, and one row per
 distinct candidate:
 
 ```text
-| Candidate | Source artefact | Current-code evidence | Decision | Reason | Plan slug |
+| Candidate | Source artefact | Current-code evidence | Decision | Reason | Planning reference |
 ```
 
 Use `planned`, `not planned`, `current-plan fix`, or `pending` for the decision.
 Explain why each candidate received that decision, including resolved issues,
 duplicates, existing-plan coverage, advisory-only notes, and work too vague or
-minor to plan. Record an existing plan's slug when it already covers the
-candidate; use `none` when no plan covers it. If no candidates were found,
+minor to plan. Record the existing specification and slice-plan slugs when they
+already cover the candidate; use `none` when no planning artefact covers it. If no candidates were found,
 record that fact and the artefacts checked. On a rerun, update that feature's
 ledger and reconcile existing plans; do not append duplicate rows or plans.
 Refer to source artefacts by feature-relative path so later stage moves preserve the
 references. Refer to a follow-up plan by its slug.
 
-For each `planned` candidate, create a unique lowercase snake_case feature at
-`plans/backlog/<slug>/<slug>.md`, following the repository's plan conventions.
-State the observed problem and evidence, minimum outcome, scope and non-goals,
-and observable acceptance conditions. Include the source feature, candidate,
-verified tip SHA, and audit snapshot SHA so the plan can be traced to the
-decision. Translate review suggestions into required outcomes unless a
-mechanism is itself a binding constraint. Do not implement these plans or
-move them out of `backlog/` here.
+Route each `planned` candidate through the same two planning stages as new work.
+Create or reuse a parent specification under `plans/specs/` with stable
+acceptance IDs. After the user approves the slice breakdown, create the slice
+map and child plans under `plans/backlog/`. A candidate that already represents
+one cohesive vertical slice still needs a one-entry slice map. If several
+outcomes can ship, fail, or roll back independently, do not create one aggregate
+backlog plan; leave the decomposition pending user approval. Include the source
+feature, candidate, verified tip SHA, and audit snapshot SHA for traceability.
+Translate review suggestions into outcomes unless a mechanism is binding. Do
+not implement child plans or move them out of `backlog/` here.
 
 Write the ledgers and plans in the user's primary checkout, not a temporary
 verification worktree. Preserve unrelated work and keep these new files out

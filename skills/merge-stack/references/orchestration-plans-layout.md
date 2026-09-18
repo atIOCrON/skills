@@ -1,15 +1,45 @@
 # Plans Layout
 
-Each feature has one plan. Its directory and plan filename share a lowercase
-`snake_case` slug:
+Broad feature specifications and executable vertical-slice plans have separate
+lifecycles:
 
 ```text
+plans/specs/<spec_slug>/<spec_slug>.md
+plans/specs/<spec_slug>/<spec_slug>.slices.md
 plans/<stage>/<slug>/<slug>.md
 plans/<stage>/<slug>/<slug>.reviews/
 plans/<stage>/<slug>/<slug>.execution/
 plans/<stage>/<slug>/<slug>.evidence/
 plans/releases/<release-id>/manifest.json
 ```
+
+A specification defines the complete outcome and stable acceptance IDs. Keep it
+at this path; record its lifecycle inside the document as `draft`, `approved`,
+`fulfilled`, or `superseded`. Only an `approved` specification may be sliced or
+built. Delivery progress is derived from its child plans, not from an
+`in_progress` specification state.
+
+The `.slices.md` file is the approved decomposition manifest. It gives every
+acceptance ID one owning slice and records each slice's outcome, blockers,
+verification boundary, rollback boundary, and exclusions. It uses slice slugs,
+not stage-dependent paths, and does not duplicate branch, plan-stage, release,
+or deployment state. Its `Slice Map Status` is `approved` or `stale`.
+Specifications and slice maps never move through stage directories and are not
+branch implementation inputs.
+
+A material change to an approved or fulfilled specification returns it to
+`draft` and makes its slice map `stale`. Clarifications that preserve acceptance
+IDs, scope, binding decisions, authorized complexity, and external acceptance
+retain status. After reapproval, revise the decomposition and obtain user
+approval before restoring the slice map to `approved`.
+
+Each staged feature is one approved vertical slice. Its directory and plan
+filename share a lowercase `snake_case` slug. The plan references its parent
+specification and approved slice map, owns a cohesive set of acceptance IDs,
+excludes sibling outcomes, and has an independent verification and rollback
+boundary.
+An explicitly classified legacy plan may stand alone only after it passes the
+same cohesion check.
 
 Stages are `backlog`, `to_do`, `in_progress`, `review`, and `done`. Use the
 feature's current directory as `<feature_dir>` in other references. Move the

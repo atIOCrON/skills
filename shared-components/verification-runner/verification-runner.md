@@ -30,7 +30,14 @@ setup and commands so the clean-worktree result is reproducible.
 3. Confirm the temporary worktree is clean and its `HEAD` is the candidate SHA.
 4. Run every required plan command from the temporary worktree root. Add focused
    checks when touched-surface risk justifies them. Require proportionate
-   regression tests for changed behavior even when the plan omits them.
+   behavioural regression tests even when the plan omits them. For browser or
+   provider lifecycle logic, exercise applicable renderer replacement,
+   concurrent value changes, fresh user activation, cancellation, failure and
+   retry, token invalidation, and reauthorization at the highest practical
+   local seam. Source-text, snapshot, mutation, and patch-shape checks are
+   supplementary; they cannot be the primary proof of runtime behaviour.
+   Record unavailable real-provider checks as external acceptance rather than
+   replacing local behavioural coverage with structural assertions.
 5. Keep bulk output outside plan artefact folders. Save commands, exit status,
    concise results, candidate SHA, and evidence links under
    `<feature_dir>/<plan_slug>.evidence/` in the primary checkout.
