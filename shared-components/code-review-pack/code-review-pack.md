@@ -59,7 +59,11 @@ not become a code-review defect merely because it cannot run here; retain its
 required status for the later acceptance or production decision.
 
 After a restack, link its old/new ranges, `range-diff`, delta classifications,
-and deterministic evidence from `index.md`.
+and deterministic evidence from `index.md`. When the range diff is equal and
+the restack is conflict-free, record the old-to-new SHA mappings and retained
+evidence from all three reviews. Require a fresh three-reviewer discovery pass
+for manual resolutions, unequal range diffs, changed generated output, or
+behavior changes.
 
 For vendor-derived changes, also record the exact package version or archive
 hash, lockfile evidence, pristine and patched trees, complete hash manifests,
@@ -90,8 +94,10 @@ A failed check, unexplained delta, or SHA mismatch blocks review.
 ## Refresh Policy
 
 Build the pack before pass 1. After a fix commit or restack, refresh the commit,
-diff, hashes, deterministic results, and verification evidence. Do not rebuild
-an unchanged vendor baseline.
+diff, hashes, deterministic results, and verification evidence. Preserve and
+link all three prior clean reviews for a proven equal-range-diff restack;
+otherwise run a fresh three-reviewer discovery pass. Do not rebuild an
+unchanged vendor baseline.
 For evidence-only closure, keep the pinned diff and SHAs, refresh the evidence
 links, manifest, hashes, and affected deterministic results, and record what
 changed in the pack. Rerun the validator after each refresh.

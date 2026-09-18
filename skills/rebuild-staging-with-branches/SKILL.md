@@ -1,74 +1,109 @@
 ---
 name: rebuild-staging-with-branches
-description: Build an integration branch from pinned master and selected feature branches, validate it, then replace staging and verify deployment.
+description: Reproducibly build a frozen release manifest, replace staging once, and verify the deployed candidate.
 disable-model-invocation: true
 metadata:
   layer: runner
 ---
 
-Make staging match a tested integration of origin/master and the
-user’s selected branches.
+# Rebuild Staging With Branches
 
-Do not change master, deploy production, or disturb existing local
-work. Perform integration work in a separate disposable checkout.
+Make staging match one tested candidate from a frozen release manifest. Do not
+change master, deploy production, or disturb existing local work. Use a
+separate disposable checkout.
 
-1. Fetch origin. Pin master and each selected branch to full commit
-   SHAs. Check staging directly on origin; record its SHA or absence.
-   Distinguish local branches from remote branches. If their tips
-   differ and the intended source is unclear, resolve that before
-   merging. Exclude uncommitted changes.
+## Input
 
-2. Create feature/staging-integration/<UTC-timestamp> from pinned
-   master. Inspect feature ancestry for dependencies and unrelated
-   commits. Merge pinned feature SHAs in dependency order, preserving
-   shared ancestry. Do not merge old staging or add unrequested
-   branches. Resolve conflicts in the integration checkout; stop
-   when resolution requires an unresolved product decision.
+Read `references/release-manifest.md`. Require and validate the canonical JSON
+manifest; do not reconstruct release scope from a Sheet, prose list, local
+branches, or staging history. Require `state: frozen` and verify every recorded
+Git ref, SHA, exclusion, dependency, all three review mappings, and evidence
+path.
 
-3. Validate the complete candidate. Confirm pinned master and every
-   selected feature tip are ancestors. Review the diff against master,
-   including conflict resolutions. Check dependency locks and patch
-   order. Run the required build, tests, and relevant regressions.
-   Commit integration fixes and pin the final candidate SHA.
+A frozen candidate has no branch-count limit. If its graph or acceptance cost
+is risky, report a supported split recommendation, but do not shrink or reject
+the user's release scope because of size.
 
-4. Inspect pipeline and deployment scripts from the candidate.
-   Preserve deployment guards. Resolve deployment prerequisites before
-   updating staging; report anything outside the authorized scope.
-   Check for active staging deployments. Record the running release
-   and preserve its rollback artifact.
+## Build
 
-5. Recheck remote staging. If it exists, create and verify a remote
-   backup pointing to its full SHA:
+1. Fetch origin. Re-resolve the manifest's base and branch tips to their full
+   SHAs. Check staging directly on origin and record its SHA or absence.
+   Exclude uncommitted changes. Stop on manifest or remote drift.
+2. Create `feature/staging-integration/<UTC-timestamp>` from the pinned base.
+   Merge the pinned feature SHAs in manifest order, preserving demonstrated
+   ancestry. Do not merge old staging, infer extra branches, or include a
+   manifest exclusion.
+3. Classify every conflict:
+   - a behavioral or patch-preimage conflict is dependency evidence or a
+     product decision;
+   - a generated `composer.lock` or routine `composer.json` conflict is not a
+     dependency by itself. Regenerate it with the pinned toolchain and locked
+     inputs, then prove the result deterministically.
+4. Resolve authorized integration conflicts only in the integration checkout.
+   Never rewrite or restack source branches to repair an integration-only
+   resolution. If source behavior is defective, return only the affected
+   branch and demonstrated descendants to `build-branch-stack`.
+5. Write a conflict-resolution report recording files, classification,
+   resolution, commands, and resulting tree. With unchanged pinned inputs,
+   revise only the integration resolution and impacted checks; do not rebuild
+   or rereview the source stack.
 
-   backup/staging-before-rebuild/<UTC-timestamp>-<12-character-sha>
+Record the exact merge order, input SHAs, toolchain, commands, candidate commit
+and tree SHAs, and conflict report under `integration` in the manifest. A
+repeat build from the same inputs may have a different commit timestamp, but it
+must produce the same tree unless the report explains the difference.
 
-   Use YYYYMMDDTHHMMSSZ. Create backups with an explicit absence lease;
-   never overwrite one. If staging is absent, record that fact.
-   A source backup does not preserve the deployed release or database.
+## Validate
 
-6. Push and verify the candidate under its unique integration branch.
-   Then update staging once, directly to the candidate SHA.
+- Confirm the pinned base and every included feature tip are ancestors of the
+  candidate, and no exclusion is an ancestor solely through an accidental
+  merge.
+- Run Claude, Codex, and Cursor when manual conflict resolutions or
+  integration-specific behavior require review. Do not rereview already clean
+  logical changes or proven equal-range-diff restacks.
+- Use the exact CI PHP, Composer, architecture, and lock inputs where the
+  repository provides them. Reuse only checksum-keyed Composer and pristine
+  vendor caches; a cache hit is not verification.
+- Run one clean locked dependency install for the candidate. Replay patches in
+  declared order. Select focused tests from every branch's declared surfaces
+  and checks, then run combined risk-based smoke tests.
+- Record checks against the candidate SHA and tree SHA. Do not reuse results
+  after either changes unless their applicability is proven.
 
-   If staging exists:
+Stop on an unresolved product decision, failed required check, undeclared
+dependency, manifest drift, or unexplained tree difference.
 
-   git push --force-with-lease=refs/heads/staging:<old-staging-sha> origin <candidate-sha>:refs/heads/staging
+## Replace Staging
 
-   If staging is absent:
+Inspect deployment scripts from the candidate and preserve their guards. Check
+for active staging deployments. Record the running release and rollback
+artifact. Recheck remote staging immediately before mutation.
 
-   git push --force-with-lease=refs/heads/staging: origin <candidate-sha>:refs/heads/staging
+If staging exists, create and verify this remote backup with an explicit
+absence lease; never overwrite it:
 
-   Never use plain --force or bypass branch protection. If the lease
-   fails, recheck deployments and back up the new tip before retrying.
-   Stop if concurrent updates continue. Do not deploy intermediate
-   integration commits.
+```text
+backup/staging-before-rebuild/<UTC-timestamp>-<12-character-sha>
+```
 
-7. Follow the staging pipeline for the candidate SHA. Verify remote
-   staging, the deployed release, pipeline result, application health,
-   and relevant regressions. If deployment fails, establish rollback
-   compatibility before using the repository’s recovery procedure.
-   If staging already matches the candidate, rerun deployment only
-   when the running release needs it.
+Push and verify the unique integration branch, then update staging once to the
+candidate SHA with an explicit lease. Never use plain `--force`, bypass branch
+protection, or deploy intermediate commits. If the lease fails, recheck active
+deployments and back up the new tip before one retry; stop if updates continue.
 
-Report the source SHAs, integration branch and candidate SHA, backup
-or prior branch absence, previous and deployed releases, pipeline
-result, checks, and unresolved failures.
+Follow one staging pipeline for the candidate SHA. If staging already runs that
+candidate, do not redeploy unless the running release is unhealthy or differs.
+Verify remote staging, deployed release, pipeline result, application health,
+and manifest-selected regressions. Establish rollback compatibility before any
+recovery action.
+
+Update the manifest to `staged` only after candidate identity and deployment
+are verified. Record previous and deployed releases, rollback release,
+pipeline, checks, acceptance state, and evidence.
+
+## Report
+
+Report the manifest path, source SHAs, integration branch, candidate commit and
+tree SHAs, conflict report, backup or prior branch absence, previous and
+deployed releases, pipeline result, checks, accepted gaps, and unresolved
+failures. Distinguish deployment success from acceptance results.

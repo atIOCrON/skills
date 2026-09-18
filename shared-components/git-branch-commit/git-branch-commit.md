@@ -45,15 +45,18 @@ After `staged-diff-scope` approves a candidate tree:
 
 An adopted tip that already contains the requested work needs no empty commit;
 verify and review its exact SHA. Create a new commit for every accepted fix
-batch. Changing a reviewed commit invalidates its review. Never amend a
-published commit.
+batch. Changing reviewed behavior invalidates its reviews. A conflict-free
+mechanical restack may retain all three reviews only under the Restack rules
+below. Never amend a published commit.
 
 ## Reviewed Revision
 
-Before handoff, require the local branch tip, upstream, fetched remote tip,
-latest clean-reviewed SHA, and latest verified SHA to match. Require the parent
-head to equal its pinned SHA and remain an ancestor. A changed parent needs a
-restack, verification, review, and synchronized push.
+Before handoff, require the local branch tip, upstream, fetched remote tip, and
+latest verified SHA to match. Require clean reviews from all three reviewers on
+that SHA or recorded equal-range-diff mappings from all three prior reviews.
+Require the parent head to equal its pinned SHA and remain an ancestor. A
+changed parent needs a restack, verification, review-policy decision, and
+synchronized push.
 
 ## Restack
 
@@ -69,11 +72,14 @@ first.
 3. Compare ranges with `git range-diff` and deterministic patch, tree, and
    generated-output checks. Classify each delta as `verbatim`, `mechanical
    regeneration`, or `intentional behavior change`.
-4. Verify the new tip in a clean detached worktree. Apply normal scope,
-   verification, and review gates to intentional changes. Update the pinned
-   base and review pack, then run a fresh review of the new range.
+4. Verify the new tip in a clean detached worktree and update the pinned base
+   and review pack. For a conflict-free restack with equal `range-diff` and
+   deterministic patch evidence, record the old-to-new SHA mappings and retain
+   all three prior reviews. Run a fresh three-reviewer pass for any manual
+   resolution, unequal range diff, changed generated output, or intentional
+   behavior change.
 
-After clean review, use `git-sync-branch.md` for the lease-protected push. Stop
-for an unexpected source change, an existing ready change request, or an
-unclassified delta. Report branch, parent and candidate SHAs, verification,
-restack evidence, and unrelated local files.
+After all three reviews are clean, use `git-sync-branch.md` for the
+lease-protected push. Stop for an unexpected source change, an existing ready
+change request, or an unclassified delta. Report branch, parent and candidate
+SHAs, verification, restack evidence, and unrelated local files.

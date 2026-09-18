@@ -22,8 +22,9 @@ Read `references/stacked-change-requests.md` before classifying the layout.
 Read `references/provider-contract.md` when adding or debugging a provider and
 `references/run-journal.md` before mutation. Read
 `references/orchestration-plans-layout.md` for a stack built by
-`build-branch-stack`. Read `references/post-merge-cleanup.md` only after every
-change merges.
+`build-branch-stack`. Read `references/release-manifest.md` and validate the
+canonical manifest before using it. Read `references/post-merge-cleanup.md`
+only after every change merges.
 
 ## Inputs and Preflight
 
@@ -126,8 +127,12 @@ For each ordered branch:
    ```
 
    Record both SHAs. The script aborts conflicts. After any rewrite, use
-   `git range-diff`, verify the new head, and require independent approval of
-   that exact SHA before continuing.
+   `git range-diff` and verify the new head. A conflict-free rebase with equal
+   range diff retains all three prior reviews; record their old-to-new SHA
+   mappings. A manual resolution, unequal range diff, changed generated output,
+   or behavior change requires a fresh Claude, Codex, and Cursor review pass.
+   Exact-head forge approval and checks still apply when repository policy
+   requires them.
 
 2. Wait for checks on the exact head:
 

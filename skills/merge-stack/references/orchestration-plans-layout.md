@@ -8,6 +8,7 @@ plans/<stage>/<slug>/<slug>.md
 plans/<stage>/<slug>/<slug>.reviews/
 plans/<stage>/<slug>/<slug>.execution/
 plans/<stage>/<slug>/<slug>.evidence/
+plans/releases/<release-id>/manifest.json
 ```
 
 Stages are `backlog`, `to_do`, `in_progress`, `review`, and `done`. Use the
@@ -18,6 +19,12 @@ reviewer is using its old path. Resolve the new plan and artefact paths before
 the next step, and refresh any handoff or manifest references. Create stage
 directories as needed. Keep links within a feature relative to its directory
 so stage moves preserve them.
+
+Release manifests live outside feature stage directories so plan moves do not
+move the release source of truth. Keep branch order, targets, SHAs, checks,
+acceptance, CRs, integration, and deployment state in the canonical JSON
+manifest. Treat spreadsheets and prose summaries as generated or reconciled
+views, not competing authorities.
 
 - `backlog`: a newly written plan, not yet selected for implementation.
 - `to_do`: a reviewed plan selected for the current implementation batch.
