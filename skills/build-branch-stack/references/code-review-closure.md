@@ -60,7 +60,8 @@ Do not create entries. The orchestrator applies these mappings:
 - `## Rejection Accepted` -> ledger status `rejected`.
 - `## Still Open` -> ledger status remains non-terminal (`accepted-fix-pending`
   if the worker fix is incomplete, `re-opened` if the entry was previously
-  `resolved` and the concern recurs, otherwise `open`).
+  `resolved` and the concern recurs, preserve `architecture-review-required`
+  when already set, otherwise `open`).
 - `## Needs User Decision` -> ledger status remains non-terminal (typically
   `open` or `accepted-fix-pending`); the orchestrator pauses for user
   decision before the next pass.

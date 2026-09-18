@@ -230,6 +230,16 @@ paths, including its own path if moved, and verify them. If a move or manifest
 update fails, report the confirmed merges and remaining stage work; do not undo
 a merge.
 
+After those moves, reconcile each affected parent specification. Require an
+`approved` specification and `approved` slice map, then locate every mapped
+slice slug exactly once across the stage directories. Change the specification
+status to `fulfilled` only when every mapped slice is in `done/`; that stage
+already proves merge and completed or explicitly accepted acceptance. Leave it
+`approved` when any slice remains elsewhere. Stop the status update on a stale
+map, missing or duplicate slug, or inconsistent acceptance ownership, but do
+not undo confirmed merges. Do not infer a parent specification for legacy
+plans. Report every specification status change or reason it remained open.
+
 ## Invariants
 
 - Preserve unrelated work; never stash, revert, or stage it during merging.
@@ -248,5 +258,5 @@ a merge.
 
 Return provider, remote, base, layout and dependency evidence, ordered changes,
 targets, approval/check SHAs, rebases, landed SHAs, journal path, resulting base
-SHA, feature stages, remote-deletion and local-cleanup status, and unattempted
-branches.
+SHA, feature stages, specification statuses, remote-deletion and local-cleanup
+status, and unattempted branches.

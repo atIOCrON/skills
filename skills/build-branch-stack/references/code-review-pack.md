@@ -23,7 +23,11 @@ hash-manifest.sha256
 
 `index.md` records the plan, dependency-parent branch and pinned base SHA,
 plan branch, review commit and tree SHAs, creation time, and evidence paths.
-It also records which standards sources were found. If `AGENTS.md` is absent,
+Link the slice's parent specification, slice map, and design checkpoint. Record
+whether the actual production surfaces stayed within the checkpoint and identify
+any new state owner, coordinator, lifecycle interception, whole-template
+replacement, or other architectural layer. It also records which standards
+sources were found. If `AGENTS.md` is absent,
 say so and identify the applicable plan, repository docs and configuration,
 affected contracts, tests, and nearby patterns used for review. General
 engineering practice may inform a finding but is not a binding repository rule.
@@ -102,9 +106,12 @@ For evidence-only closure, keep the pinned diff and SHAs, refresh the evidence
 links, manifest, hashes, and affected deterministic results, and record what
 changed in the pack. Rerun the validator after each refresh.
 
-Fresh reviewers receive only the pinned diff, approved plan, repository
-standards, reproducible inputs, verification results, and this pack. Exclude
-prior findings, triage, fix narratives, conclusions, and review hints.
+Fresh reviewers receive only the pinned diff, approved plan, parent
+specification, slice map, design checkpoint, repository standards, reproducible
+inputs, verification results, and this pack. Distinguish behavioural evidence
+from source-text, snapshot, mutation, and patch-shape assertions; structural
+checks cannot stand in for runtime lifecycle proof. Exclude prior findings,
+triage, fix narratives, conclusions, and review hints.
 
 ## Output
 

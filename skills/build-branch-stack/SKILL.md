@@ -1,6 +1,6 @@
 ---
 name: build-branch-stack
-description: Build verified, reviewed remote branches and maintain the canonical release manifest before integration.
+description: Build approved vertical-slice plans as proportionate, verified, reviewed remote branches and maintain the canonical release manifest before integration.
 disable-model-invocation: true
 metadata:
   layer: runner
@@ -8,10 +8,11 @@ metadata:
 
 # Build Branch Stack
 
-Build and push release branches from reviewed plans. Record each stable branch
-in the canonical release manifest. Use `open-stack-requests` in draft mode as
-branches stabilize when the task authorizes change-request (CR) publication;
-do not wait for release assembly.
+Build and push release branches from reviewed vertical-slice plans. Parent
+feature specifications are context, not executable branch inputs. Record each
+stable branch in the canonical release manifest. Use `open-stack-requests` in
+draft mode as branches stabilize when the task authorizes change-request (CR)
+publication; do not wait for release assembly.
 
 ## Resources
 
@@ -27,8 +28,10 @@ manifest.
 
 ## Inputs
 
-- Ordered reviewed feature plans at `plans/<stage>/<slug>/<slug>.md`, or
-  selected legacy `plans/<slug>.md` files to migrate.
+- Ordered reviewed vertical-slice plans at
+  `plans/<stage>/<slug>/<slug>.md`, each linked to its approved parent
+  specification and slice map, or selected legacy plans explicitly classified
+  as cohesive slices.
 - Base branch: the remote default unless the user names another.
 - Starting branch: the base unless the user names an existing parent.
 - Plan branch: create one by default, or use a user-selected existing branch
@@ -44,8 +47,9 @@ Input order alone does not establish a dependency. Branch independent plans
 from the base. If a plan needs multiple unmerged predecessors, stop for a
 different split or a merged prerequisite; do not invent a linear parent.
 Release scope follows what must ship. Never impose a branch-count cap. When
-the graph, conflict surface, or acceptance cost is unusually high, recommend a
-smaller split with concrete evidence, but let the user decide release scope.
+the graph, conflict surface, or acceptance cost is unusually high, return the
+work for a smaller split with concrete evidence. The user controls release
+scope; this runner controls whether one branch is a safe implementation unit.
 
 ## Progress
 
@@ -68,15 +72,36 @@ passes; never predict a final pass.
 ## Readiness
 
 Before moving plans or editing code, inspect repository instructions, selected
-plans, branch refs, and available CI. Identify required verification for each
-touched surface, its prerequisites (such as locked dependencies, services,
+plans, parent specifications, slice maps, branch refs, and available CI. Reject
+a parent specification as an implementation input. Require each parent
+specification and slice map to have status `approved`; stop on a `draft`,
+`fulfilled`, `superseded`, or `stale` input. Resolve each plan by its mapped
+slice slug rather than a stage-dependent path. For each selected plan, answer
+before creating or adopting a branch:
+
+- What single actor-visible or integration-visible outcome does it deliver?
+- Can any acceptance group ship, fail, or roll back independently?
+- Does it combine providers, SDKs, lifecycle owners, or external acceptance
+  environments?
+- Would a cross-cutting coordinator exist only because unrelated outcomes were
+  grouped?
+- Does every owned acceptance ID map to this slice, with sibling outcomes
+  explicitly excluded?
+
+Stop and return the plan for decomposition when it fails this cohesion gate.
+An explicitly classified legacy plan must meet the same standard.
+
+Identify required verification for each touched surface, its prerequisites
+(such as locked dependencies, services,
 fixtures, or disabled components), and whether CI runs on the target branches.
 Prepare reproducible local checks for requirements CI cannot run. If a required
 agent-run gate or prerequisite is missing, resolve its scope and ownership before
 implementation; do not silently add unrelated CI or tooling work. Distinguish
 checks the agent can run from human or external acceptance (such as a sandbox
 wallet test). Record intended commands, any agreed gate gap, and each external
-check's procedure, owner, and pending result in plan evidence.
+check's procedure, owner, and pending result in plan evidence. Runtime lifecycle
+logic requires executable local behavioural proof at the highest practical
+seam; source-shape assertions may supplement but not replace it.
 
 ## Workflow
 
@@ -101,7 +126,10 @@ For each plan:
    `to_do/` to `in_progress/` before implementation. On a repair run, verify
    the existing branch and manifest instead of recreating it; move only
    affected features and descendants back to `in_progress/` when needed.
-3. Follow `from-reviewed-plan-to-git-handoff.md`: selectively stage and review
+3. Follow `from-reviewed-plan-to-git-handoff.md`. Before editing, require the
+   implementation worker to create the design checkpoint specified by
+   `plan-implement.md`; stop if it exposes a cohesion failure or unauthorized
+   architecture. Then selectively stage and review
    any new edits, commit if needed, and verify the exact commit in a clean worktree.
    Create or update the remote branch at the first verified commit. Push each
    verified fix and review the pinned parent-to-commit diff. Keep the feature in
@@ -174,18 +202,37 @@ return any just-moved features to `in_progress/` and report the blocker.
 Audit the selected features' preserved artefacts using
 `references/artefact-audit.md`. Verify candidate follow-ups against the tested
 stack state, record planning decisions in each feature's
-`<slug>.reviews/artefact-audit-ledger.md`, and create backlog plans for distinct
-work still worth doing. On repair runs, reconcile prior decisions and plans
-for affected features. Write these local planning files in the user's primary
+`<slug>.reviews/artefact-audit-ledger.md`, and route distinct work still worth
+doing through the specification and vertical-slice workflow. On repair runs,
+reconcile prior decisions and planning artefacts for affected features. Write
+these local planning files in the user's primary
 checkout without changing verified branch tips. Report an incomplete audit
 separately from branch readiness.
 
 ## Rules
 
 - Make the least-complex change that satisfies each plan and binding contract.
-- Require proportionate regression tests for changed behavior.
+- Require behavioural regression tests proportionate to the changed lifecycle;
+  structural assertions alone are insufficient evidence of runtime behaviour.
 - Map changed surfaces to plan scope or a binding contract. Stop for user
   approval before adding an unplanned deliverable.
+- Stop and return to architecture or slice planning when implementation would
+  introduce an unapproved page-global mutable coordinator, cross-provider
+  lifecycle manager, retry or recovery framework, whole vendor-template
+  replacement, one patch spanning independently testable defects, or local
+  ownership of upstream behaviour. Do the same when the production footprint
+  materially exceeds the design checkpoint. Line counts are signals, not fixed
+  limits.
+- Require the first discovery review to assess correctness and proportionality
+  separately, including alignment with the platform's native owner. Resolve a
+  proportionality failure by simplifying, splitting, upgrading, or choosing a
+  different extension mechanism.
+- Before accepting a finding, ask whether removing or simplifying new machinery
+  closes it. A finding does not authorize a new responsibility merely because
+  a broad acceptance condition can be cited.
+- If two successive discovery passes expose new failure modes caused by the
+  branch's coordinator, state machine, retry system, or lifecycle interception,
+  stop local fixes and return to architecture review.
 - Preserve unrelated dirty work; never broadly stage, clean, or revert it.
 - Review immutable commits, not the index. The index is a candidate-tree gate.
 - Run fresh Claude, Codex, and Cursor reviewers in parallel for every discovery
@@ -211,6 +258,7 @@ surfaces, checks, all three review mappings, CRs, exclusions, freeze, integratio
 acceptance, and deployment state; link detailed evidence instead of duplicating
 it. Report
 `Verified and pushed, ready for human review` or the blocker, plus each
-feature's audit ledger path, decisions, backlog plans created or reused, and
-any audit work still pending. State whether each draft CR was created by the
-publication skill or remains a next action. This skill creates no CR.
+feature's audit ledger path and decisions, any specifications, slice maps, or
+backlog plans created or reused, and incomplete audit work. State whether each
+draft CR was created by the publication skill or remains a next action. This
+skill creates no CR.

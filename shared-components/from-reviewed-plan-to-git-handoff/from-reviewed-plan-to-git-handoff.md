@@ -1,7 +1,8 @@
 # From Reviewed Plan To Git Handoff
 
-Implement one reviewed plan, push each verified revision, and obtain clean
-reviews from Claude, Codex, and Cursor. Do not create a change request.
+Implement one reviewed vertical-slice plan, push each verified revision, and
+obtain clean reviews from Claude, Codex, and Cursor. Do not create a change
+request.
 
 ## Inputs
 
@@ -11,8 +12,10 @@ caller creates or validates and checks out the plan branch first.
 
 ## Route
 
-1. Load the plan, `AGENTS.md` where present, and applicable repository
-   standards and contracts.
+1. Load the plan, its parent specification and slice map, `AGENTS.md` where
+   present, and applicable repository standards and contracts. Reject a parent
+   specification as an executable plan. Require the specification and slice map
+   to be `approved` and the plan's slice slug and acceptance ownership to match.
 2. Select the host mapping through `orchestration-runtime.md`. Have the initial
    implementation worker assess any adopted branch tip against the plan and
    complete remaining implementation.

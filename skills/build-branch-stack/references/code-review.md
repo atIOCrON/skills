@@ -44,6 +44,19 @@ Inspect every changed file, affected entry point, reader, state transition, and
 surrounding invariant. Continue after the first blocker and report every
 independent material defect established in this pass.
 
+Assess two questions separately:
+
+1. Is the implementation correct for the approved slice and its contracts?
+2. Is it proportionate and aligned with the platform's native ownership model?
+
+A proportionality problem is material when the branch introduces an
+unauthorized architectural layer, duplicates upstream or platform ownership,
+combines independently releasable responsibilities, materially exceeds its
+design checkpoint, or relies on source-shape assertions for runtime behaviour.
+Do not treat mere style or architecture preference as a defect. Recommend
+simplifying, splitting, upgrading, or using a narrower extension mechanism
+before adding guards to new machinery.
+
 A blocker or should-fix must establish a reachable supported failure, an
 affected-contract regression, or a binding policy or repository-standard
 violation. Unsupported inputs, hypothetical scale, future use, and architecture
@@ -76,6 +89,9 @@ empty sections.
 ## Related Existing Issues
 - [{finding_id}] [path/to/file.py:line] <pre-existing issue> - Evidence: <evidence> - Recommendation: <follow-up or why it blocks>
 
+## Proportionality
+- <Proportionate - native owner, extension mechanism, and behavioural evidence; or Not proportionate - finding IDs and concise reason>
+
 ## Skill Feedback
 - <non-blocking workflow feedback>
 ```
@@ -89,4 +105,4 @@ End with exactly one:
 
 Use `Address findings before next pass` only for should-fix findings. Keep the
 response machine-actionable, commit-pinned, specific, and concise. Output only
-the six sections and status line.
+the seven sections and status line. Use exactly one proportionality line.

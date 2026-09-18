@@ -5,7 +5,8 @@ exact plan-branch tip.
 
 ## Inputs
 
-Require the repository, host mapping, plan and slug, implementation scope,
+Require the repository, host mapping, vertical-slice plan and slug, parent
+specification, slice map, design checkpoint, implementation scope,
 dependency-parent branch and pinned base SHA, plan branch, candidate commit,
 neutral pack, reviewer preflight status, and verification evidence.
 
@@ -49,23 +50,31 @@ For each pass:
    `code-review-loop-code-review-invocation.md`. Start all three reviewers fresh
    and require exhaustive review after the first blocker.
 5. Triage all outputs once. Batch accepted blocker and should-fix findings
-   for the original implementation worker; do not routinely fix nits.
-6. For accepted fixes, keep the feature in `in_progress/` and resume that
+   for the original implementation worker; do not routinely fix nits. Before
+   dispatch, ask whether removing or simplifying new machinery is the smaller
+   resolution.
+6. If one branch-introduced coordinator, state machine, retry system, or
+   lifecycle interception caused newly discovered material failures in this and
+   the immediately preceding fresh pass, stop the fix loop. Mark the ledger as
+   `architecture-review-required` and return to the design checkpoint for
+   simplification, splitting, upgrade, upstream correction, or a different
+   extension mechanism.
+7. For accepted fixes, keep the feature in `in_progress/` and resume that
    worker, then:
    - prepare an exact tree through `staged-diff-scope`;
    - create a new commit through `git-branch-commit`;
    - verify the new SHA through `verification-runner` in a clean worktree;
    - push it through `git-sync-branch` and check remote SHA equality;
    - refresh the neutral pack at the current feature path.
-7. Resume each originating reviewer once with its findings, original and
+8. Resume each originating reviewer once with its findings, original and
    current review SHAs, applied changes, and verification evidence. Apply
    proposed ledger transitions through the orchestrator; never share another
    reviewer's findings. Use artefact paths from the feature's current stage.
-8. Repeat fixes and targeted closure until those findings close or need a
+9. Repeat fixes and targeted closure until those findings close or need a
    user decision. Use targeted closure for a rejected material finding when
    triage is uncertain, evidence conflicts, new evidence addresses it, or the
    user requests it.
-9. Resolve recurring escalations with the user before another fresh pass.
+10. Resolve recurring escalations with the user before another fresh pass.
 
 ## Completion
 

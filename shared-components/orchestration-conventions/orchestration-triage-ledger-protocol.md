@@ -5,7 +5,7 @@ material concerns at `<feature_dir>/<plan_slug>.reviews/code-review-triage-ledge
 with one row per distinct material concern:
 
 ```text
-| ledger_id | first_pass | last_pass | reviewers | concern (one line) | files | status | resolution evidence |
+| ledger_id | first_pass | last_pass | reviewers | concern (one line) | files | architecture source | status | resolution evidence |
 ```
 
 The orchestrator owns ledger writes. It applies entry changes from
@@ -15,7 +15,8 @@ Reviewers never write the ledger.
 ## Status Vocabulary
 
 - Non-terminal statuses: `open`, `accepted-fix-pending`, `re-opened`,
-  `recurring-escalation`. Any non-terminal entry blocks loop completion.
+  `recurring-escalation`, `architecture-review-required`. Any non-terminal
+  entry blocks loop completion.
 - Terminal statuses: `resolved`, `rejected`, `deferred-by-user`.
 
 `ledger_id` values are shaped `ledger-NN`, assigned as the next sequential
@@ -37,6 +38,11 @@ non-material plan mismatches, or non-blocking related existing issues.
   `first_pass` and `last_pass` equal to the current pass, status `open`, and
   the smallest concern phrasing that captures the root cause.
 
+Set `architecture source` to the branch-introduced coordinator, state machine,
+retry system, lifecycle interception, or other architectural layer that caused
+the finding; otherwise use `-`. When updating an older ledger without this
+column, add it and preserve every existing value.
+
 ## Recurrence And Re-opening
 
 If a matched entry's existing status is `resolved` or `rejected`, transition
@@ -49,6 +55,15 @@ three or more passes) must be set to status `recurring-escalation` and
 surfaced in the triage output with a one-line user-decision prompt (resolve,
 reject with evidence, defer, or continue investigating). The orchestrator
 pauses for the user before the next pass starts.
+
+Independently, if one architecture source causes newly discovered material
+failure modes in two successive fresh discovery passes, set its non-terminal
+entries to `architecture-review-required`. Stop local fixes before another
+worker dispatch. Return to the design checkpoint and decide whether to remove
+or simplify the machinery, split the slice, upgrade, use an upstream fix, or
+choose another extension mechanism. This two-pass ratchet applies across
+distinct findings with the same source; it does not wait for one concern to
+recur in three passes.
 
 ## Consolidation
 
