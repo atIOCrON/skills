@@ -1,6 +1,6 @@
 ---
 name: promote-branch-to-staging
-description: Point the disposable staging branch at one already-built feature tip, deploy the Bitbucket staging pipeline, and revert by restoring the backup SHA. Use when the user asks to push, promote, or test a finished feature on staging, or how that differs from a Bitbucket MR into staging. Not for resetting staging to master or rebuilding a multi-branch frozen manifest.
+description: Point the disposable staging branch at one already-built feature tip, deploy the Bitbucket staging pipeline, and revert by restoring the backup SHA. Use when the user asks to push, promote, or test a finished feature on staging, or how that differs from a Bitbucket MR into staging. Not for resetting staging to the remote default branch or rebuilding several user-selected branches.
 disable-model-invocation: true
 metadata:
   layer: runner
@@ -9,23 +9,24 @@ metadata:
 # Promote Branch To Staging
 
 Make `origin/staging` equal one already-pushed candidate SHA, then let the
-Bitbucket `staging` pipeline do a code-only deploy. Do not change `master`,
-rewrite frozen parent/integration/feature branches, deploy production, restore
-databases, replace media, or disturb local work.
+Bitbucket `staging` pipeline do a code-only deploy. Do not change the resolved
+base, rewrite pinned parent/integration/feature branches, deploy production,
+restore databases, replace media, or disturb local work.
 
 Use this skill only when **all** of these are true:
 
 - The candidate branch is finished and already on `origin`.
 - Current `origin/staging` is an **ancestor** of the candidate (fast-forward
   of what staging already runs). Typical case: staging still points at a
-  frozen `feature/staging-integration/<UTC>`, and the new feature was branched
+  pinned `feature/staging-integration/<UTC>`, and the new feature was branched
   from that exact SHA.
 - The user authorized moving the staging pointer. Do not promote unsolicited.
 
 Otherwise stop and use a different skill:
 
-- Staging should match `master` → `rebuild-staging-from-master`
-- Need to merge several pinned features from a frozen manifest →
+- Staging should match the remote default branch →
+  `rebuild-staging-from-default-branch`
+- Need to merge several user-selected branches on the resolved base →
   `rebuild-staging-with-branches`
 
 ## Why not a Bitbucket merge request into staging
@@ -35,11 +36,11 @@ Staging is a **leased disposable pointer**, not a merge target. An MR into
 makes revert a second merge instead of moving the pointer back.
 
 Practice: push the candidate SHA to `refs/heads/staging` with
-`--force-with-lease`. The feature branch, its frozen parent, and every source
+`--force-with-lease`. The feature branch, its pinned parent, and every source
 feature stay at their existing SHAs. Only `staging` moves. Revert moves it
 back.
 
-Do **not** create a extra `feature/staging-integration/<UTC>` that merely
+Do **not** create an extra `feature/staging-integration/<UTC>` that merely
 duplicates the candidate SHA. That name is for a rebuild that produces a new
 integration commit. A named feature already *is* the candidate.
 
@@ -47,8 +48,8 @@ integration commit. A named feature already *is* the candidate.
 
 Untouched (no new commits, no force-push):
 
-- `master`
-- frozen parent / previous integration branch
+- resolved base branch
+- pinned parent / previous integration branch
 - every feature that went into that parent
 - the candidate feature branch itself
 
@@ -64,13 +65,25 @@ Do not switch, reset, clean, stash, or edit local files. Fetch, then pin
 **full** SHAs from `origin`. Local Git metadata from fetch is the only local
 change.
 
+If the user names a base branch, use that branch from `origin`. Otherwise
+resolve the base with `git ls-remote --symref origin HEAD`; require one usable
+`refs/heads/<branch>` target. Do not assume `main`, `master`, or `develop`, and
+do not infer the base from the checked-out branch, `init.defaultBranch`, or a
+possibly stale local `origin/HEAD`. Stop if remote HEAD is missing, ambiguous,
+or points to `staging`.
+
 ```bash
-git fetch origin staging master "$FEATURE" "$PARENT"
+git fetch origin staging "$BASE" "$FEATURE" "$PARENT"
 CANDIDATE=$(git rev-parse "origin/$FEATURE")
 OLD_STAGING=$(git rev-parse origin/staging)
 PARENT_SHA=$(git rev-parse "origin/$PARENT")
-MASTER=$(git rev-parse origin/master)
+BASE_SHA=$(git rev-parse "origin/$BASE")
 ```
+
+For the base, feature, and parent, compare any corresponding local branch with
+the pinned origin SHA. Stop and report both SHAs if a local branch exists and
+differs. A missing local branch is fine. Never substitute a local tip. Do not
+compare or use a local `staging` branch.
 
 Stop unless:
 
@@ -152,7 +165,7 @@ not redeploy.
 Confirm:
 
 - `git ls-remote origin refs/heads/staging` == `CANDIDATE`
-- parent, feature, and `master` SHAs unchanged
+- parent, feature, and resolved base SHAs unchanged
 - backup still `OLD_STAGING`
 - live `current` is a new release; previous release still on disk
 - candidate files exist in `current` (patches/templates from the feature)
