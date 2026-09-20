@@ -67,7 +67,10 @@ providers on that SHA or recorded equal-range-diff mappings for all three,
 preserved artefacts, passed agent-run implementation and final stack checks,
 and recorded human or external checks.
 Pending external acceptance does not make the branch `Blocked`. Number review
-passes; never predict a final pass.
+passes. Never describe a current or future pass as “final,” “last,” “closing,” or
+“concluding.” A pass can only be identified retrospectively as the last completed
+pass after every completion condition is satisfied. Before then, call it “pass
+N,” “the current pass,” or “the next fresh pass.”
 
 ## Readiness
 

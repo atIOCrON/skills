@@ -21,6 +21,18 @@ One completed fresh pass plus terminal closure is sufficient when the reviewed
 commit has not changed. After a material fix, close the originating findings,
 then run a fresh pass on the new commit.
 
+**Prospective-language invariant:** Starting a fresh pass does not establish
+that it will be the final pass. Material findings may require fixes, targeted
+closure, and another fresh pass. In plans, progress updates, prompts, and
+handoffs, use the numbered pass only. Do not predict that it is the final review
+cycle.
+
+Correct: “Pass 6 is running against the verified SHA.”\
+Correct: “If pass 6 is clean, the branch may satisfy review completion.”\
+Incorrect: “The final pass is running.”\
+Incorrect: “This is the last review cycle.”\
+Retrospectively correct: “Pass 6 was the last required pass; review is complete.”
+
 A conflict-free restack does not require another discovery review when
 `git range-diff` is equal and deterministic patch checks show the logical
 change is unchanged. Verify the new commit, record the old-to-new SHA mapping,
