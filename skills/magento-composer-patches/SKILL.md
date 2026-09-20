@@ -1,31 +1,151 @@
 ---
 name: magento-composer-patches
-description: Create or revise Composer-managed Magento 2 vendor patches, including patch ordering, regeneration and sequential verification. Excludes Magento setup data and schema patches.
+description: Create or revise Composer-managed Magento 2 vendor patches, including patch ownership, ordering, deterministic regeneration, strict replay, and effective-result verification. Excludes Magento setup data and schema patches.
 disable-model-invocation: false
 metadata:
   layer: capability
 ---
 
-# Magento 2 Patch Guidelines
+# Magento Composer Patches
 
-1. **Read the repository policy and classify the change.** If `docs/composer-patches.md` exists, read it before editing and treat it as authoritative for repository-specific patch categories, application order and branch landing order. Inspect the locked package, registered patches and their application order. Distinguish defects in the original module from project-specific customisations and defects introduced by those customisations.
+Use this capability for Composer-managed modifications to locked Magento 2
+packages. Repository policy is authoritative. If `docs/composer-patches.md`
+exists, read it before editing and use its categories, paths, strip levels,
+registration order, and branch landing order.
 
-2. **Confirm a patch is the right ownership boundary.** Use a Composer patch for a narrow defect or customisation against a locked package. Before patching general lifecycle behaviour, compare the package's documented extension point, a project module or adapter, a package upgrade, and an upstream correction. Stop for explicit architecture approval if the change would replace whole templates, introduce shared mutable browser state, coordinate providers, add a retry or recovery framework, or make the project own a substantial upstream subsystem. Patch mechanics and clean replay do not make that architecture proportionate.
+## Classify Ownership Before Editing
 
-3. **Keep module bug fixes standalone and first.** Register module bug-fix patches before customisation patches for the same package. Each module bug-fix patch must apply independently to the clean, locked package and contain only the changes needed to fix that module defect. It must not depend on project customisations or another local patch. Keep it suitable for submission to the module developers.
+Inspect the locked package, registered patches, their exact application order,
+and the effective installed code. Distinguish:
 
-4. **Order dependent work deliberately.** Follow the repository policy when it defines patch categories or ordering. Otherwise, place independently applicable and vendor-neutral changes before integrations that depend on project-specific modules, data or behavior. Stack and land overlapping or order-dependent same-package branches in final patch application order; do not develop them in parallel from the same base. A branch may change only the patches it owns. Assign each affected patch already on the base branch to an owner, preferably a narrowly named regeneration branch for that concern. Later patch files remain out of scope until their branch rebases onto the final earlier branch.
+- a defect in the pristine locked package;
+- a defect introduced by an existing project patch;
+- a project-specific customization; and
+- an integration that depends on other project code or data.
 
-5. **Revise the existing patch for the same concern.** When changing an existing customisation or fixing a defect it introduced, update the patch that owns it. Likewise, revise the existing bug-fix patch when correcting or completing the same module fix. Do not add another patch merely to correct or extend an existing patch. Separate plans and branches do not require separate patch files. If an existing patch mixes a module bug fix with customisation, extract the module fix into a standalone patch on its owning branch. Once that branch is final, rebase the customisation's owning branch onto it and rebuild its patch there.
+Compare the package's supported Magento plugin, observer or event, layout/XML
+extension, project module or adapter, package upgrade, and upstream correction
+before choosing a Composer patch. Repository policy decides which mechanisms
+are supported. A patch is appropriate for a narrow locked-package defect or
+authorized customization; clean mechanics do not make broad local ownership
+proportionate.
 
-6. **Separate distinct concerns.** Create a new patch for an independent module bug fix or customisation when no existing patch suitably owns the change. Give it a clear, descriptive name. Do not bundle project-specific behavior into a module bug fix or combine independently testable defects merely because they touch the same package.
+Stop for architecture approval before a permanent dependency modification
+that lacks a supported extension point, replaces a substantial dependency-owned
+surface, coordinates providers, introduces shared mutable browser state or a
+retry/recovery framework, or makes the project own an upstream subsystem.
 
-7. **Use the correct baseline.** Generate standalone module bug-fix patches against clean, locked package sources. Generate customisation patches against the locked package with all preceding registered patches applied, including module bug fixes. Never generate a revised patch against its own previously patched output. If an earlier patch changes or moves, do not rebuild later patches in that branch. Once the earlier owning branch is final, rebase each affected later owning branch onto it and rebuild only that later branch's patches there. Intermediate branches with unregenerated later patches are review layers; do not promote them independently. Resolve overlaps while preserving both standalone bug-fix applicability and the full application sequence.
+## Patch Ownership and Order
 
-8. **Keep the diff narrow and maintain registration.** Preserve unrelated behavior. Exclude formatting churn, generated files and local configuration. Changes made only in `vendor/` are not deliverables. Follow repository conventions for paths, strip depth and Composer metadata. Preserve locked versions and references unless an upgrade is authorized. Treat a patch or replacement template whose footprint grows far beyond the demonstrated defect as a signal to stop and reassess ownership; do not use a fixed line limit.
+Keep original-package bug fixes standalone and first. Each must apply to the
+pristine locked package without project customizations or another local patch
+and remain suitable for upstream reporting. Put independently applicable,
+vendor-neutral changes before project integrations unless repository policy
+says otherwise.
 
-9. **Verify independently and in sequence.** Verify each module bug-fix patch against a separate clean copy of the locked package, without other local patches. On a split branch, apply and verify the registered sequence only through the patches that branch owns. Do not apply or repair unrebased later patches. After each later branch rebases, verify the sequence through its owned patches on that branch. At the final integration tip, apply and verify every registered patch before deployment or promotion. Investigate rejected hunks, fuzz and unexpected offsets within the sequence under test. Compare the resulting code with the intended change; run syntax and behavioural checks. For browser or provider lifecycle changes, source-shape assertions are supplementary: exercise state transitions, cancellation, retry, current values, and replacement at the highest practical local seam. Keep unavailable real-provider acceptance pending rather than substituting structural checks. For module fixes, reproduce the original defect and verify the fix without project customisations. Preserve required diff context whitespace.
+Revise the existing patch that owns a concern. Do not add a follow-up patch
+merely to correct or extend it. Create a new patch only for a distinct defect or
+customization, and never combine independently testable defects merely because
+they touch one package. If one patch mixes an upstream defect with project
+customization, extract the upstream fix on its owning branch, then rebase and
+regenerate the customization on top.
 
-10. **Prepare module fixes for upstream reporting.** Provide the affected package and locked version, a concise defect description, reproduction steps or a regression test, expected and actual behavior, and verification results alongside the standalone patch. State any verification limitations. Preparing these materials does not imply submitting them to the module developers.
+Stack overlapping same-package branches in final patch order. A branch changes
+only the patches it owns. Earlier patches must be finalized before dependent
+later patches are regenerated. Intermediate branches with stale later patches
+are review layers and must not be promoted independently.
 
-Report which patches changed, why any new patch was needed, the final application and branch landing order, and what independent and full-sequence verification passed.
+Use these baselines:
+
+- an original-package bug fix: the pristine locked package;
+- a customization: the locked package with every preceding registered patch;
+- a revised patch: the correct baseline without that patch's old output.
+
+Temporary edits inside `vendor/` may help author a patch, but they are never the
+deliverable. Preserve locked versions and references unless an upgrade is
+authorized. Exclude formatting churn, generated files, and local configuration.
+
+## Verification Phases
+
+### Authoring
+
+Work against the correct baseline and run the smallest fast checks that expose
+syntax, patch shape, and the targeted behavior. A validated immutable baseline
+or patch-prefix cache may be reused. Regenerate only the patch currently owned;
+do not repair unrebased later patches in the same branch.
+
+### Candidate
+
+Regenerate the owned patch from the correct pristine or preceding-prefix tree.
+Replay each patch in scope with:
+
+```bash
+scripts/strict_patch_replay.sh <tree> <patch-file> <log-file> <strip-level>
+```
+
+The script requires GNU patch, sets `--fuzz=0`, rejects reported fuzz or
+offsets, and preserves raw output in the named log. A zero exit from another
+patch command is not equivalent evidence.
+
+Record the locked package version or archive hash, lock evidence, pristine or
+prefix tree identity, ordered patch identities, strip level, GNU patch identity,
+strict replay logs, and effective result tree identity. Compare the resulting
+code byte-for-byte where repository policy requires it. Review and test both
+the patch source and the effective resulting code. Run syntax and focused
+behavioral tests. For lifecycle changes, exercise state transitions,
+cancellation, retries, current-value changes, and replacement at the highest
+practical local seam; source-shape checks remain supplementary.
+
+### Integration
+
+At the final integration tip, reconstruct the pristine locked package and
+strictly replay the complete registered patch sequence in order. Verify the
+effective full tree and run combined syntax, build, and behavioral regression
+checks before deployment or promotion. Keep unavailable real-provider checks
+as explicit external acceptance rather than substituting structural evidence.
+
+## Immutable Prefix Cache
+
+Use `scripts/prepare_patch_prefix_cache.py` when repeated authoring or review
+would otherwise reconstruct the same pristine package and ordered patch prefix:
+
+```bash
+python scripts/prepare_patch_prefix_cache.py \
+  --pristine-tree <tree> \
+  --cache-root <cache-directory> \
+  --strip-level <n> \
+  --patch <first.patch> \
+  --patch <second.patch>
+```
+
+The cache key covers the pristine tree contents, patch bytes and order, strip
+level, strict-replay script, and GNU patch identity. A hit is valid only when
+the manifest inputs and cached output tree hash still match. Any changed input
+produces a different key. A corrupted entry blocks reuse and is never silently
+overwritten. Keep the cache outside versioned review artefacts; link its
+manifest and relevant logs from the review evidence.
+
+## Patch-Pressure Report
+
+When deciding whether an accumulating patch set should become a maintained fork
+or a different extension, report repository-derived evidence rather than a
+fixed threshold. Include package and locked version, patch count and order,
+changed lines or bytes, overlap between patches, upstream churn or divergence,
+strict replay failures or offsets, available supported extension points, and
+the observed regeneration and regression-test burden. Treat the report as an
+architecture input, not automatic authorization to fork.
+
+## Upstream Report
+
+For an original-package fix, provide the affected package and locked version, a
+concise defect description, reproduction steps or a regression test, expected
+and actual behavior, the standalone patch, and verification results. State any
+limitations. Preparing this material does not submit it upstream.
+
+## Output
+
+Report the ownership classification, changed patches, why each new patch was
+needed, final application and branch landing order, cache identity when used,
+authoring checks, candidate replay and effective-result verification,
+integration-sequence verification, patch-pressure conclusion when applicable,
+and any external acceptance still pending.

@@ -97,6 +97,13 @@ An explicitly classified legacy plan must meet the same standard.
 Identify required verification for each touched surface, its prerequisites
 (such as locked dependencies, services,
 fixtures, or disabled components), and whether CI runs on the target branches.
+Detect and select every applicable capability skill for specialized changed surfaces.
+Require each selected capability to define fast authoring checks, exact
+candidate verification, final integration verification, and the immutable
+input identities that permit safe reuse. It must also identify the source
+representation and the effective generated or runtime result reviewers need.
+Record those commands and evidence here without copying ecosystem-specific
+procedures into this orchestration skill.
 Prepare reproducible local checks for requirements CI cannot run. If a required
 agent-run gate or prerequisite is missing, resolve its scope and ownership before
 implementation; do not silently add unrelated CI or tooling work. Distinguish
@@ -132,7 +139,9 @@ For each plan:
 3. Follow `from-reviewed-plan-to-git-handoff.md`. Before editing, require the
    implementation worker to create the design checkpoint specified by
    `plan-implement.md`; stop if it exposes a cohesion failure or unauthorized
-   architecture. Then selectively stage and review
+   architecture. Run the applicable capability's authoring checks during
+   implementation and its exact candidate verification before accepting the
+   candidate. Then selectively stage and review
    any new edits, commit if needed, and verify the exact commit in a clean worktree.
    Create or update the remote branch at the first verified commit. Push each
    verified fix and review the pinned parent-to-commit diff. Keep the feature in
@@ -154,7 +163,7 @@ there through verification and code review. Synchronize reviewed tips with
 explicit leases.
 Classify each delta as `verbatim`, `mechanical regeneration`, or
 `intentional behavior change`. Verify every new tip. A conflict-free restack
-with equal `range-diff` and deterministic patch evidence retains all three
+with equal `range-diff` and deterministic identity evidence retains all three
 prior reviews; record their old-to-new SHA mappings. A fresh three-reviewer pass
 is required for manual resolutions, unequal range diffs, changed generated
 output, or behavior changes. An unexpected local branch change needs a scope
@@ -165,6 +174,8 @@ After all plans:
 1. Run deterministic pre-handoff checks on every chain head and independent
    branch. For an ordered independent batch, build an unpushed temporary
    integration commit from the pinned base in merge order and test it. Check
+   the applicable capabilities' final integration verification against each
+   exact chain head or temporary integration commit. Check
    that CI required by the plan, user, or repository policy runs on the target
    branches and covers applicable behavior tests and risk-based lint, type,
    dependency, secret, and static checks. Run required agent-run checks locally
@@ -221,11 +232,14 @@ separately from branch readiness.
   approval before adding an unplanned deliverable.
 - Stop and return to architecture or slice planning when implementation would
   introduce an unapproved page-global mutable coordinator, cross-provider
-  lifecycle manager, retry or recovery framework, whole vendor-template
-  replacement, one patch spanning independently testable defects, or local
-  ownership of upstream behaviour. Do the same when the production footprint
-  materially exceeds the design checkpoint. Line counts are signals, not fixed
-  limits.
+  lifecycle manager, retry or recovery framework, substantial replacement of
+  a dependency-owned surface, one permanent dependency modification spanning
+  independently testable defects, or local ownership of unsupported upstream
+  behaviour. Do the same when the production footprint materially exceeds the
+  design checkpoint. Line counts are signals, not fixed limits.
+- Escalate a permanent dependency modification when no supported extension
+  point exists or the project would assume ongoing ownership of upstream
+  behaviour.
 - Require the first discovery review to assess correctness and proportionality
   separately, including alignment with the platform's native owner. Resolve a
   proportionality failure by simplifying, splitting, upgrading, or choosing a

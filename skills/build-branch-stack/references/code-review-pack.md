@@ -34,13 +34,15 @@ engineering practice may inform a finding but is not a binding repository rule.
 `ownership-map.md` maps each changed path to plan scope or owner. Capture each
 deterministic command, exit status, and literal output.
 
-Include the smallest pinned chain that determines changed behavior: the
-component, its caller or theme consumer, relevant layout or DI binding, and
-locked vendor method when applicable. Put targeted excerpts or Git object IDs
-and SHA-256 hashes in `index.md` or a linked context file. Identify each source
-path and revision; explain omitted links. Do not copy whole vendor trees into
-the pack. For package provenance, identify the exact lock entry and package or
-archive used to establish what the vendor ships.
+Include the smallest pinned chain that determines changed behavior: the source
+representation, any generator or transformation configuration, and the
+consumer, runtime binding, or effective result. Put targeted excerpts or Git
+object IDs and SHA-256 hashes in `index.md` or a linked context file. Identify
+each source path and revision; explain omitted links. For generated or derived
+deliverables, show reviewers both the source representation and the effective
+result, plus the capability-provided content, configuration, and toolchain
+identities that determine it. Keep large input or result trees outside the
+pack and link them from `index.md`.
 
 In `evidence-manifest.json`, record the review SHA and one entry per required
 check: `id`, `kind` (`agent` or `external`), `required`, `last_run_sha` (full
@@ -69,16 +71,11 @@ evidence from all three reviews. Require a fresh three-reviewer discovery pass
 for manual resolutions, unequal range diffs, changed generated output, or
 behavior changes.
 
-For vendor-derived changes, also record the exact package version or archive
-hash, lockfile evidence, pristine and patched trees, complete hash manifests,
-strict apply results without fuzz or offsets, and required byte comparisons.
-Keep large trees outside review artefacts and link them from `index.md`.
-Run `scripts/strict_patch_replay.sh <tree> <patch> <log> <strip-level>` for each
-patch in registered order on an isolated tree. The
-script requires GNU patch, uses `--fuzz=0`, rejects reported fuzz or offsets,
-and saves the raw apply output even on failure. Link each log and its hash from
-the pack. Do not infer strict application from a successful `patch --fuzz=0`
-exit alone.
+For specialized generated or dependency-derived changes, link the applicable
+capability's candidate evidence and deterministic reproduction results. Record
+the immutable inputs and their identities, the effective result identity, and
+the exact capability command used. Do not duplicate capability-specific replay
+or validation procedures in this universal review pack.
 
 ## Deterministic Checks
 
@@ -91,7 +88,8 @@ Use explicit object IDs:
 - local branch tip, upstream, fetched remote tip, reviewed, and verified SHA
   equality;
 - clean-worktree verification evidence for `<review-sha>`;
-- file identity, strict patch application, and byte comparison where required.
+- source and effective-result identity plus capability-defined deterministic
+  checks where required.
 
 A failed check, unexplained delta, or SHA mismatch blocks review.
 
@@ -100,8 +98,10 @@ A failed check, unexplained delta, or SHA mismatch blocks review.
 Build the pack before pass 1. After a fix commit or restack, refresh the commit,
 diff, hashes, deterministic results, and verification evidence. Preserve and
 link all three prior clean reviews for a proven equal-range-diff restack;
-otherwise run a fresh three-reviewer discovery pass. Do not rebuild an
-unchanged vendor baseline.
+otherwise run a fresh three-reviewer discovery pass. Reuse immutable inputs
+only when the applicable capability proves their content, configuration, and
+toolchain identity; never rebuild an unchanged proven input merely to refresh
+the pack.
 For evidence-only closure, keep the pinned diff and SHAs, refresh the evidence
 links, manifest, hashes, and affected deterministic results, and record what
 changed in the pack. Rerun the validator after each refresh.
@@ -109,8 +109,8 @@ changed in the pack. Rerun the validator after each refresh.
 Fresh reviewers receive only the pinned diff, approved plan, parent
 specification, slice map, design checkpoint, repository standards, reproducible
 inputs, verification results, and this pack. Distinguish behavioural evidence
-from source-text, snapshot, mutation, and patch-shape assertions; structural
-checks cannot stand in for runtime lifecycle proof. Exclude prior findings,
+from source-text, snapshot, mutation, and generated-artifact assertions;
+structural checks cannot stand in for runtime lifecycle proof. Exclude prior findings,
 triage, fix narratives, conclusions, and review hints.
 
 ## Output

@@ -27,7 +27,6 @@ while IFS='|' read -r source target; do
 done <<'EOF'
 shared-components/code-review-closure/code-review-closure.md|references/code-review-closure.md
 shared-components/code-review-pack/code-review-pack.md|references/code-review-pack.md
-shared-components/code-review-pack/scripts/strict_patch_replay.sh|scripts/strict_patch_replay.sh
 shared-components/code-review-pack/scripts/validate_review_pack.py|scripts/validate_review_pack.py
 shared-components/code-review-loop/code-review-loop-closure-invocation.md|references/code-review-loop-closure-invocation.md
 shared-components/code-review-loop/code-review-loop-code-review-invocation.md|references/code-review-loop-code-review-invocation.md

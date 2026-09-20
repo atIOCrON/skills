@@ -21,6 +21,13 @@ One completed fresh pass plus terminal closure is sufficient when the reviewed
 commit has not changed. After a material fix, close the originating findings,
 then run a fresh pass on the new commit.
 
+Before deciding the post-fix review action, record a risk classification.
+Treat changed production behavior, interfaces, lifecycle ownership, dependency
+inputs, generated or effective output, or invalidated verification as material.
+Only explanatory or evidence changes with unchanged commit and tree identities
+qualify for targeted closure without fresh discovery. Treat uncertainty as
+material.
+
 **Prospective-language invariant:** Starting a fresh pass does not establish
 that it will be the final pass. Material findings may require fixes, targeted
 closure, and another fresh pass. In plans, progress updates, prompts, and
@@ -34,11 +41,11 @@ Incorrect: “This is the last review cycle.”\
 Retrospectively correct: “Pass 6 was the last required pass; review is complete.”
 
 A conflict-free restack does not require another discovery review when
-`git range-diff` is equal and deterministic patch checks show the logical
+`git range-diff` is equal and deterministic identity checks show the logical
 change is unchanged. Verify the new commit, record the old-to-new SHA mapping,
 refresh the pack, and retain all three prior clean reviews. Any manual resolution,
 unequal range diff, changed generated output, or intentional behavior change
-requires a fresh three-reviewer pass. Do not treat a generated lockfile
+requires a fresh three-reviewer pass. Do not treat a generated-artifact
 conflict by itself as a behavioral change when deterministic regeneration
 proves equality.
 
