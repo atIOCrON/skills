@@ -34,8 +34,8 @@ setup and commands so the clean-worktree result is reproducible.
    provider lifecycle logic, exercise applicable renderer replacement,
    concurrent value changes, fresh user activation, cancellation, failure and
    retry, token invalidation, and reauthorization at the highest practical
-   local seam. Source-text, snapshot, mutation, and patch-shape checks are
-   supplementary; they cannot be the primary proof of runtime behaviour.
+   local seam. Source-text, snapshot, mutation, and generated-artifact-shape
+   checks are supplementary; they cannot be the primary proof of runtime behaviour.
    Record unavailable real-provider checks as external acceptance rather than
    replacing local behavioural coverage with structural assertions.
 5. Keep bulk output outside plan artefact folders. Save commands, exit status,

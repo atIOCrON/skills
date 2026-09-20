@@ -35,8 +35,9 @@ ownership scope is provided, ask.
    - the native owner or extension point;
    - the smallest proposed design and expected production surfaces;
    - every new state owner or asynchronous coordinator, or `none`;
-   - upgrade, upstream, native-extension, module, and patch alternatives that
-     are relevant, and why the smaller options do not satisfy the slice;
+   - supported extensions, adapters, upgrades, upstream corrections, and
+     direct dependency modifications that are relevant, and why the smaller
+     options do not satisfy the slice;
    - behaviour-level verification and separate external acceptance; and
    - conditions that require stopping for architecture or slice replanning.
 9. For a complex or cross-cutting change, write
@@ -58,8 +59,9 @@ Use repository instructions or indexes to choose relevant docs when available.
 - Choose the least-complex change that meets the acceptance conditions and
   preserves affected binding contracts.
 - Prefer the platform's native lifecycle owner and documented extension point.
-  A patch can correct a narrow locked-package defect; it does not by itself
-  authorize local ownership of the package's general lifecycle.
+  A direct dependency modification can correct a narrow locked dependency
+  defect; it does not by itself authorize local ownership of the dependency's
+  general lifecycle.
 - Do not add capability for hypothetical future needs.
 - Small implementation-detail deviations are allowed when they preserve the
   approved outcome, stay within the plan's authorization envelope, improve
@@ -80,10 +82,11 @@ Use repository instructions or indexes to choose relevant docs when available.
 - Preserve the existing invariants identified for the touched surface,
   including state transitions and failure handling.
 - Stop before implementing an unapproved page-global mutable coordinator,
-  cross-provider lifecycle manager, retry or recovery framework, whole
-  vendor-template replacement, or patch spanning independently testable
-  defects. Stop as well when the production footprint materially exceeds the
-  design checkpoint. Line counts are warning evidence, not absolute limits.
+  cross-provider lifecycle manager, retry or recovery framework, substantial
+  replacement of a dependency-owned surface, or permanent dependency
+  modification spanning independently testable defects. Stop as well when the
+  production footprint materially exceeds the design checkpoint. Line counts
+  are warning evidence, not absolute limits.
 - Do not stage files, commit, branch, push, or open a pull request.
 
 ## Verification
@@ -93,8 +96,8 @@ surface. Add proportionate regression tests for changed behaviour even when
 the plan omits them. Browser activation, renderer replacement, concurrency,
 current-value changes, cancellation, retries, token invalidation, and provider
 callbacks require executable behavioural tests at the highest practical local
-seam. Source-text, snapshot, and patch-shape checks may supplement but not
-replace those tests. Keep real-provider acceptance separate when it cannot run
+seam. Source-text, snapshot, and generated-artifact-shape checks may supplement
+but not replace those tests. Keep real-provider acceptance separate when it cannot run
 locally. Run planned adversarial checks for complex or cross-cutting work.
 Report failures honestly; if verification is impossible here, say why.
 
