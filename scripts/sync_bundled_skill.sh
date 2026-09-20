@@ -9,7 +9,6 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 branch_bundle="$repo_root/skills/build-branch-stack"
 publish_bundle="$repo_root/skills/open-stack-requests"
 merge_bundle="$repo_root/skills/merge-stack"
-rebuild_bundle="$repo_root/skills/rebuild-staging-with-branches"
 integration_bundle="$repo_root/skills/integrate-and-test-staging"
 failed=0
 
@@ -88,11 +87,6 @@ sync_one shared-components/release-manifest/release-manifest.md \
   "$merge_bundle" references/release-manifest.md
 sync_one shared-components/release-manifest/scripts/validate_release_manifest.py \
   "$merge_bundle" scripts/validate_release_manifest.py
-
-sync_one shared-components/release-manifest/release-manifest.md \
-  "$rebuild_bundle" references/release-manifest.md
-sync_one shared-components/release-manifest/scripts/validate_release_manifest.py \
-  "$rebuild_bundle" scripts/validate_release_manifest.py
 
 sync_one shared-components/release-manifest/release-manifest.md \
   "$integration_bundle" references/release-manifest.md
