@@ -102,7 +102,11 @@ Keep integration results under `integration`, including ordered input SHAs,
 candidate commit and tree SHAs, toolchain identity, clean-install evidence,
 conflict-resolution report, checks, staging pipeline and deployed release,
 rollback release, and acceptance result. Link evidence; do not copy large logs
-into the manifest.
+into the manifest. Keep checks that intrinsically require a complete release
+candidate under `integration`, not a branch's `checks`. Before every planned
+branch exists, record integration as pending with the missing branch or other
+prerequisite for each deferred check; do not attach a partial-stack result as
+evidence for the eventual candidate.
 
 ## Freeze
 

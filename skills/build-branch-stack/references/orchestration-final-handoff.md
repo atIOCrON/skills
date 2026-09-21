@@ -44,11 +44,17 @@ Include:
 - triage ledger path and terminal-status counts;
 - confirmation no non-terminal ledger entries remain;
 - canonical release-manifest path, validation result, freeze state, and final
-  stack-check evidence;
+  stack-check status, including passed evidence or the prerequisites for checks
+  that remain pending until a complete release candidate exists;
 - pending human or external acceptance checks, their procedures and owners,
   and any authorized limitation decisions;
+- release-progression status and each pending release-candidate check with its
+  prerequisite;
 - `## Skill Feedback For User Review` with entries or `- None`;
-- final state: blocker or `Verified and pushed, ready for human review`.
+- final branch state: branch-level blocker or
+  `Verified and pushed, ready for human review`. A legitimately pending
+  release-candidate check is reported separately and does not change that
+  branch state.
 
 Keep the handoff concise and cite artifact paths rather than copying large
 review outputs.
