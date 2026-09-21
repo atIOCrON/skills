@@ -108,15 +108,20 @@ release-orchestration gates.
 
    Never reorder the list silently. If the supplied order conflicts with a
    demonstrated dependency, stop and report it.
-3. Classify conflicts. Generated `composer.lock` or routine `composer.json`
-   conflicts may be regenerated with the repository's pinned toolchain and
-   locked inputs. Behavioral and patch-preimage conflicts require a product
-   decision; stop if unresolved. Resolve authorized integration-only
-   conflicts only in the disposable checkout. Do not rewrite or restack a
-   source branch to repair them.
+3. Classify conflicts. Resolve only mechanical integration conflicts whose
+   result is determined by the selected inputs, such as regenerating
+   `composer.lock` with the repository's pinned toolchain and locked inputs.
+   Stop if a resolution would require editing tests, runtime source, patches,
+   or behavior-affecting dependency configuration. Do not make corrective
+   changes on the integration branch, and do not rewrite or restack a source
+   branch to repair them.
 4. Confirm that the pinned base and every selected tip are ancestors of the
    candidate. Inspect dependency locks and patch order. Run the repository's
-   relevant build, tests, and regressions. Pin the final candidate commit and
+   relevant build, tests, and regressions. Any test failure, or any validation
+   result that would require a test or runtime change, is a stop condition:
+   leave the receipt in `building`, do not alter the candidate to make the
+   check pass, and report the failure and the source branch that must be
+   corrected. Only after all checks pass, pin the final candidate commit and
    tree SHAs, then update the still-ignored receipt.
 
 ## Replace and verify staging
