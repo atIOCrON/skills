@@ -22,9 +22,10 @@ Resolve `orchestration_skill_root` to this directory. Read
 `references/git-branch-commit.md` for branch and commit operations,
 `references/git-sync-branch.md` for verified pushes, then
 `references/from-reviewed-plan-to-git-handoff.md`. Read other references when
-their step requires them. Read `references/artefact-audit.md` after final stack
-checks. Read `references/release-manifest.md` before creating or changing the
-manifest.
+their step requires them. Read `references/artefact-audit.md` after a feature
+reaches `review/`; revisit only its pending cross-branch questions after a tested
+stack snapshot exists. Read `references/release-manifest.md` before creating or
+changing the manifest.
 
 ## Inputs
 
@@ -64,13 +65,15 @@ Use `Queued`, `In progress`, `Blocked`, or `Ready for human review`. The last
 status requires the feature in `review/`, a verified final SHA matching local,
 upstream, and remote tips, a pinned parent, clean reviews from all three
 providers on that SHA or recorded equal-range-diff mappings for all three,
-preserved artefacts, passed agent-run implementation and final stack checks,
-and recorded human or external checks.
-Pending external acceptance does not make the branch `Blocked`. Number review
-passes. Never describe a current or future pass as “final,” “last,” “closing,” or
-“concluding.” A pass can only be identified retrospectively as the last completed
-pass after every completion condition is satisfied. Before then, call it “pass
-N,” “the current pass,” or “the next fresh pass.”
+preserved artefacts, passed required branch-level agent checks, and recorded
+human, external, and not-yet-runnable release-candidate checks. Final stack
+checks gate release progression, not this feature status.
+Pending external acceptance or not-yet-runnable release-candidate checks do not
+make the branch `Blocked`. Number review passes. Never describe a current or
+future pass as “final,” “last,” “closing,” or “concluding.” A pass can only be
+identified retrospectively as the last completed pass after every completion
+condition is satisfied. Before then, call it “pass N,” “the current pass,” or
+“the next fresh pass.”
 
 ## Readiness
 
@@ -146,15 +149,22 @@ For each plan:
    Create or update the remote branch at the first verified commit. Push each
    verified fix and review the pinned parent-to-commit diff. Keep the feature in
    `in_progress/` through all code review passes and fixes. Update the branch's
-   manifest entry after every verified tip change. Once Claude, Codex, and
-   Cursor have cleanly reviewed the logical change and its required agent
-   checks pass, validate the manifest. If the current task authorizes CR
-   creation, hand the branch to `open-stack-requests` in draft mode; otherwise
-   record that publication as the next action. This skill does not open the CR
-   itself.
-4. Preserve the feature's `.reviews/`, `.evidence/`, and any `.execution/`
-   folders before removing a worktree. Use this branch as a parent only where
-   dependency evidence requires it.
+   manifest entry after every verified tip change.
+4. Once Claude, Codex, and Cursor have cleanly reviewed the logical change and
+   its required branch-level agent checks pass, preserve the feature's
+   `.reviews/`, `.evidence/`, and any `.execution/` folders before removing a
+   worktree. Record pending human and external checks with procedures and owners.
+   Record release-candidate checks that intrinsically require unbuilt descendant
+   branches or a complete candidate with their prerequisites. Verify that the
+   exact tip matches local, upstream, and remote refs, move the whole feature to
+   `review/`, refresh its manifest and artefact paths, and validate the manifest.
+   A missing prerequisite for a required branch-level check remains a blocker;
+   do not classify it as a deferred release check. If the move or manifest write
+   fails, return any just-moved feature to `in_progress/` and report the blocker.
+   If the current task authorizes CR creation, hand the branch to
+   `open-stack-requests` in draft mode; otherwise record publication as the next
+   action. This skill does not open the CR itself. Use this branch as a parent
+   only where dependency evidence requires it.
 
 Before each plan and final handoff, compare every local parent with its pinned
 SHA and refetch any parent already on `origin`. If a parent moved, move only
@@ -171,19 +181,30 @@ decision before it can count as reviewed.
 
 After all plans:
 
-1. Run deterministic pre-handoff checks on every chain head and independent
-   branch. For an ordered independent batch, build an unpushed temporary
-   integration commit from the pinned base in merge order and test it. Check
-   the applicable capabilities' final integration verification against each
-   exact chain head or temporary integration commit. Check
+1. When every branch in the selected release candidate exists, run deterministic
+   pre-handoff checks on every chain head and independent branch. For an ordered
+   independent batch, build an unpushed temporary integration commit from the
+   pinned base in merge order and test it. Check the applicable capabilities'
+   final integration verification against each exact chain head or temporary
+   integration commit. Check
    that CI required by the plan, user, or repository policy runs on the target
    branches and covers applicable behavior tests and risk-based lint, type,
    dependency, secret, and static checks. Run required agent-run checks locally
-   where CI is optional or cannot cover them. Stop if a required agent-run check
-   is absent, cannot run, or fails; record human or external acceptance as
+   where CI is optional or cannot cover them. If later planned branches do not
+   yet exist, record these release-candidate checks as pending with their exact
+   prerequisites; checks on the current partial stack are not conclusive evidence
+   for the eventual candidate. Pending release-candidate checks do not move a
+   completed feature out of `review/`, but they block freeze, ready CRs, staging,
+   and merge. If a required final stack check is absent or cannot run for a
+   complete candidate, block release progression. If it fails, return the
+   affected feature and demonstrated descendants to `in_progress/` for a fix,
+   fresh verification, and code review. Record human or external acceptance as
    pending with its procedure and owner when it cannot yet be performed.
-2. When `scripts/codex/protected_full_pipeline.py` exists, run it with the
-   committed lock-selected seed and baseline:
+2. For a complete candidate, when
+   `scripts/codex/protected_full_pipeline.py` exists, run it with the committed
+   lock-selected seed and baseline. If the candidate is incomplete, record this
+   check and its required branches as pending instead of running it on a partial
+   stack:
 
    ```bash
    python -m scripts.codex.protected_full_pipeline \
@@ -196,26 +217,23 @@ Keep bulk output outside artefact folders and index concise evidence under
 the last plan. Never publish or refresh protected seed or baseline data here.
 Treat a lock mismatch or unexpected output as a blocker.
 
-After all agent-run implementation and final stack checks pass, code review
-findings are resolved, and remaining human or external acceptance checks are
-recorded, move selected features still in `in_progress/` to `review/`; leave
-unaffected features already in `review/` or `done/` there. Pending external
-acceptance alone does not delay this move or the subsequent artefact audit.
-If acceptance later reveals a defect, return the affected feature and
-descendants to `in_progress/` for a fix, fresh verification, and code review.
-Refresh the canonical manifest at its stable release path and check every
-recorded plan and artefact path. Freeze only when the user selects the candidate
-and all included branch tips, all three clean reviews or mappings, and required
-agent checks agree. Record the freeze authorization and scope digest, then
-validate the manifest. Do not add scope after freeze. A critical addition requires an
+Leave completed features in `review/` while release-candidate or human and
+external checks are pending. If any later check reveals a defect, return the
+affected feature and demonstrated descendants to `in_progress/` for a fix,
+fresh verification, and code review. Refresh the canonical manifest at its
+stable release path and check every recorded plan and artefact path. Freeze only
+when the user selects a complete candidate, final stack checks pass, and all
+included branch tips, all three clean reviews or mappings, and required agent
+checks agree. Record the freeze authorization and scope digest, then validate
+the manifest. Do not add scope after freeze. A critical addition requires an
 authorized thaw, a new digest, and invalidation of affected integration,
 pipeline, and acceptance evidence; noncritical additions go to a later release
-unless the user changes the frozen scope. If a move or manifest write fails,
-return any just-moved features to `in_progress/` and report the blocker.
+unless the user changes the frozen scope.
 
 Audit the selected features' preserved artefacts using
 `references/artefact-audit.md`. Verify candidate follow-ups against the tested
-stack state, record planning decisions in each feature's
+stack state, or against the exact verified feature tip when no complete tested
+snapshot exists. Record planning decisions in each feature's
 `<slug>.reviews/artefact-audit-ledger.md`, and route distinct work still worth
 doing through the specification and vertical-slice workflow. On repair runs,
 reconcile prior decisions and planning artefacts for affected features. Write
@@ -257,8 +275,11 @@ separately from branch readiness.
 - Do not amend a published commit. Preserve clean review evidence across only
   conflict-free, equal-range-diff restacks with deterministic identity checks.
 - Stop for failed verification, unresolved findings, unsafe commits, revision
-  mismatch, or unpreserved artefacts. When the full-pipeline export test
-  exists, do not skip it unless the user cancels it.
+  mismatch, or unpreserved artefacts. A failed branch-level check blocks the
+  feature; a failed final stack check blocks release progression and returns the
+  affected feature and demonstrated descendants to `in_progress/`. When the
+  full-pipeline export test exists, do not skip it for a complete candidate
+  unless the user cancels it.
 - Do not mark a feature `done/` while external acceptance is pending or a
   failure remains unresolved. Record passed checks or an authorized decision
   explicitly accepting each limitation before `done/`; retain the confirmed
@@ -274,8 +295,11 @@ path. It records the base, ordered branches, dependencies, targets, tips,
 surfaces, checks, all three review mappings, CRs, exclusions, freeze, integration,
 acceptance, and deployment state; link detailed evidence instead of duplicating
 it. Report
-`Verified and pushed, ready for human review` or the blocker, plus each
-feature's audit ledger path and decisions, any specifications, slice maps, or
-backlog plans created or reused, and incomplete audit work. State whether each
-draft CR was created by the publication skill or remains a next action. This
-skill creates no CR.
+`Verified and pushed, ready for human review` for every feature that meets the
+branch-level criteria, even when release-candidate checks are legitimately
+pending. Separately report whether release progression is ready or blocked,
+including each pending check and prerequisite. Also report each feature's audit
+ledger path and decisions, any specifications, slice maps, or backlog plans
+created or reused, and incomplete audit work. State whether each draft CR was
+created by the publication skill or remains a next action. This skill creates
+no CR.

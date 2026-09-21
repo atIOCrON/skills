@@ -60,16 +60,21 @@ views, not competing authorities.
 - `to_do`: a reviewed plan selected for the current implementation batch.
   Move only selected plans from `backlog`.
 - `in_progress`: implementation, fixes, CLI code review loops, commits,
-  restacks, or agent-run checks are underway, or a check found a defect. Keep
-  the feature here throughout the code review loop.
-- `review`: the branch is committed and verified, code review findings are
-  resolved, agent-run implementation and final stack checks pass, and remaining
-  human or external acceptance checks are recorded with procedures and owners.
-  Keep it here while those checks are pending or its change request is open.
-  Return it to `in_progress` if a check finds a defect or a fix or restack is
-  needed. An unavailable sandbox wallet can leave Google Pay acceptance
-  pending here; a failed wallet test sends the feature back for a fix and fresh
-  verification and review.
+  restacks, or required branch-level agent checks are underway, or a check found
+  a defect. Keep the feature here throughout the code review loop.
+- `review`: the exact branch tip and pinned parent are verified, the local,
+  upstream, and remote tips agree, code review findings are resolved, all three
+  automated reviews are clean or have valid equal-range-diff mappings, required
+  branch-level agent checks pass, and artefacts are preserved. Record pending
+  human or external acceptance checks with their procedures and owners. Record
+  release-candidate checks that intrinsically require unbuilt descendant
+  branches or a complete candidate with their prerequisites. Those deferred
+  release checks do not delay this move. Keep the feature here while those
+  checks are pending or its change request is open. Return it to `in_progress`
+  if a later check finds a defect or a fix or non-mechanical restack is needed.
+  An unavailable sandbox wallet can leave Google Pay acceptance pending here;
+  a failed wallet test sends the feature back for a fix and fresh verification
+  and review.
 - `done`: every human or external acceptance check passed or its limitation
   was explicitly accepted by an authorized decision maker. The change request
   must also be merged and its landed commit confirmed. Move the feature here

@@ -1,9 +1,13 @@
 # Artefact Audit at Branch Handoff
 
-Audit the selected features after their agent-run branch and stack checks pass,
-their artefacts are preserved under `plans/review/<slug>/`, and the canonical
-release manifest records the reviewed and tested SHAs. On a repair run, re-audit
-affected features and descendants whose evidence or code snapshot changed.
+Audit each selected feature after its required branch-level agent checks pass,
+its artefacts are preserved under `plans/review/<slug>/`, and the canonical
+release manifest records the reviewed and tested SHA. A complete tested stack
+snapshot is not required: use the exact feature tip and mark questions that
+intrinsically require unbuilt descendant branches or a complete candidate as
+pending. Revisit those questions after that snapshot exists without repeating
+resolved branch-local decisions. On a repair run, re-audit affected features
+and descendants whose evidence or code snapshot changed.
 Human or external acceptance may still be pending; record it separately from
 the audit's follow-up planning decisions.
 The audit creates planning files in the user's primary checkout; it does not
@@ -37,9 +41,10 @@ what remains unknown rather than inventing a plan. A demonstrated acceptance
 failure, an unimplemented acceptance condition, or an unresolved material
 review finding is a current-plan fix:
 return the affected feature and descendants to `in_progress/` for verification
-and review, then repeat final checks, manifest refresh, and audit before
-handoff. Do not move that gap to the backlog. A pending external check alone is
-not a current-plan fix.
+and review, then repeat the affected branch checks, manifest refresh, and audit.
+Repeat release-candidate checks when their evidence was invalidated. Do not move
+that gap to the backlog. A pending external or not-yet-runnable release-candidate
+check alone is not a current-plan fix.
 
 ## Decision ledger and plans
 
