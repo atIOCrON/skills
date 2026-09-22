@@ -18,7 +18,7 @@ CHECK_KINDS = {"agent", "external"}
 CHECK_STATES = {"passed", "failed", "pending", "blocked_by_environment"}
 CHECK_METHODS = {"direct", "identity_reuse"}
 REVIEW_STATES = {"pending", "clean", "changes_required"}
-REVIEW_METHODS = {"direct", "equal_range_diff"}
+REVIEW_METHODS = {"direct", "equal_range_diff", "test_only_closure"}
 REVIEWERS = {"claude", "codex", "cursor"}
 CR_STATES = {"none", "draft", "ready", "merged", "closed"}
 
@@ -220,8 +220,9 @@ def validate(data: Any) -> list[str]:
                     errors.append(f"{review_prefix}.origin_sha must be a full SHA")
                 if method == "direct" and origin_sha != review.get("sha"):
                     errors.append(f"{review_prefix} direct origin_sha must equal sha")
-                if method == "equal_range_diff" and origin_sha == review.get("sha"):
-                    errors.append(f"{review_prefix} equal_range_diff must map different SHAs")
+                is_mapping = method in {"equal_range_diff", "test_only_closure"}
+                if is_mapping and origin_sha == review.get("sha"):
+                    errors.append(f"{review_prefix} {method} must map different SHAs")
             elif method is not None or origin_sha is not None:
                 errors.append(
                     f"{review_prefix} method and origin_sha must be null until clean"

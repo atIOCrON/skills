@@ -1,7 +1,7 @@
 # Code Review Loop
 
-Review successive verified and pushed commits until one clean pass covers the
-exact plan-branch tip.
+Review successive verified and pushed commits until valid review evidence
+covers the exact plan-branch tip.
 
 ## Inputs
 
@@ -25,8 +25,28 @@ Before deciding the post-fix review action, record a risk classification.
 Treat changed production behavior, interfaces, lifecycle ownership, dependency
 inputs, generated or effective output, or invalidated verification as material.
 Only explanatory or evidence changes with unchanged commit and tree identities
-qualify for targeted closure without fresh discovery. Treat uncertainty as
-material.
+qualify for ordinary targeted closure without fresh discovery. Treat
+uncertainty as material.
+
+One narrow exception applies when a completed discovery pass is otherwise
+clean and its sole accepted finding needs only a test-only remediation. The new
+commit may complete review without another discovery pass when all of these
+conditions hold:
+
+- the delta changes only test code or test-owned data;
+- production, runtime, build, package, configuration, dependency, shared-fixture,
+  generated-output, interface, behavior, ownership, and effective-result
+  identities are unchanged;
+- the new SHA passes exact-candidate verification, including direct execution
+  of every added or changed test; unaffected checks may use deterministic reuse;
+- every other ledger entry is terminal; and
+- each reviewer who originated the accepted finding confirms closure in the
+  original session against the old and new SHAs.
+
+Record `test_only_closure` mappings from all three prior review SHAs to the new
+SHA. A test path alone does not prove eligibility. Any uncertainty, additional
+accepted finding, failed or invalidated verification, non-test delta, or
+closure concern requires a fresh three-reviewer pass.
 
 **Prospective-language invariant:** Starting a fresh pass does not establish
 that it will be the final pass. Material findings may require fixes, targeted
@@ -55,8 +75,9 @@ deterministic checks, then ask only the originating reviewer in its original
 session to assess its finding. Record its closure and update the ledger; mark
 the same SHA clean-reviewed only after all findings are terminal. Do not run
 another discovery pass solely for added evidence. A code change, restack,
-parent change, failed verification, or new contradiction still blocks closure
-and follows the normal review path.
+parent change, failed verification, or new contradiction still blocks ordinary
+evidence-only closure. A code change follows the normal review path unless it
+meets the test-only exception above.
 
 For each pass:
 
@@ -93,29 +114,30 @@ For each pass:
    user decision. Use targeted closure for a rejected material finding when
    triage is uncertain, evidence conflicts, new evidence addresses it, or the
    user requests it.
-10. Resolve recurring escalations with the user before another fresh pass.
+10. After closure, record eligible test-only mappings or start the next fresh
+    pass. Resolve recurring escalations with the user first.
 
 ## Completion
 
 Return `Reviewed and pushed` only when:
 
 - at least one fresh pass from all three reviewers covered the logical change,
-  directly on the current SHA or through recorded equal-range-diff restack
-  mappings, and no material finding or contradiction remains unresolved after
-  any targeted closure;
+  directly on the current SHA or through recorded equal-range-diff or
+  test-only-closure mappings, and no material finding or contradiction remains
+  unresolved after targeted closure;
 - all ledger entries are terminal and required closure is complete;
 - the same SHA is the local branch tip, upstream, fetched remote tip, and latest
   verified commit, with either direct clean reviews from all three reviewers or
-  recorded equal-range-diff mappings from all three clean-reviewed logical
-  changes; and
+  valid mappings from all three clean-reviewed logical changes; and
 - the dependency-parent head equals the pinned base SHA and remains an
   ancestor.
 
-Any fix commit, manual restack resolution, unequal range diff, behavior change,
-or unexplained SHA mismatch invalidates completion and requires verification
-plus a fresh pass. An equal-range-diff mechanical restack needs verification
-and recorded identity evidence, not another discovery review. An unexpected
-remote source change blocks until the user accepts its scope.
+Any ineligible fix commit, manual restack resolution, unequal range diff,
+behavior change, or unexplained SHA mismatch invalidates completion and
+requires verification plus a fresh pass. Equal-range-diff restacks and eligible
+test-only remediations need verification and recorded mappings, not another
+discovery review. An unexpected remote source change blocks until the user
+accepts its scope.
 
 Report pass outcomes and SHAs, closure rounds, fixes, verification, rejected
 or deferred findings, artefact paths, ledger counts, identity checks, skill

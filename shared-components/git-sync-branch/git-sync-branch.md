@@ -36,5 +36,5 @@ git push --force-with-lease=refs/heads/<branch-name>:<old-remote-sha> \
 Never use an unqualified force push. After each push, fetch and require local,
 upstream, remote, and verified SHAs to match. At final branch handoff, also
 require all three clean reviews on the final SHA or their recorded
-equal-range-diff mappings. Stop for a failed push, lease mismatch, unexpected
-remote change, or revision drift.
+equal-range-diff or test-only-closure mappings. Stop for a failed push, lease
+mismatch, unexpected remote change, or revision drift.

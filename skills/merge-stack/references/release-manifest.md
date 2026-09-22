@@ -104,8 +104,12 @@ Record one review entry for each of `claude`, `codex`, and `cursor`. For a
 direct review, set `method` to `direct` and use the reviewed tip for both `sha`
 and `origin_sha`. After a proven mechanical restack, set `method` to
 `equal_range_diff`, set `sha` to the verified new tip, `origin_sha` to the
-directly reviewed old tip, and link the mapping evidence. A clean release
-requires all three entries.
+directly reviewed old tip, and link the mapping evidence. After an eligible
+test-only remediation, set `method` to `test_only_closure` for all three prior
+reviews, map each `origin_sha` to the verified new `sha`, and link evidence for
+the test-only delta, unchanged production and effective-result identities,
+exact-tip verification, and same-session closure by each originating reviewer.
+A clean release requires all three entries.
 
 Keep integration results under `integration`, including ordered input SHAs,
 candidate commit and tree SHAs, toolchain identity, clean-install evidence,

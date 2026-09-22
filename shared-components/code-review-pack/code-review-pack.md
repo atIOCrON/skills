@@ -80,6 +80,13 @@ evidence from all three reviews. Require a fresh three-reviewer discovery pass
 for manual resolutions, unequal range diffs, changed generated output, or
 behavior changes.
 
+After an eligible test-only remediation, link the old and new SHAs, exact-tip
+verification, changed-test results, unchanged production and effective-result
+identities, ledger state, and same-session closure from each originating
+reviewer. Record `test_only_closure` mappings for all three reviews. Any missing
+identity, non-test delta, extra accepted finding, or closure concern requires a
+fresh three-reviewer pass.
+
 For specialized generated or dependency-derived changes, link the applicable
 capability's candidate evidence and deterministic reproduction results. Record
 the immutable inputs and their identities, the effective result identity, and
@@ -107,8 +114,9 @@ A failed check, unexplained delta, or SHA mismatch blocks review.
 
 Build the pack before pass 1. After a fix commit or restack, refresh the commit,
 diff, hashes, deterministic results, and verification evidence. Preserve and
-link all three prior clean reviews for a proven equal-range-diff restack;
-otherwise run a fresh three-reviewer discovery pass. Reuse immutable inputs
+link all three prior clean reviews for a proven equal-range-diff restack or an
+eligible test-only remediation with recorded closure; otherwise run a fresh
+three-reviewer discovery pass. Reuse immutable inputs
 only when the applicable capability proves their content, configuration, and
 toolchain identity; never rebuild an unchanged proven input merely to refresh
 the pack. Starting a fresh reviewer pass does not itself rerun checks.
