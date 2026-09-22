@@ -11,6 +11,7 @@ Require:
 - plan path and verification commands;
 - exact candidate commit SHA;
 - touched files or modules;
+- verification-ownership classification for each acceptance group;
 - prior check evidence and capability-defined equivalence rules, when available;
 - implementation worker reference when available;
 - verification point, such as `initial-candidate` or `post-review-fix`.
@@ -39,14 +40,25 @@ setup and commands so the clean-worktree result is reproducible.
    or cannot be proved. Do not rerun an expensive deterministic check merely
    because the commit SHA changed. Starting a reviewer pass does not trigger a
    check; a changed tip or determining input may.
-6. Add focused checks when touched-surface risk justifies them. Require
+6. Add focused checks when candidate-owned risk justifies them. Require
    proportionate behavioural regression evidence even when the plan omits it.
-   For browser or provider lifecycle logic, cover applicable renderer
-   replacement, concurrent value changes, fresh user activation, cancellation,
-   failure and retry, token invalidation, and reauthorization at the highest
-   practical local seam. Source-text, snapshot, mutation, and generated-artifact
-   checks may supplement but not replace runtime evidence. Record unavailable
-   real-provider checks as external acceptance.
+   When the candidate introduces or modifies browser or provider lifecycle
+   logic, cover applicable renderer replacement, concurrent value changes,
+   fresh user activation, cancellation, failure and retry, token invalidation,
+   and reauthorization at the highest practical local seam. Source-text,
+   snapshot, mutation, and generated-artifact checks may supplement but not
+   replace proof of runtime behaviour the candidate owns.
+
+   When the candidate only changes routing, selection, configuration, or
+   reachability for an unchanged dependency-owned lifecycle, verify that
+   mechanism through source-contract evidence and effective runtime binding or
+   code identity. Reuse inherited tests only when their exact version,
+   configuration, relevant inputs, and effective result apply. Do not add or
+   require a fake provider, server, persistence layer, account store, or order
+   lifecycle solely to prove unchanged behaviour owned elsewhere; a harness's
+   own transitions are not production evidence. Lightweight test doubles may
+   prove candidate-owned routing or binding. Record unavailable real-provider
+   checks as external acceptance.
 7. Keep bulk output outside plan artefact folders. Save each command or reuse
    mapping, status, current and originating SHAs, input and result identities,
    concise results, and evidence links under

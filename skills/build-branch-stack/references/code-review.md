@@ -52,7 +52,12 @@ Assess two questions separately:
 A proportionality problem is material when the branch introduces an
 unauthorized architectural layer, duplicates upstream or platform ownership,
 combines independently releasable responsibilities, materially exceeds its
-design checkpoint, or relies on source-shape assertions for runtime behaviour.
+design checkpoint, adds verification machinery disproportionate to its owned
+production mechanism, or relies on source-shape assertions alone for runtime
+behaviour the candidate introduces or modifies. Treat candidate-owned routing,
+selection, configuration, or reachability separately from unchanged lifecycle
+behaviour owned by a dependency or external provider. A fake system's state
+transitions are not evidence of the production system it imitates.
 Do not treat mere style or architecture preference as a defect. Recommend
 simplifying, splitting, upgrading, or using a narrower extension mechanism
 before adding guards to new machinery.
@@ -65,8 +70,9 @@ unplanned deliverable that needs user approval.
 
 Use `blocker` for safety, security, data loss, or failure of a required outcome;
 `should-fix` for other material defects; and `nit` for preferences. Require
-proportionate regression tests for changed behavior even when the plan omits
-them; do not demand unrelated coverage expansion.
+proportionate regression tests for behaviour the candidate owns even when the
+plan omits them; do not demand local reconstruction of unchanged
+dependency-owned behaviour or unrelated coverage expansion.
 
 ## Output
 

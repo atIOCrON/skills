@@ -19,9 +19,14 @@ ownership scope is provided, ask.
    contradicts current evidence, or would materially change the approved scope.
 4. Read applicable `AGENTS.md` files when present and the repository docs,
    configuration, tests, and contracts relevant to the touched surface.
-5. Make a concise scope-to-change map. Map each changed surface and new
-   component to an acceptance condition, binding policy, or affected contract.
-   Omit anything that cannot be mapped.
+5. Make a concise scope-to-change map. For each owned acceptance group, record
+   the candidate-owned mechanism; whether the candidate introduces or modifies
+   its lifecycle implementation or only changes routing, selection,
+   configuration, or reachability; its runtime owner; and its branch-local,
+   inherited, and external evidence. Map each changed surface and new component
+   to an acceptance condition, binding policy, or affected contract. Omit
+   anything that cannot be mapped. Do not equate a changed observable outcome
+   with local ownership of an unchanged dependency lifecycle.
 6. Confirm the plan has one independently verifiable outcome, one rollback
    boundary, explicit sibling exclusions, and no acceptance group that can ship
    or fail independently. Stop for decomposition if it does not.
@@ -38,7 +43,8 @@ ownership scope is provided, ask.
    - supported extensions, adapters, upgrades, upstream corrections, and
      direct dependency modifications that are relevant, and why the smaller
      options do not satisfy the slice;
-   - behaviour-level verification and separate external acceptance; and
+   - the verification-ownership classification, proposed local test machinery,
+     applicable inherited evidence, and separate external acceptance; and
    - conditions that require stopping for architecture or slice replanning.
 9. For a complex or cross-cutting change, write
    `<feature_dir>/<plan_slug>.execution/implementation-analysis.md` before
@@ -51,6 +57,15 @@ ownership scope is provided, ask.
 
 Use the analysis to shape the implementation and verification harness. Do not
 send it to fresh reviewers; they retain an independent perspective.
+
+At the design checkpoint, compare proposed verification machinery with the
+candidate-owned production mechanism. If verification would introduce a
+provider simulator, server model, persistence fixture, retry framework, or more
+lifecycle machinery than the production change, simplify it or return the
+verification footprint for correction before editing. Approval of a plan does
+not authorize disproportionate verification machinery. Preserve the approved
+acceptance outcome while amending a requested seam that would simulate
+unchanged external or dependency-owned behaviour.
 
 Use repository instructions or indexes to choose relevant docs when available.
 
@@ -66,6 +81,10 @@ Use repository instructions or indexes to choose relevant docs when available.
 - Small implementation-detail deviations are allowed when they preserve the
   approved outcome, stay within the plan's authorization envelope, improve
   correctness, or better match current repo patterns. Report the divergence.
+- Treat the plan's verification section as required evidence outcomes, not
+  authorization to construct a disproportionate harness. A command mandated by
+  the user or binding repository policy remains required; otherwise choose the
+  smallest meaningful seam that proves the candidate-owned mechanism.
 - If the plan conflicts with a binding policy, applicable repository standard,
   or affected contract, stop and report the conflict. Do not broaden scope to
   resolve it without user approval.
@@ -93,19 +112,31 @@ Use repository instructions or indexes to choose relevant docs when available.
 
 Run preliminary verification named by the plan when practical for the owned
 surface. Add proportionate regression tests for changed behaviour even when
-the plan omits them. Browser activation, renderer replacement, concurrency,
-current-value changes, cancellation, retries, token invalidation, and provider
-callbacks require executable behavioural tests at the highest practical local
-seam. Source-text, snapshot, and generated-artifact-shape checks may supplement
-but not replace those tests. Keep real-provider acceptance separate when it cannot run
-locally. Run planned adversarial checks for complex or cross-cutting work.
+the plan omits them. When the candidate introduces or modifies browser
+activation, renderer replacement logic, concurrency, current-value changes,
+cancellation, retries, token invalidation, or provider callbacks, require
+executable behavioural tests at the highest practical local seam. Source-text,
+snapshot, and generated-artifact-shape checks may supplement but not replace
+proof of runtime behaviour the candidate owns.
+
+When the candidate only changes routing, selection, configuration, or
+reachability for an unchanged dependency-owned lifecycle, prove that mechanism
+directly through source-contract evidence and effective runtime binding or code
+identity. Reuse inherited test evidence only when its exact version,
+configuration, relevant inputs, and effective result apply, and keep
+real-provider acceptance separate when it cannot run locally. Lightweight test
+doubles may establish candidate-owned routing or binding. Do not construct a
+fake provider, server, persistence layer, account store, or order lifecycle
+solely to prove unchanged behaviour owned elsewhere; the harness's transitions
+are not production evidence. Run planned adversarial checks for complex or
+cross-cutting work.
 Report failures honestly; if verification is impossible here, say why.
 
 ## Output
 
 ```markdown
 ## Scope-to-Change Map
-- <acceptance condition, policy, or affected contract> - <necessary change>
+- <acceptance group> - <candidate mechanism> - <lifecycle modified or only exposed> - <runtime owner> - <local, inherited, and external evidence>
 
 ## Implemented
 - <file> - <change>

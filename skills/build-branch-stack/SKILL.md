@@ -97,6 +97,13 @@ before creating or adopting a branch:
 Stop and return the plan for decomposition when it fails this cohesion gate.
 An explicitly classified legacy plan must meet the same standard.
 
+Before implementation, classify each owned acceptance group by its
+candidate-owned mechanism; whether the candidate introduces or modifies its
+lifecycle implementation or only changes routing, selection, configuration, or
+reachability; its runtime owner; and its branch-local, inherited, and external
+evidence. A candidate can change the observable product outcome without
+changing the dependency-owned lifecycle implementation.
+
 Identify required verification for each touched surface, its prerequisites
 (such as locked dependencies, services,
 fixtures, or disabled components), and whether CI runs on the target branches.
@@ -116,8 +123,16 @@ implementation; do not silently add unrelated CI or tooling work. Distinguish
 checks the agent can run from human or external acceptance (such as a sandbox
 wallet test). Record intended commands, any agreed gate gap, and each external
 check's procedure, owner, and pending result in plan evidence. Runtime lifecycle
-logic requires executable local behavioural proof at the highest practical
-seam; source-shape assertions may supplement but not replace it.
+logic introduced or modified by the candidate requires executable local
+behavioural proof at the highest practical seam; source-shape assertions may
+supplement but not replace proof of that owned runtime behaviour. Merely making
+an unchanged dependency-owned lifecycle reachable does not require
+reconstructing it locally when exact effective-code identity, applicable
+inherited test evidence, and explicit external acceptance establish the
+contract. Lightweight test doubles may prove candidate-owned routing or
+binding, but transitions implemented by a fake provider, server, persistence
+layer, account store, or order lifecycle are not evidence of production
+behaviour owned elsewhere.
 
 ## Workflow
 
@@ -145,7 +160,15 @@ For each plan:
 3. Follow `from-reviewed-plan-to-git-handoff.md`. Before editing, require the
    implementation worker to create the design checkpoint specified by
    `plan-implement.md`; stop if it exposes a cohesion failure or unauthorized
-   architecture. Run the applicable capability's authoring checks during
+   architecture. Compare the proposed verification machinery with the
+   candidate-owned production mechanism. If verification would introduce a
+   provider simulator, server model, persistence fixture, retry framework, or
+   more lifecycle machinery than the production change, simplify it or return
+   the verification footprint for correction before editing. Approval of a
+   plan does not authorize disproportionate verification machinery; preserve
+   the acceptance outcome while amending a test seam that would simulate
+   unchanged external or dependency-owned behaviour. Run the applicable
+   capability's authoring checks during
    implementation and its exact candidate verification before accepting the
    candidate. Do not substitute capability final-integration verification for
    per-plan candidate verification. Then selectively stage and review
@@ -260,8 +283,14 @@ separately from branch readiness.
 ## Rules
 
 - Make the least-complex change that satisfies each plan and binding contract.
-- Require behavioural regression tests proportionate to the changed lifecycle;
-  structural assertions alone are insufficient evidence of runtime behaviour.
+- Require behavioural regression tests proportionate to lifecycle
+  implementation introduced or modified by the candidate. Do not infer local
+  lifecycle ownership merely because the candidate exposes existing behaviour;
+  structural assertions alone remain insufficient evidence of runtime
+  behaviour the candidate owns.
+- Keep verification machinery proportionate to the candidate-owned production
+  mechanism. A test harness's own state transitions do not prove production
+  behaviour.
 - Map changed surfaces to plan scope or a binding contract. Stop for user
   approval before adding an unplanned deliverable.
 - Stop and return to architecture or slice planning when implementation would
