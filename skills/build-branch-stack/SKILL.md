@@ -64,7 +64,7 @@ verification changes:
 Use `Queued`, `In progress`, `Blocked`, or `Ready for human review`. The last
 status requires the feature in `review/`, a verified final SHA matching local,
 upstream, and remote tips, a pinned parent, clean reviews from all three
-providers on that SHA or recorded equal-range-diff mappings for all three,
+providers on that SHA or valid equal-range-diff or test-only-closure mappings,
 preserved artefacts, passed required branch-level agent checks, and recorded
 human, external, and not-yet-runnable release-candidate checks. Final stack
 checks gate release progression, not this feature status.
@@ -190,6 +190,10 @@ prior reviews; record their old-to-new SHA mappings. A fresh three-reviewer pass
 is required for manual resolutions, unequal range diffs, changed generated
 output, or behavior changes. An unexpected local branch change needs a scope
 decision before it can count as reviewed.
+When an otherwise-clean discovery pass has one accepted finding resolved only
+by an eligible test-only remediation, follow `code-review-loop.md`: verify the
+new SHA, obtain same-session closure from each originating reviewer, and record
+`test_only_closure` mappings instead of running another discovery pass.
 
 After all plans:
 
@@ -285,7 +289,9 @@ separately from branch readiness.
 - Run fresh Claude, Codex, and Cursor reviewers in parallel for every discovery
   pass. All three must complete successfully.
 - Do not amend a published commit. Preserve clean review evidence across only
-  conflict-free, equal-range-diff restacks with deterministic identity checks.
+  conflict-free equal-range-diff restacks or eligible test-only remediations
+  with the identity, verification, and closure evidence required by
+  `code-review-loop.md`.
 - Stop for failed verification, unresolved findings, unsafe commits, revision
   mismatch, or unpreserved artefacts. A failed branch-level check blocks the
   feature; a failed final stack check blocks release progression and returns the

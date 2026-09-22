@@ -53,7 +53,8 @@ below. Never amend a published commit.
 
 Before handoff, require the local branch tip, upstream, fetched remote tip, and
 latest verified SHA to match. Require clean reviews from all three reviewers on
-that SHA or recorded equal-range-diff mappings from all three prior reviews.
+that SHA or valid equal-range-diff or test-only-closure mappings from all three
+prior reviews.
 Require the parent head to equal its pinned SHA and remain an ancestor. A
 changed parent needs a restack, verification, review-policy decision, and
 synchronized push.

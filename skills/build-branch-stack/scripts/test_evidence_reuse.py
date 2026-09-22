@@ -210,6 +210,39 @@ class ReleaseManifestReuseTest(unittest.TestCase):
         errors = release_validator.validate(manifest)
         self.assertTrue(any("must map different SHAs" in error for error in errors))
 
+    def test_release_review_accepts_test_only_closure(self) -> None:
+        manifest = self.manifest()
+        tip_sha = manifest["branches"][0]["tip_sha"]
+        for review in manifest["branches"][0]["reviews"]:
+            review.update(
+                {
+                    "status": "clean",
+                    "sha": tip_sha,
+                    "method": "test_only_closure",
+                    "origin_sha": "e" * 40,
+                    "evidence": "evidence/test-only-closure.md",
+                }
+            )
+        self.assertEqual(release_validator.validate(manifest), [])
+
+    def test_release_review_rejects_same_sha_test_only_closure(self) -> None:
+        manifest = self.manifest()
+        tip_sha = manifest["branches"][0]["tip_sha"]
+        for review in manifest["branches"][0]["reviews"]:
+            review.update(
+                {
+                    "status": "clean",
+                    "sha": tip_sha,
+                    "method": "test_only_closure",
+                    "origin_sha": tip_sha,
+                    "evidence": "evidence/test-only-closure.md",
+                }
+            )
+        errors = release_validator.validate(manifest)
+        self.assertTrue(
+            any("test_only_closure must map different SHAs" in error for error in errors)
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
