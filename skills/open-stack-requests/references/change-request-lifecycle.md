@@ -44,7 +44,7 @@ provider, and no dirty file overlapping the CR diff. Use
 `origin/<target>...refs/heads/<source>` for log and diff inspection. For create,
 refresh, and ready modes, require synchronized upstream; require the source
 SHA to equal the local branch ref, upstream, and verified SHA. When ready, also
-require all three latest clean review SHAs or their equal-range-diff mappings.
+require every latest clean review SHA or its restack identity mapping.
 Require the target SHA to equal the pinned base and remain an ancestor.
 For return to draft after detected movement, allow only the SHA or upstream
 mismatch being invalidated; fetch and record the actual refs and preserve CR
@@ -54,12 +54,12 @@ Create exactly one draft CR with the manifest source and target. Generate its
 title and description from current manifest and branch evidence; refresh them
 after every accepted source or target change. Record its URL and state in the
 manifest. Return it and all ready descendants to draft before a changed source
-or target is reviewed. A proven equal-range-diff mechanical restack may retain
-all three reviews, but the CR must still point at the verified new SHA.
+or target is reviewed. A proven semantically identical restack may retain
+all required reviews, but the CR must still point at the verified new SHA.
 
 Mark it ready only when the frozen manifest's final checks, verified SHA, clean
-reviews from all three providers or their equal-range-diff mappings, current
-source and target SHAs, and applicable forge checks agree. Then request a
+required reviews from all three providers or their restack identity mappings,
+current source and target SHAs, and applicable forge checks agree. Then request a
 qualified independent reviewer allowed by repository policy. A skipped
 pipeline does not count as a pass;
 record when no CR checks apply.

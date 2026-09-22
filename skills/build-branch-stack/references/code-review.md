@@ -65,8 +65,9 @@ unplanned deliverable that needs user approval.
 
 Use `blocker` for safety, security, data loss, or failure of a required outcome;
 `should-fix` for other material defects; and `nit` for preferences. Require
-proportionate regression tests for changed behavior even when the plan omits
-them; do not demand unrelated coverage expansion.
+the smallest reliable regression evidence for changed behavior. Prefer an
+existing seam and do not demand a new custom harness without the user's
+explicit approval in the plan. Do not demand unrelated coverage expansion.
 
 ## Output
 

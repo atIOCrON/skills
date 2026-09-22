@@ -9,6 +9,20 @@ artifact_size() {
   fi
 }
 
+utc_timestamp() {
+  date -u '+%Y-%m-%dT%H:%M:%SZ'
+}
+
+epoch_seconds() {
+  date '+%s'
+}
+
+elapsed_seconds() {
+  local started="$1"
+  local finished="$2"
+  printf '%s' "$((finished - started))"
+}
+
 phase_and_pass_label() {
   local artifact_dir="$1"
   local base
@@ -20,6 +34,12 @@ phase_and_pass_label() {
       ;;
     code-review-pass*)
       printf 'code-review, pass %s' "${base#code-review-pass}"
+      ;;
+    behavior-review-pass*)
+      printf 'behavior-review, pass %s' "${base#behavior-review-pass}"
+      ;;
+    patch-mechanics-review-pass*)
+      printf 'patch-mechanics-review, pass %s' "${base#patch-mechanics-review-pass}"
       ;;
     *)
       printf 'launcher-level, pass unknown'

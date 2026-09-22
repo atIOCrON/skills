@@ -8,11 +8,14 @@ failures back to its implementation worker.
 Require:
 
 - repository root;
-- plan path and verification commands;
+- plan path and commands classified as `authoring`, `candidate`, or
+  `integration`;
 - exact candidate commit SHA;
 - touched files or modules;
 - implementation worker reference when available;
-- verification point, such as `initial-candidate` or `post-review-fix`.
+- verification point, such as `initial-candidate`, `post-review-fix`,
+  `behavior-candidate`, or `patch-mechanics-candidate`;
+- capability reuse keys and prior evidence, when available.
 
 Stop if the plan lacks deterministic verification commands or the commit cannot
 be resolved.
@@ -28,18 +31,24 @@ setup and commands so the clean-worktree result is reproducible.
 2. Create a temporary detached Git worktree at that SHA. Do not verify the
    mutable implementation checkout.
 3. Confirm the temporary worktree is clean and its `HEAD` is the candidate SHA.
-4. Run every required plan command from the temporary worktree root. Add focused
-   checks when touched-surface risk justifies them. Require proportionate
-   behavioural regression tests even when the plan omits them. For browser or
-   provider lifecycle logic, exercise applicable renderer replacement,
-   concurrent value changes, fresh user activation, cancellation, failure and
-   retry, token invalidation, and reauthorization at the highest practical
-   local seam. Source-text, snapshot, mutation, and generated-artifact-shape
+4. Run every required `candidate` command from the temporary worktree root.
+   Do not rerun `authoring` or `integration` commands. Reuse prior capability
+   evidence only when its complete content, configuration and toolchain key
+   matches; record the cache decision. Add focused checks when touched-surface
+   risk justifies them. Use the smallest representative behavioral checks that
+   exercise each materially distinct transition. Prefer an existing test seam;
+   do not create a custom harness without the user's explicit approval recorded
+   in the plan. Source-text, snapshot, mutation, and generated-artifact-shape
    checks are supplementary; they cannot be the primary proof of runtime behaviour.
    Record unavailable real-provider checks as external acceptance rather than
    replacing local behavioural coverage with structural assertions.
-5. Keep bulk output outside plan artefact folders. Save commands, exit status,
-   concise results, candidate SHA, and evidence links under
+   For a Composer behavior candidate, include package-scoped strict replay and
+   effective-tree equality but defer mechanics review. For a patch-mechanics
+   candidate, verify delivery mechanics and equality; any effective-tree change
+   returns the branch to behavior verification.
+5. Keep bulk output outside plan artefact folders. Save commands, start and
+   finish times, elapsed time, exit status, cache status, concise results,
+   candidate SHA, and evidence links under
    `<feature_dir>/<plan_slug>.evidence/` in the primary checkout.
 6. Remove only the explicit temporary worktree after capturing evidence.
 7. Return `verification-passed` only for that SHA.
@@ -57,6 +66,6 @@ verification point.
 
 ## Output
 
-Report the commit SHA, commands and status, focused checks, evidence paths, fix
-attempts, cleanup status, and final `verification-passed` or
-`verification-blocked`.
+Report the commit SHA, commands and status, timing, cache decisions, focused
+checks, evidence paths, fix attempts, cleanup status, and final
+`verification-passed` or `verification-blocked`.

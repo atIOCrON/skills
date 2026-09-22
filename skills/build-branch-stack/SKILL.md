@@ -63,8 +63,8 @@ verification changes:
 
 Use `Queued`, `In progress`, `Blocked`, or `Ready for human review`. The last
 status requires the feature in `review/`, a verified final SHA matching local,
-upstream, and remote tips, a pinned parent, clean reviews from all three
-providers on that SHA or recorded equal-range-diff mappings for all three,
+upstream, and remote tips, a pinned parent, every required three-provider review
+set clean on that SHA or covered by recorded restack-identity mappings,
 preserved artefacts, passed required branch-level agent checks, and recorded
 human, external, and not-yet-runnable release-candidate checks. Final stack
 checks gate release progression, not this feature status.
@@ -105,16 +105,31 @@ Require each selected capability to define fast authoring checks, exact
 candidate verification, final integration verification, and the immutable
 input identities that permit safe reuse. It must also identify the source
 representation and the effective generated or runtime result reviewers need.
-Record those commands and evidence here without copying ecosystem-specific
-procedures into this orchestration skill.
+Record its review contract as `standard` or `composer_split`; Magento Composer
+patches require `composer_split`.
+Label every command `authoring`, `candidate`, or `integration`. Record those
+commands and evidence here without copying ecosystem-specific procedures into
+this orchestration skill. Reject a plan that makes an integration command part
+of every candidate without a specific candidate-level risk that cheaper checks
+cannot prove.
 Prepare reproducible local checks for requirements CI cannot run. If a required
 agent-run gate or prerequisite is missing, resolve its scope and ownership before
 implementation; do not silently add unrelated CI or tooling work. Distinguish
 checks the agent can run from human or external acceptance (such as a sandbox
 wallet test). Record intended commands, any agreed gate gap, and each external
 check's procedure, owner, and pending result in plan evidence. Runtime lifecycle
-logic requires executable local behavioural proof at the highest practical
-seam; source-shape assertions may supplement but not replace it.
+logic requires executable local behavioural proof at the lowest-cost reliable
+existing seam; source-shape assertions may supplement but not replace it. Do
+not create a custom browser, runtime, provider, package, or application harness
+unless the plan records the user's explicit approval for that harness. General
+plan approval does not count.
+Before editing, select risk profiles from the changed surfaces. Cover only
+applicable invariants: state ownership and transitions; replacement and
+destruction; concurrency and stale results; cancellation, failure, retry and
+success; fallback and user-action availability; current-value and independent
+form isolation; source-to-generated-output integrity; and dependency baseline,
+order and effective result. Record the compact invariant list in the design
+checkpoint and use it for implementation and candidate verification.
 
 ## Workflow
 
@@ -143,14 +158,20 @@ For each plan:
    implementation worker to create the design checkpoint specified by
    `plan-implement.md`; stop if it exposes a cohesion failure or unauthorized
    architecture. Run the applicable capability's authoring checks during
-   implementation and its exact candidate verification before accepting the
-   candidate. Then selectively stage and review
-   any new edits, commit if needed, and verify the exact commit in a clean worktree.
+   implementation and only its exact candidate checks before accepting the
+   candidate. Reuse immutable capability evidence when its complete identity
+   key still matches; do not rerun integration checks. Then selectively stage
+   and review any new edits, commit if needed, and verify the exact commit in a
+   clean worktree.
    Create or update the remote branch at the first verified commit. Push each
-   verified fix and review the pinned parent-to-commit diff. Keep the feature in
-   `in_progress/` through all code review passes and fixes. Update the branch's
-   manifest entry after every verified tip change.
-4. Once Claude, Codex, and Cursor have cleanly reviewed the logical change and
+   verified fix and review the pinned parent-to-commit diff. Use the applicable
+   capability's review contract. Composer vendor patches always use separate
+   three-reviewer behavior and patch-mechanics phases; do not combine them based
+   on perceived simplicity. Keep the feature in
+   `in_progress/` through all code review passes and fixes. Atomically update
+   the branch's manifest progress after each verified tip, review pass, finding
+   closure, publication change, or next-action change.
+4. Once every required Claude, Codex, and Cursor review set is clean and
    its required branch-level agent checks pass, preserve the feature's
    `.reviews/`, `.evidence/`, and any `.execution/` folders before removing a
    worktree. Record pending human and external checks with procedures and owners.
@@ -172,12 +193,13 @@ affected descendants to `in_progress/` before restacking; keep each candidate
 there through verification and code review. Synchronize reviewed tips with
 explicit leases.
 Classify each delta as `verbatim`, `mechanical regeneration`, or
-`intentional behavior change`. Verify every new tip. A conflict-free restack
-with equal `range-diff` and deterministic identity evidence retains all three
-prior reviews; record their old-to-new SHA mappings. A fresh three-reviewer pass
-is required for manual resolutions, unequal range diffs, changed generated
-output, or behavior changes. An unexpected local branch change needs a scope
-decision before it can count as reviewed.
+`intentional behavior change`. Verify every new tip. Retain prior reviews when
+equal `range-diff` or capability-defined semantic identity proves the logical
+child change and effective result are unchanged. Semantic identity must compare
+the old and new parent-relative changes, owned source and patch blobs,
+generated or dependency-derived outputs, and focused behavior; record the
+old-to-new SHA mappings. Conflict resolution or unequal `range-diff` alone does
+not require fresh review. Any unexplained difference or behavior change does.
 
 After all plans:
 
@@ -223,7 +245,7 @@ affected feature and demonstrated descendants to `in_progress/` for a fix,
 fresh verification, and code review. Refresh the canonical manifest at its
 stable release path and check every recorded plan and artefact path. Freeze only
 when the user selects a complete candidate, final stack checks pass, and all
-included branch tips, all three clean reviews or mappings, and required agent
+included branch tips, every required clean review or mapping, and required agent
 checks agree. Record the freeze authorization and scope digest, then validate
 the manifest. Do not add scope after freeze. A critical addition requires an
 authorized thaw, a new digest, and invalidation of affected integration,
@@ -244,8 +266,10 @@ separately from branch readiness.
 ## Rules
 
 - Make the least-complex change that satisfies each plan and binding contract.
-- Require behavioural regression tests proportionate to the changed lifecycle;
-  structural assertions alone are insufficient evidence of runtime behaviour.
+- Require the smallest reliable behavioral regression evidence for the changed
+  lifecycle; structural assertions alone are insufficient evidence of runtime
+  behaviour. Prefer existing facilities and representative scenarios. A new
+  custom test harness requires explicit user approval recorded in the plan.
 - Map changed surfaces to plan scope or a binding contract. Stop for user
   approval before adding an unplanned deliverable.
 - Stop and return to architecture or slice planning when implementation would
@@ -273,7 +297,10 @@ separately from branch readiness.
 - Run fresh Claude, Codex, and Cursor reviewers in parallel for every discovery
   pass. All three must complete successfully.
 - Do not amend a published commit. Preserve clean review evidence across only
-  conflict-free, equal-range-diff restacks with deterministic identity checks.
+  restacks with equal-range-diff or semantic-identity evidence.
+- Record start, finish, elapsed time, outcome, candidate SHA and cache status
+  for implementation, verification, review, closure, restack, publication,
+  manifest and audit work. Timing is diagnostic; do not impose a time budget.
 - Stop for failed verification, unresolved findings, unsafe commits, revision
   mismatch, or unpreserved artefacts. A failed branch-level check blocks the
   feature; a failed final stack check blocks release progression and returns the
@@ -292,7 +319,7 @@ separately from branch readiness.
 Save and validate the canonical manifest at
 `plans/releases/<release-id>/manifest.json` or the repository-defined stable
 path. It records the base, ordered branches, dependencies, targets, tips,
-surfaces, checks, all three review mappings, CRs, exclusions, freeze, integration,
+surfaces, checks, all required review mappings, CRs, exclusions, freeze, integration,
 acceptance, and deployment state; link detailed evidence instead of duplicating
 it. Report
 `Verified and pushed, ready for human review` for every feature that meets the

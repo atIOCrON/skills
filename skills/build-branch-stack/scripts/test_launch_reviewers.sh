@@ -283,6 +283,9 @@ run_success_case() {
   assert_exit_code_file "$artifact_dir/${reviewer}-exit-code" "0"
   assert_file_contains "$artifact_dir/${reviewer}-session.md" "stderr_path:"
   assert_file_contains "$artifact_dir/${reviewer}-session.md" "attempt_log_path:"
+  assert_file_contains "$artifact_dir/${reviewer}-session.md" "started_at:"
+  assert_file_contains "$artifact_dir/${reviewer}-session.md" "finished_at:"
+  assert_file_contains "$artifact_dir/${reviewer}-session.md" "elapsed_seconds:"
   assert_file_contains "$artifact_dir/${reviewer}-attempts.md" "<prompt-file-stdin>"
   assert_file_contains "$artifact_dir/${reviewer}-session.md" "<prompt-file-stdin>"
   assert_file_not_contains "$artifact_dir/${reviewer}-attempts.md" "<prompt-file-contents>"
@@ -528,6 +531,18 @@ run_create_chat_empty_case() {
   test -f "$artifact_dir/cursor-failure.md"
   assert_file_contains "$artifact_dir/cursor-failure.md" "deterministic setup failure"
 }
+
+. "$script_dir/launcher_common.sh"
+if [ "$(phase_and_pass_label /tmp/behavior-review-pass3)" != \
+  "behavior-review, pass 3" ]; then
+  echo "behavior phase label failed" >&2
+  exit 1
+fi
+if [ "$(phase_and_pass_label /tmp/patch-mechanics-review-pass4)" != \
+  "patch-mechanics-review, pass 4" ]; then
+  echo "patch-mechanics phase label failed" >&2
+  exit 1
+fi
 
 run_success_case claude success
 run_success_case cursor success

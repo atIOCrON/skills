@@ -16,13 +16,13 @@ Require:
 - verification evidence paths,
 - neutral review-pack path,
 - original and current review commit SHAs,
-- plan path,
+- plan path and review phase,
 - cross-pass triage ledger path
   (`<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`).
 
 ## Scope
 
-- Assess only findings from the original code-review artifact.
+- Assess only findings from the original review artifact and phase.
 - Assess only IDs named in the closure request. Batch all selected findings from
   this reviewer into one response; do not assess ordinary nits.
 - This closure is expected to run in the same reviewer conversation/session that

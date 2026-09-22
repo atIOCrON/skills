@@ -1,14 +1,15 @@
 # Code Review Loop
 
-Review successive verified and pushed commits until one clean pass covers the
-exact plan-branch tip.
+Review successive verified and pushed commits until the required clean review
+set covers the exact plan-branch tip.
 
 ## Inputs
 
 Require the repository, host mapping, vertical-slice plan and slug, parent
 specification, slice map, design checkpoint, implementation scope,
 dependency-parent branch and pinned base SHA, plan branch, candidate commit,
-neutral pack, reviewer preflight status, and verification evidence.
+neutral pack, reviewer preflight status, verification evidence, and review
+contract: `standard` or `composer_split`.
 
 The cross-pass material concern ledger is
 `<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`.
@@ -17,9 +18,10 @@ The cross-pass material concern ledger is
 
 Each numbered pass is a fresh three-reviewer discovery review of
 `<base-sha>...<review-sha>`. Targeted closure rounds do not count as passes.
-One completed fresh pass plus terminal closure is sufficient when the reviewed
-commit has not changed. After a material fix, close the originating findings,
-then run a fresh pass on the new commit.
+For `standard`, use one code-review phase. For `composer_split`, complete the
+behavior phase before starting patch mechanics. One clean fresh pass plus
+terminal closure is sufficient within each required phase when its approved
+identity has not changed.
 
 Before deciding the post-fix review action, record a risk classification.
 Treat changed production behavior, interfaces, lifecycle ownership, dependency
@@ -40,14 +42,14 @@ Incorrect: “The final pass is running.”\
 Incorrect: “This is the last review cycle.”\
 Retrospectively correct: “Pass 6 was the last required pass; review is complete.”
 
-A conflict-free restack does not require another discovery review when
-`git range-diff` is equal and deterministic identity checks show the logical
-change is unchanged. Verify the new commit, record the old-to-new SHA mapping,
-refresh the pack, and retain all three prior clean reviews. Any manual resolution,
-unequal range diff, changed generated output, or intentional behavior change
-requires a fresh three-reviewer pass. Do not treat a generated-artifact
-conflict by itself as a behavioral change when deterministic regeneration
-proves equality.
+A restack does not require another discovery review when equal `git range-diff`
+or capability-defined semantic identity proves the logical child change and
+effective result are unchanged. Semantic identity compares parent-relative
+changes, owned source and patch blobs, generated or dependency-derived outputs,
+and focused behavior. Verify the new commit, record the old-to-new SHA mapping,
+refresh the pack, and retain every required review. Manual resolution, unequal
+range diff, or regenerated output does not invalidate reviews by itself; an
+unexplained difference or behavior change does.
 
 When only explanatory or verification evidence changes, confirm the pinned
 base, commit, and tree SHAs are unchanged. Refresh the pack's evidence and
@@ -58,7 +60,7 @@ another discovery pass solely for added evidence. A code change, restack,
 parent change, failed verification, or new contradiction still blocks closure
 and follows the normal review path.
 
-For each pass:
+For each standard pass:
 
 1. Confirm the review commit equals the local branch tip, upstream, fetched
    remote tip, and latest verified SHA. Confirm the dependency-parent head
@@ -95,28 +97,58 @@ For each pass:
    user requests it.
 10. Resolve recurring escalations with the user before another fresh pass.
 
+## Composer Split Review
+
+Use this deterministic route for every Composer vendor patch:
+
+1. Create `behavior-review-pass<N>/` and run all three fresh reviewers with
+   `code-review-behavior.md` and
+   `code-review-loop-behavior-invocation.md`. Give them the baseline-to-effective
+   code diff and relevant runtime context. Patch-delivery mechanics are out of
+   scope.
+2. Triage, batch, fix, close, verify, and push as above. After every behavioral
+   code change, regenerate and commit the owned patch, replay only the affected
+   package from its validated prefix, and prove byte-identical effective output
+   before starting the next behavior pass.
+3. After a clean behavior pass and terminal closure, create
+   `patch-mechanics-review-pass<N>/` and run all three fresh reviewers with
+   `code-review-patch-mechanics.md` and
+   `code-review-loop-patch-mechanics-invocation.md`.
+4. For a mechanics-only fix, commit, run strict package replay, and compare the
+   effective tree with the behavior-approved identity. If unchanged, retain the
+   behavior approvals and run a fresh mechanics pass. If changed, invalidate
+   both sets and return to behavior review.
+5. A mechanics reviewer may report a newly established behavioral blocker, but
+   it returns to behavior triage; the mechanics pass does not expand into a
+   semantic rescan.
+
+Use one ledger with a `phase` column. Number passes independently by phase.
+Closure resumes the originating reviewer and preserves that finding's phase.
+
 ## Completion
 
 Return `Reviewed and pushed` only when:
 
-- at least one fresh pass from all three reviewers covered the logical change,
-  directly on the current SHA or through recorded equal-range-diff restack
-  mappings, and no material finding or contradiction remains unresolved after
-  any targeted closure;
+- the `standard` contract has one clean code-review pass from all three
+  reviewers, or `composer_split` has both one clean behavior pass and one clean
+  patch-mechanics pass from all three reviewers, directly on the current SHA or
+  through valid identity mappings;
 - all ledger entries are terminal and required closure is complete;
 - the same SHA is the local branch tip, upstream, fetched remote tip, and latest
-  verified commit, with either direct clean reviews from all three reviewers or
-  recorded equal-range-diff mappings from all three clean-reviewed logical
-  changes; and
+  verified commit, with every required review entry direct or mapped from its
+  clean-reviewed logical change; and
 - the dependency-parent head equals the pinned base SHA and remains an
   ancestor.
 
-Any fix commit, manual restack resolution, unequal range diff, behavior change,
-or unexplained SHA mismatch invalidates completion and requires verification
-plus a fresh pass. An equal-range-diff mechanical restack needs verification
-and recorded identity evidence, not another discovery review. An unexpected
-remote source change blocks until the user accepts its scope.
+Any behavior change, unexplained restack difference, or unexplained SHA mismatch
+invalidates behavior approval and requires verification plus a fresh behavior
+or standard pass. In `composer_split`, a mechanics-only fix with byte-identical
+effective output invalidates only mechanics approval. A semantically identical
+restack needs verification and recorded identity evidence, not discovery
+review. An unexpected remote source change blocks until the user accepts its
+scope.
 
 Report pass outcomes and SHAs, closure rounds, fixes, verification, rejected
-or deferred findings, artefact paths, ledger counts, identity checks, skill
-feedback, and either a blocker or `Reviewed and pushed`.
+or deferred findings, artefact paths, ledger counts, identity checks, per-pass
+reviewer and orchestration timings, skill feedback, and either a blocker or
+`Reviewed and pushed`.

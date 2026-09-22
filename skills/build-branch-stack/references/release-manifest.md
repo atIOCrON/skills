@@ -30,6 +30,14 @@ from the manifest, never use them to override it silently.
       "dependency_reason": "none",
       "tip_sha": "<full-sha>",
       "tree_sha": "<full-tree-sha>",
+      "progress": {
+        "status": "in_progress",
+        "review_phase": "code",
+        "review_pass": 0,
+        "last_verified_sha": null,
+        "next_action": "<concise next action>",
+        "updated_at": "<ISO-8601 timestamp>"
+      },
       "surfaces": ["storefront"],
       "checks": [
         {
@@ -43,6 +51,7 @@ from the manifest, never use them to override it silently.
       ],
       "reviews": [
         {
+          "phase": "code",
           "reviewer": "claude",
           "status": "clean",
           "sha": "<full-sha>",
@@ -51,6 +60,7 @@ from the manifest, never use them to override it silently.
           "evidence": "<path>"
         },
         {
+          "phase": "code",
           "reviewer": "codex",
           "status": "clean",
           "sha": "<full-sha>",
@@ -59,6 +69,7 @@ from the manifest, never use them to override it silently.
           "evidence": "<path>"
         },
         {
+          "phase": "code",
           "reviewer": "cursor",
           "status": "clean",
           "sha": "<full-sha>",
@@ -91,12 +102,25 @@ List branches in integration order. `target` is the change-request target;
 `dependency_reason: "none"` for an independent branch. A generated-file
 conflict alone is not dependency evidence.
 
-Record one review entry for each of `claude`, `codex`, and `cursor`. For a
-direct review, set `method` to `direct` and use the reviewed tip for both `sha`
-and `origin_sha`. After a proven mechanical restack, set `method` to
-`equal_range_diff`, set `sha` to the verified new tip, `origin_sha` to the
-directly reviewed old tip, and link the mapping evidence. A clean release
-requires all three entries.
+Record either one `code` review entry for each of `claude`, `codex`, and
+`cursor`, or, for the Composer split contract, one `behavior` and one
+`patch_mechanics` entry for each reviewer. Omitted `phase` means `code` for
+backward compatibility. Initialize all six split entries as `pending` so the
+manifest remains valid while behavior review is in progress. For a direct
+review, set `method` to `direct` and use
+the reviewed tip for both `sha` and `origin_sha`. After a proven restack, set
+`method` to `equal_range_diff` or `semantic_identity`, set `sha` to the verified
+new tip, `origin_sha` to the directly reviewed old tip, and link the mapping
+evidence. A clean release requires every entry in its selected review contract.
+After a mechanics-only Composer fix with byte-identical effective output, map
+the clean behavior entries to the new tip with `semantic_identity` and link the
+strict replay equality evidence; do not pretend they directly reviewed the new
+patch bytes.
+
+Update `progress` atomically after each verified tip, review phase or pass, finding
+closure, publication change, or next-action change. It is resumability state,
+not frozen release scope, and does not affect `freeze.scope_digest`. Link
+detailed logs instead of copying or hashing them during a progress update.
 
 Keep integration results under `integration`, including ordered input SHAs,
 candidate commit and tree SHAs, toolchain identity, clean-install evidence,
@@ -110,8 +134,8 @@ evidence for the eventual candidate.
 
 ## Freeze
 
-Freeze only after branch tips, all three review SHAs, and required agent checks
-agree.
+Freeze only after branch tips, every required review SHA, and required agent
+checks agree.
 Compute `freeze.scope_digest` with:
 
 ```bash

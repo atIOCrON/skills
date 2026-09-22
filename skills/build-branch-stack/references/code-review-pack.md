@@ -4,6 +4,10 @@ Build a neutral, commit-pinned pack at
 `<feature_dir>/<plan_slug>.reviews/code-review-pack/`. Every fresh reviewer in
 a pass uses the same immutable review boundary.
 
+Record `review_mode` as `standard`, `behavior`, or `patch_mechanics` in
+`index.md`. Use the same required files in every mode so pack validation and
+resumption remain uniform.
+
 ## Contents
 
 Create or refresh:
@@ -47,10 +51,14 @@ pack and link them from `index.md`.
 In `evidence-manifest.json`, record the review SHA and one entry per required
 check: `id`, `kind` (`agent` or `external`), `required`, `last_run_sha` (full
 commit SHA or `null`), `command`, `runtime`, `result` (`passed`, `failed`,
-`pending`, or `blocked_by_environment`), `log_path`, and `log_sha256`. Use
+`pending`, or `blocked_by_environment`), `started_at`, `finished_at`,
+`elapsed_seconds`, `cache_status` (`hit`, `miss`, or `not_applicable`),
+`log_path`, and `log_sha256`. Use
 `null` paths and hashes when no log exists. A result from an older SHA must
 remain visible with its old `last_run_sha`; it cannot count as a passed required
 agent check on the current SHA. Link each log from `verification-summary.md`.
+Completed checks require timestamps and elapsed seconds; pending checks use
+`null`. A cache hit links the reused evidence and its complete identity key.
 Link supporting files with local Markdown links. Run
 `scripts/validate_review_pack.py <pack-dir> <repo-root>` after creating or
 refreshing the manifest; it checks local Markdown links, file hashes, check
@@ -65,17 +73,33 @@ not become a code-review defect merely because it cannot run here; retain its
 required status for the later acceptance or production decision.
 
 After a restack, link its old/new ranges, `range-diff`, delta classifications,
-and deterministic evidence from `index.md`. When the range diff is equal and
-the restack is conflict-free, record the old-to-new SHA mappings and retained
-evidence from all three reviews. Require a fresh three-reviewer discovery pass
-for manual resolutions, unequal range diffs, changed generated output, or
-behavior changes.
+and deterministic evidence from `index.md`. Retain every required review when equal
+range diff or capability-defined semantic identity proves the parent-relative
+logical change and effective result are unchanged. Record old-to-new SHA
+mappings and the compared source, patch, generated-output and focused-behavior
+identities. Require fresh review for unexplained differences or behavior
+changes, not for conflict resolution or unequal range diff alone.
 
 For specialized generated or dependency-derived changes, link the applicable
 capability's candidate evidence and deterministic reproduction results. Record
 the immutable inputs and their identities, the effective result identity, and
-the exact capability command used. Do not duplicate capability-specific replay
-or validation procedures in this universal review pack.
+the exact capability command used. Link the representations; do not copy
+complete generated trees into the pack or duplicate capability procedures.
+
+For a Composer vendor patch, use two modes:
+
+- `behavior`: lead with the baseline-to-effective source diff, relevant project
+  runtime code, behavioral evidence, committed patch identity, and strict
+  replay equality. Patch mechanics are present only as the identity proof and
+  are not review scope.
+- `patch_mechanics`: link the clean behavior-review evidence and approved
+  effective-tree identity, then expose the final raw patch, correct baseline or
+  prefix, registration, classification, order, strip/tool identities, strict
+  logs, and equality result. Do not duplicate semantic review material.
+
+Build the mechanics pack only after behavior review is clean. A mechanics-only
+refresh retains that approval only while the effective-tree identity remains
+equal.
 
 ## Deterministic Checks
 
@@ -97,7 +121,7 @@ A failed check, unexplained delta, or SHA mismatch blocks review.
 
 Build the pack before pass 1. After a fix commit or restack, refresh the commit,
 diff, hashes, deterministic results, and verification evidence. Preserve and
-link all three prior clean reviews for a proven equal-range-diff restack;
+link every required prior clean review for a semantically identical restack;
 otherwise run a fresh three-reviewer discovery pass. Reuse immutable inputs
 only when the applicable capability proves their content, configuration, and
 toolchain identity; never rebuild an unchanged proven input merely to refresh
@@ -106,7 +130,7 @@ For evidence-only closure, keep the pinned diff and SHAs, refresh the evidence
 links, manifest, hashes, and affected deterministic results, and record what
 changed in the pack. Rerun the validator after each refresh.
 
-Fresh reviewers receive only the pinned diff, approved plan, parent
+Fresh reviewers receive only the phase-appropriate pinned diff, approved plan, parent
 specification, slice map, design checkpoint, repository standards, reproducible
 inputs, verification results, and this pack. Distinguish behavioural evidence
 from source-text, snapshot, mutation, and generated-artifact assertions;

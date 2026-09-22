@@ -83,8 +83,19 @@ slice.
 Source-text, snapshot, or patch-shape assertions may protect structure. They do
 not prove browser activation, DOM replacement, concurrency, retry, cancellation,
 provider callbacks, current totals, or other runtime lifecycle behaviour.
-State the highest practical local behavioural seam for those requirements and
-record real-provider or real-environment acceptance separately.
+State the lowest-cost reliable local seam that executes those requirements and
+record real-provider or real-environment acceptance separately. Prefer one
+representative scenario that proves several coupled conditions over a
+cross-product matrix.
+
+## Test Infrastructure Policy
+
+Do not authorize a new custom test harness unless the user explicitly approves
+that harness. A custom harness is new bespoke infrastructure that simulates or
+drives a browser, runtime, provider, package, or application outside the
+repository's existing test facilities. Approval of the specification, slices,
+or implementation does not imply harness approval. Prefer existing tests,
+small fixtures within them, focused commands, or explicit external acceptance.
 
 ## Authorized Complexity
 

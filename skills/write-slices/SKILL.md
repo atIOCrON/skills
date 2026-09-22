@@ -102,6 +102,16 @@ overwrite or move an existing plan. Each child plan must contain:
 - agent-run behavioural checks and separate human or external acceptance; and
 - required database objects at the same precision as the parent spec.
 
+Name the existing test facility each slice will extend, or state that no
+permanent automated test is required and record the focused command or external
+acceptance instead. Do not plan a new custom browser, runtime, provider,
+package, or application harness unless the user explicitly approved that
+harness by name. General approval of the specification or slice map does not
+count. If a new harness appears necessary, present it as a separate decision
+before writing approved child plans. Count test-support complexity in the
+one-context slice test, and prefer one representative scenario over a field,
+provider, or state matrix.
+
 Do not copy the entire parent specification. Include only the context,
 decisions, criteria, and verification needed to implement and review this
 slice. Theme cleanup, migration, or other supporting work travels with the

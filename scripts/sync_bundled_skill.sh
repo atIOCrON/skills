@@ -29,10 +29,14 @@ shared-components/code-review-closure/code-review-closure.md|references/code-rev
 shared-components/code-review-pack/code-review-pack.md|references/code-review-pack.md
 shared-components/code-review-pack/scripts/validate_review_pack.py|scripts/validate_review_pack.py
 shared-components/code-review-loop/code-review-loop-closure-invocation.md|references/code-review-loop-closure-invocation.md
+shared-components/code-review-loop/code-review-loop-behavior-invocation.md|references/code-review-loop-behavior-invocation.md
 shared-components/code-review-loop/code-review-loop-code-review-invocation.md|references/code-review-loop-code-review-invocation.md
+shared-components/code-review-loop/code-review-loop-patch-mechanics-invocation.md|references/code-review-loop-patch-mechanics-invocation.md
 shared-components/code-review-loop/code-review-loop.md|references/code-review-loop.md
 shared-components/code-review-triage/code-review-triage.md|references/code-review-triage.md
 shared-components/code-review/code-review.md|references/code-review.md
+shared-components/code-review/code-review-behavior.md|references/code-review-behavior.md
+shared-components/code-review/code-review-patch-mechanics.md|references/code-review-patch-mechanics.md
 shared-components/from-reviewed-plan-to-git-handoff/from-reviewed-plan-to-git-handoff.md|references/from-reviewed-plan-to-git-handoff.md
 shared-components/git-branch-commit/git-branch-commit.md|references/git-branch-commit.md
 shared-components/git-sync-branch/git-sync-branch.md|references/git-sync-branch.md

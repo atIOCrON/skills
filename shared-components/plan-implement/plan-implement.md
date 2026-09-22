@@ -40,7 +40,15 @@ ownership scope is provided, ask.
      options do not satisfy the slice;
    - behaviour-level verification and separate external acceptance; and
    - conditions that require stopping for architecture or slice replanning.
-9. For a complex or cross-cutting change, write
+9. Select only the risk profiles implied by the touched surfaces and add their
+   invariants to the checkpoint: state transitions; replacement and destruction;
+   concurrency and stale results; cancellation, failure, retry and success;
+   fallback and user-action availability; current-value and independent-form
+   isolation; source-to-generated-output integrity; and dependency baseline,
+   order and effective result. Map each selected invariant to one focused check
+   or explain why it is external. Reuse existing scenarios; do not create a
+   test-per-invariant matrix.
+10. For a complex or cross-cutting change, write
    `<feature_dir>/<plan_slug>.execution/implementation-analysis.md` before
    editing. Keep it concise and include:
    - the scope-to-change map;
@@ -49,8 +57,8 @@ ownership scope is provided, ask.
    - invariants and hazards the implementation must preserve;
    - adversarial checks that can disprove the proposed behavior.
 
-Use the analysis to shape the implementation and verification harness. Do not
-send it to fresh reviewers; they retain an independent perspective.
+Use the analysis to shape implementation and verification. Do not send it to
+fresh reviewers; they retain an independent perspective.
 
 Use repository instructions or indexes to choose relevant docs when available.
 
@@ -81,6 +89,10 @@ Use repository instructions or indexes to choose relevant docs when available.
   applicable.
 - Preserve the existing invariants identified for the touched surface,
   including state transitions and failure handling.
+- Prefer existing test infrastructure and the smallest representative scenario.
+  Do not create a custom browser, runtime, provider, package, or application
+  harness unless the plan records the user's explicit approval for it. Small
+  fixtures within an existing test facility are not a new harness.
 - Stop before implementing an unapproved page-global mutable coordinator,
   cross-provider lifecycle manager, retry or recovery framework, substantial
   replacement of a dependency-owned surface, or permanent dependency
@@ -92,13 +104,13 @@ Use repository instructions or indexes to choose relevant docs when available.
 ## Verification
 
 Run preliminary verification named by the plan when practical for the owned
-surface. Add proportionate regression tests for changed behaviour even when
-the plan omits them. Browser activation, renderer replacement, concurrency,
-current-value changes, cancellation, retries, token invalidation, and provider
-callbacks require executable behavioural tests at the highest practical local
-seam. Source-text, snapshot, and generated-artifact-shape checks may supplement
-but not replace those tests. Keep real-provider acceptance separate when it cannot run
-locally. Run planned adversarial checks for complex or cross-cutting work.
+surface. Add only the smallest regression evidence justified by changed
+behaviour. Use the lowest-cost reliable existing seam and one representative
+scenario per materially distinct transition; do not build a test-per-invariant
+or provider/field matrix. Source-text, snapshot, and generated-artifact-shape
+checks may supplement but not replace executable behavior evidence. Keep
+real-provider acceptance separate when it cannot run locally. Run planned
+adversarial checks for complex or cross-cutting work.
 Report failures honestly; if verification is impossible here, say why.
 
 ## Output

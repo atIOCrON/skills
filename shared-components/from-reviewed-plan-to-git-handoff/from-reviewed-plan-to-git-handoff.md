@@ -1,8 +1,8 @@
 # From Reviewed Plan To Git Handoff
 
 Implement one reviewed vertical-slice plan, push each verified revision, and
-obtain clean reviews from Claude, Codex, and Cursor. Do not create a change
-request.
+obtain every required clean review set from Claude, Codex, and Cursor. Do not
+create a change request.
 
 ## Inputs
 
@@ -32,8 +32,8 @@ caller creates or validates and checks out the plan branch first.
 8. Run `code-review-loop.md`. Verify, push, and review every accepted fix
    commit.
 9. Require the local branch tip, upstream, remote, and latest verified SHA to
-   match. Require all three clean reviews for that SHA or recorded
-   equal-range-diff mappings from all three clean-reviewed logical changes.
+   match. Require every selected review set to be clean for that SHA or covered
+   by recorded restack identity mappings from its clean-reviewed logical change.
    Require the parent head to equal its pinned SHA and remain an ancestor.
    Produce the branch handoff evidence.
 

@@ -63,8 +63,8 @@ views, not competing authorities.
   restacks, or required branch-level agent checks are underway, or a check found
   a defect. Keep the feature here throughout the code review loop.
 - `review`: the exact branch tip and pinned parent are verified, the local,
-  upstream, and remote tips agree, code review findings are resolved, all three
-  automated reviews are clean or have valid equal-range-diff mappings, required
+  upstream, and remote tips agree, review findings are resolved, every required
+  automated review set is clean or has valid restack identity mappings, required
   branch-level agent checks pass, and artefacts are preserved. Record pending
   human or external acceptance checks with their procedures and owners. Record
   release-candidate checks that intrinsically require unbuilt descendant
@@ -90,7 +90,8 @@ fix sends the feature to `in_progress/`.
 ## Artefacts
 
 - `<feature_dir>/<slug>.reviews/` contains `plan-review-pass<N>/`,
-  `code-review-pass<N>/`, `code-review-pack/`, and
+  `code-review-pass<N>/`, `behavior-review-pass<N>/`,
+  `patch-mechanics-review-pass<N>/`, `code-review-pack/`, and
   `code-review-triage-ledger.md`. After the branch handoff audit it also
   contains `artefact-audit-ledger.md`, which records follow-up planning
   decisions for that feature.

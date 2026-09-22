@@ -61,18 +61,22 @@ Use these baselines:
 - a customization: the locked package with every preceding registered patch;
 - a revised patch: the correct baseline without that patch's old output.
 
-Temporary edits inside `vendor/` may help author a patch, but they are never the
-deliverable. Preserve locked versions and references unless an upgrade is
-authorized. Exclude formatting churn, generated files, and local configuration.
+Prefer an isolated copy of the locked package with the required patch prefix
+applied. Temporary edits inside `vendor/` may help author a patch, but never use
+an unverified live installation as the baseline or deliverable. Preserve locked
+versions and references unless an upgrade is authorized. Exclude formatting
+churn, generated files, and local configuration.
 
 ## Verification Phases
 
 ### Authoring
 
-Work against the correct baseline and run the smallest fast checks that expose
-syntax, patch shape, and the targeted behavior. A validated immutable baseline
-or patch-prefix cache may be reused. Regenerate only the patch currently owned;
-do not repair unrebased later patches in the same branch.
+Work directly in an isolated effective package tree built from the correct
+baseline. Run the smallest fast checks that expose syntax and targeted
+behavior. A validated immutable baseline or patch-prefix cache may be reused.
+After each vendor-code change, regenerate only the patch currently owned;
+do not repair unrebased later patches in the same branch. Commit that patch on
+the feature branch so every review iteration remains in its normal history.
 
 ### Candidate
 
@@ -90,19 +94,43 @@ patch command is not equivalent evidence.
 Record the locked package version or archive hash, lock evidence, pristine or
 prefix tree identity, ordered patch identities, strip level, GNU patch identity,
 strict replay logs, and effective result tree identity. Compare the resulting
-code byte-for-byte where repository policy requires it. Review and test both
-the patch source and the effective resulting code. Run syntax and focused
-behavioral tests. For lifecycle changes, exercise state transitions,
-cancellation, retries, current-value changes, and replacement at the highest
-practical local seam; source-shape checks remain supplementary.
+code byte-for-byte with the authoring tree. Run syntax and the minimum focused
+behavioral checks justified by the change.
+
+Use two review phases for every Composer vendor patch; never combine them based
+on perceived simplicity:
+
+1. **Behavior review.** Give all three reviewers the baseline-to-effective
+   source diff and relevant project code. Patch format, registration, order and
+   replay mechanics are out of scope. After a behavioral fix, regenerate and
+   commit the patch, replay only the affected package against the cached prefix,
+   prove exact output equality, and run another fresh behavior pass.
+2. **Patch-mechanics review.** Start only after behavior review is clean. Give
+   all three reviewers the final patch, registration, ordering and replay
+   evidence. They do not repeat semantic review. A mechanics-only fix retains
+   behavior approval when strict replay proves the effective tree unchanged;
+   any effective-output change returns to behavior review.
+
+Reviewing mutable direct edits alone cannot approve a Composer patch. The
+committed patch and package-scoped equality proof bind each behavior pass to an
+immutable feature-branch SHA.
+
+Do not run a full project Composer install for ordinary authoring or candidate
+verification. Require one only when the candidate changes package selection,
+Composer or patch-plugin configuration, or another mechanism that package
+replay cannot prove. Registering or changing an ordinary package patch requires
+strict replay of its affected package and prefix, not installation of every
+locked package.
 
 ### Integration
 
 At the final integration tip, reconstruct the pristine locked package and
 strictly replay the complete registered patch sequence in order. Verify the
 effective full tree and run combined syntax, build, and behavioral regression
-checks before deployment or promotion. Keep unavailable real-provider checks
-as explicit external acceptance rather than substituting structural evidence.
+checks before deployment or promotion. Run the clean plugin-enabled Composer
+install here and compare installed affected-package trees with strict replay.
+Keep unavailable real-provider checks as explicit external acceptance rather
+than substituting structural evidence.
 
 ## Immutable Prefix Cache
 

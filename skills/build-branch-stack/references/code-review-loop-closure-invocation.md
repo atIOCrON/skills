@@ -1,4 +1,4 @@
-You are {reviewer_name} for an orchestration run. Check closure round {closure_round} for code-review pass {pass_number}.
+You are {reviewer_name} for an orchestration run. Check closure round {closure_round} for {review_phase} pass {pass_number}.
 Repo root: {repo_root}
 Plan path: {plan_path}
 Review label: {review_label}

@@ -8,7 +8,8 @@ Require:
 
 - repository root;
 - host provider: `codex`, `claude`, or `cursor`;
-- phase: `plan-review` or `code-review`;
+- phase: `plan-review`, `code-review`, `behavior-review`, or
+  `patch-mechanics-review`;
 - pass number;
 - reviewer label;
 - plan path;
@@ -63,8 +64,8 @@ If closure is later requested by the owning loop, it should persist:
 ```
 
 Session metadata records provider, transport, session reference, phase, pass,
-redacted command or native operation, artifact paths, output bytes, and failure
-path when applicable.
+redacted command or native operation, artifact paths, start, finish, elapsed
+seconds, output bytes, and failure path when applicable.
 
 ## Commands
 

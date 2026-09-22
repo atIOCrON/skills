@@ -75,6 +75,9 @@ done
 for provider in codex claude cursor; do
   test -s "$artifact_dir/$provider.md"
   test -s "$artifact_dir/$provider-session.md"
+  grep -qF 'started_at:' "$artifact_dir/$provider-session.md"
+  grep -qF 'finished_at:' "$artifact_dir/$provider-session.md"
+  grep -qF 'elapsed_seconds:' "$artifact_dir/$provider-session.md"
   printf 'CLOSURE\n' > "$artifact_dir/$provider-closure-prompt.md"
   "$script_dir/resume_review.sh" "$provider" "$artifact_dir/$provider-closure-prompt.md" "$artifact_dir" "$repo_root"
   test -s "$artifact_dir/$provider-closure.md"

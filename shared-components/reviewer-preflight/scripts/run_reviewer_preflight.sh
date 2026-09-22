@@ -17,6 +17,11 @@ trap 'rm -rf "$tmp_root"' EXIT
 test -d "$repo_root" || { echo "error: repo-root is not a directory: $repo_root" >&2; exit 2; }
 
 last_non_empty_line() { awk 'NF { line = $0 } END { print line }'; }
+cli_version() {
+  local value
+  value="$($1 --version 2>/dev/null | head -n 1 || true)"
+  printf '%s' "${value:-unknown}"
+}
 assert_token() {
   local step="$1" expected="$2" file="$3" actual
   actual="$(last_non_empty_line < "$file")"
@@ -47,7 +52,8 @@ run_claude() {
       -p "$capability_prompt" --output-format text
   ) > "$tmp_root/resume"
   assert_token "resume capability" "$capability_expected" "$tmp_root/resume"
-  printf 'reviewer: claude\ncommand: claude\nmodel: %s\nsession_id: %s\npass: true\n' "$model" "$session_id"
+  printf 'reviewer: claude\ncommand: %s\nversion: %s\nmodel: %s\nrepo_root: %s\nhead_sha: %s\nsession_id: %s\npass: true\n' \
+    "$(command -v claude)" "$(cli_version claude)" "$model" "$repo_root" "$head_sha" "$session_id"
 }
 
 run_cursor() {
@@ -64,7 +70,8 @@ run_cursor() {
     --workspace "$repo_root" --resume "$chat_id" \
     -p "$capability_prompt" --output-format text > "$tmp_root/resume"
   assert_token "resume capability" "$capability_expected" "$tmp_root/resume"
-  printf 'reviewer: cursor\ncommand: cursor-agent\nmodel: %s\nchat_id: %s\npass: true\n' "$model" "$chat_id"
+  printf 'reviewer: cursor\ncommand: %s\nversion: %s\nmodel: %s\nrepo_root: %s\nhead_sha: %s\nchat_id: %s\npass: true\n' \
+    "$(command -v cursor-agent)" "$(cli_version cursor-agent)" "$model" "$repo_root" "$head_sha" "$chat_id"
 }
 
 run_codex() {
@@ -94,7 +101,8 @@ run_codex() {
         --json -o "$tmp_root/resume" - > "$tmp_root/resume-events"
   fi
   assert_token "resume capability" "$capability_expected" "$tmp_root/resume"
-  printf 'reviewer: codex\ncommand: codex\nmodel: %s\nsession_id: %s\npass: true\n' "$model" "$session_id"
+  printf 'reviewer: codex\ncommand: %s\nversion: %s\nmodel: %s\nrepo_root: %s\nhead_sha: %s\nsession_id: %s\npass: true\n' \
+    "$(command -v codex)" "$(cli_version codex)" "$model" "$repo_root" "$head_sha" "$session_id"
 }
 
 case "$provider" in

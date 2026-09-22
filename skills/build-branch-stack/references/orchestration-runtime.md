@@ -26,3 +26,11 @@ For each run, record:
 - provider-to-transport mapping;
 - implementation session reference;
 - all three reviewer session references.
+
+Maintain `<feature_dir>/<plan_slug>.execution/timings.jsonl`. Append one JSON
+object for each implementation, verification, review, closure, restack,
+publication, manifest and audit operation. Record `category`, `label`,
+`started_at`, `finished_at`, `elapsed_seconds`, `candidate_sha`, `result`, and
+`cache_status` (`hit`, `miss`, or `not_applicable`). Use wall-clock duration;
+do not infer command time from file modification dates. Timing is diagnostic,
+not a budget or stopping rule.

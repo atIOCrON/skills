@@ -45,15 +45,15 @@ After `staged-diff-scope` approves a candidate tree:
 
 An adopted tip that already contains the requested work needs no empty commit;
 verify and review its exact SHA. Create a new commit for every accepted fix
-batch. Changing reviewed behavior invalidates its reviews. A conflict-free
-mechanical restack may retain all three reviews only under the Restack rules
-below. Never amend a published commit.
+batch. Changing reviewed behavior invalidates its reviews. A semantically
+identical restack may retain every required review under the Restack rules below.
+Never amend a published commit.
 
 ## Reviewed Revision
 
 Before handoff, require the local branch tip, upstream, fetched remote tip, and
-latest verified SHA to match. Require clean reviews from all three reviewers on
-that SHA or recorded equal-range-diff mappings from all three prior reviews.
+latest verified SHA to match. Require every selected three-provider review set
+to be clean on that SHA or covered by recorded restack identity mappings.
 Require the parent head to equal its pinned SHA and remain an ancestor. A
 changed parent needs a restack, verification, review-policy decision, and
 synchronized push.
@@ -68,18 +68,19 @@ first.
 1. Record old base and branch tips, any old remote tip, and the new parent
    SHA. Create a recoverable backup ref for the old tip.
 2. Rebase with `git rebase --onto <new-base-sha> <old-base-sha> <branch-name>`.
-   Abort and stop on conflicts; resolving them changes behavior intentionally.
+   Resolve conflicts only within owned scope and preserve a record of each
+   choice; conflict resolution does not by itself prove behavior changed.
 3. Compare ranges with `git range-diff` and deterministic source, tree, and
    effective-output identity checks. Classify each delta as `verbatim`, `mechanical
    regeneration`, or `intentional behavior change`.
 4. Verify the new tip in a clean detached worktree and update the pinned base
-   and review pack. For a conflict-free restack with equal `range-diff` and
-   deterministic identity evidence, record the old-to-new SHA mappings and retain
-   all three prior reviews. Run a fresh three-reviewer pass for any manual
-   resolution, unequal range diff, changed generated output, or intentional
-   behavior change.
+   and review pack. Retain all required reviews when equal `range-diff` or
+   capability-defined semantic identity proves the parent-relative logical
+   change and effective result are unchanged. Record old-to-new SHA mappings
+   and identity evidence. Run a fresh pass for unexplained differences or
+   behavior changes.
 
-After all three reviews are clean, use `git-sync-branch.md` for the
+After every required review set is clean, use `git-sync-branch.md` for the
 lease-protected push. Stop for an unexpected source change, an existing ready
 change request, or an unclassified delta. Report branch, parent and candidate
 SHAs, verification, restack evidence, and unrelated local files.

@@ -56,6 +56,22 @@ def main(pack, repo):
                 raise ValueError("missing command or procedure")
             if not isinstance(check["runtime"], str) or not check["runtime"].strip():
                 raise ValueError("missing runtime")
+            cache_status = check["cache_status"]
+            if cache_status not in ("hit", "miss", "not_applicable"):
+                raise ValueError("invalid cache_status")
+            started_at = check["started_at"]
+            finished_at = check["finished_at"]
+            elapsed_seconds = check["elapsed_seconds"]
+            completed = check["result"] in ("passed", "failed")
+            if completed:
+                if not isinstance(started_at, str) or not started_at.strip():
+                    raise ValueError("completed check needs started_at")
+                if not isinstance(finished_at, str) or not finished_at.strip():
+                    raise ValueError("completed check needs finished_at")
+                if not isinstance(elapsed_seconds, (int, float)) or elapsed_seconds < 0:
+                    raise ValueError("completed check needs non-negative elapsed_seconds")
+            elif any(value is not None for value in (started_at, finished_at, elapsed_seconds)):
+                raise ValueError("incomplete check timing must be null")
             sha = check["last_run_sha"]
             if sha is not None and not (isinstance(sha, str) and re.fullmatch(r"[0-9a-f]{40,64}", sha)):
                 raise ValueError("invalid last_run_sha")

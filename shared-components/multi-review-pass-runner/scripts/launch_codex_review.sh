@@ -27,6 +27,8 @@ stderr_file="$artifact_dir/codex-stderr.log"
 events_file="$artifact_dir/codex-events.jsonl"
 attempts_file="$artifact_dir/codex-attempts.md"
 failure_file="$artifact_dir/codex-failure.md"
+run_started_at="$(utc_timestamp)"
+run_started_epoch="$(epoch_seconds)"
 
 rm -f "$failure_file"
 : > "$output_file"
@@ -37,6 +39,10 @@ init_attempt_log "$attempts_file" "$reviewer" "$prompt_file"
 record_setup_failure() {
   local exit_code="$1"
   local detail="$2"
+  local run_finished_at run_finished_epoch run_elapsed
+  run_finished_at="$(utc_timestamp)"
+  run_finished_epoch="$(epoch_seconds)"
+  run_elapsed="$(elapsed_seconds "$run_started_epoch" "$run_finished_epoch")"
   printf '%s\n' "$detail" >> "$stderr_file"
   printf '%s\n' "$exit_code" > "$exit_code_file"
   append_attempt_log "$attempts_file" 1 "codex setup" "$exit_code" 0 "$(artifact_size "$stderr_file")" "no retry - deterministic setup failure"
@@ -54,6 +60,9 @@ record_setup_failure() {
 - events_path: $events_file
 - stderr_path: $stderr_file
 - attempt_log_path: $attempts_file
+- started_at: $run_started_at
+- finished_at: $run_finished_at
+- elapsed_seconds: $run_elapsed
 - final_output_bytes: 0
 - failure_artifact_path: $failure_file
 EOF
@@ -132,6 +141,10 @@ if [ "$final_exit_code" -ne 0 ]; then
   write_failure_artifact "$failure_file" "$reviewer" "$artifact_dir" "$attempt" "$failure_class" "stopped-blocked" "None" "$stderr_file" "$attempts_file" "$failure_detail"
 fi
 
+run_finished_at="$(utc_timestamp)"
+run_finished_epoch="$(epoch_seconds)"
+run_elapsed="$(elapsed_seconds "$run_started_epoch" "$run_finished_epoch")"
+
 cat > "$session_file" <<EOF
 # Codex Review Session
 
@@ -145,6 +158,9 @@ cat > "$session_file" <<EOF
 - events_path: $events_file
 - stderr_path: $stderr_file
 - attempt_log_path: $attempts_file
+- started_at: $run_started_at
+- finished_at: $run_finished_at
+- elapsed_seconds: $run_elapsed
 - final_output_bytes: $(artifact_size "$output_file")
 - failure_artifact_path: $failure_path
 EOF

@@ -5,8 +5,8 @@ rebuttals. Do not edit implementation files.
 
 ## Inputs
 
-Require reviewer responses, plan path, pass number, intended implementation
-scope, review base and commit SHAs, neutral pack, and cross-pass ledger path:
+Require reviewer responses, plan path, review phase, pass number, intended
+implementation scope, review base and commit SHAs, neutral pack, and cross-pass ledger path:
 `<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`.
 
 ## Read First
@@ -22,6 +22,9 @@ scope, review base and commit SHAs, neutral pack, and cross-pass ledger path:
 ## Rules
 
 - Treat comments as hypotheses; deduplicate them before acting.
+- Preserve the phase boundary. Behavior review does not inspect patch mechanics;
+  patch-mechanics review does not repeat semantic review. Route an independently
+  established behavioral blocker from mechanics back to the behavior phase.
 - Accept only findings that meet the material-finding definition.
 - Reject claims based only on unsupported inputs, hypothetical scale, future
   use, or architecture preference.
@@ -34,6 +37,8 @@ scope, review base and commit SHAs, neutral pack, and cross-pass ledger path:
   machinery closes the finding. A broad acceptance condition does not authorize
   a new state owner, coordinator, retry system, or lifecycle responsibility.
 - Batch material findings for one implementer. Do not routinely fix nits.
+- Do not accept a request for a new custom test harness unless the plan records
+  the user's explicit approval. Prefer an existing seam or external acceptance.
 - Do not stage, commit, push, or inspect unrelated dirty work.
 
 Resolve source conflicts in this order: safety, security, legal, and policy;
@@ -79,6 +84,7 @@ reviewed SHA.
 - updated: <ledger_id> (<old_status> -> <new_status>), ...
 
 ## Worker Handoff
+- review_phase: <code, behavior, or patch_mechanics>
 - <concise fix payload, or None>
 ```
 

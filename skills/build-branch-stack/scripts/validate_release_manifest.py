@@ -17,8 +17,9 @@ STATES = {"building", "frozen", "staged", "accepted", "released"}
 CHECK_KINDS = {"agent", "external"}
 CHECK_STATES = {"passed", "failed", "pending", "blocked_by_environment"}
 REVIEW_STATES = {"pending", "clean", "changes_required"}
-REVIEW_METHODS = {"direct", "equal_range_diff"}
+REVIEW_METHODS = {"direct", "equal_range_diff", "semantic_identity"}
 REVIEWERS = {"claude", "codex", "cursor"}
+REVIEW_PHASES = {"code", "behavior", "patch_mechanics"}
 CR_STATES = {"none", "draft", "ready", "merged", "closed"}
 
 
@@ -115,6 +116,35 @@ def validate(data: Any) -> list[str]:
             if not is_sha(branch.get(field)):
                 errors.append(f"{prefix}.{field} must be a full lowercase hexadecimal SHA")
 
+        progress = branch.get("progress")
+        if progress is not None:
+            if not isinstance(progress, dict):
+                errors.append(f"{prefix}.progress must be an object")
+            else:
+                if not is_text(progress.get("status")):
+                    errors.append(f"{prefix}.progress.status must be a non-empty string")
+                review_pass = progress.get("review_pass")
+                if not isinstance(review_pass, int) or review_pass < 0:
+                    errors.append(
+                        f"{prefix}.progress.review_pass must be a non-negative integer"
+                    )
+                review_phase = progress.get("review_phase")
+                if review_phase is not None and review_phase not in REVIEW_PHASES:
+                    errors.append(
+                        f"{prefix}.progress.review_phase must be code, behavior, "
+                        "patch_mechanics, or null"
+                    )
+                last_verified = progress.get("last_verified_sha")
+                if last_verified is not None and not is_sha(last_verified):
+                    errors.append(
+                        f"{prefix}.progress.last_verified_sha must be null or a full SHA"
+                    )
+                for field in ("next_action", "updated_at"):
+                    if not is_text(progress.get(field)):
+                        errors.append(
+                            f"{prefix}.progress.{field} must be a non-empty string"
+                        )
+
         parent = branch.get("parent")
         if not isinstance(parent, dict):
             errors.append(f"{prefix}.parent must be an object")
@@ -167,19 +197,31 @@ def validate(data: Any) -> list[str]:
         if not isinstance(reviews, list):
             errors.append(f"{prefix}.reviews must be an array")
             reviews = []
-        seen_reviewers: set[str] = set()
+        seen_reviews: set[tuple[str, str]] = set()
+        phase_reviewers: dict[str, set[str]] = {
+            phase: set() for phase in REVIEW_PHASES
+        }
         for review_index, review in enumerate(reviews):
             review_prefix = f"{prefix}.reviews[{review_index}]"
             if not isinstance(review, dict):
                 errors.append(f"{review_prefix} must be an object")
                 continue
+            phase = review.get("phase", "code")
+            if phase not in REVIEW_PHASES:
+                errors.append(f"{review_prefix}.phase is invalid")
             reviewer = review.get("reviewer")
             if reviewer not in REVIEWERS:
                 errors.append(f"{review_prefix}.reviewer is invalid")
-            elif reviewer in seen_reviewers:
-                errors.append(f"{review_prefix}.reviewer duplicates {reviewer!r}")
-            else:
-                seen_reviewers.add(reviewer)
+            elif phase in REVIEW_PHASES:
+                review_key = (phase, reviewer)
+                if review_key in seen_reviews:
+                    errors.append(
+                        f"{review_prefix}.reviewer duplicates {reviewer!r} "
+                        f"in phase {phase!r}"
+                    )
+                else:
+                    seen_reviews.add(review_key)
+                    phase_reviewers[phase].add(reviewer)
             if review.get("status") not in REVIEW_STATES:
                 errors.append(f"{review_prefix}.status is invalid")
             if review.get("sha") is not None and not is_sha(review.get("sha")):
@@ -193,8 +235,11 @@ def validate(data: Any) -> list[str]:
                     errors.append(f"{review_prefix}.origin_sha must be a full SHA")
                 if method == "direct" and origin_sha != review.get("sha"):
                     errors.append(f"{review_prefix} direct origin_sha must equal sha")
-                if method == "equal_range_diff" and origin_sha == review.get("sha"):
-                    errors.append(f"{review_prefix} equal_range_diff must map different SHAs")
+                if (
+                    method in {"equal_range_diff", "semantic_identity"}
+                    and origin_sha == review.get("sha")
+                ):
+                    errors.append(f"{review_prefix} mapped review must use different SHAs")
             elif method is not None or origin_sha is not None:
                 errors.append(
                     f"{review_prefix} method and origin_sha must be null until clean"
@@ -203,8 +248,26 @@ def validate(data: Any) -> list[str]:
                 errors.append(f"{review_prefix}.evidence must be null or a path")
             if review.get("status") == "clean" and not is_text(review.get("evidence")):
                 errors.append(f"{review_prefix}.evidence is required when clean")
-        if seen_reviewers != REVIEWERS:
-            errors.append(f"{prefix}.reviews must contain claude, codex, and cursor")
+        active_phases = {
+            phase for phase, reviewers in phase_reviewers.items() if reviewers
+        }
+        if active_phases == {"code"}:
+            if phase_reviewers["code"] != REVIEWERS:
+                errors.append(
+                    f"{prefix}.reviews code phase must contain claude, codex, and cursor"
+                )
+        elif active_phases == {"behavior", "patch_mechanics"}:
+            for phase in ("behavior", "patch_mechanics"):
+                if phase_reviewers[phase] != REVIEWERS:
+                    errors.append(
+                        f"{prefix}.reviews {phase} phase must contain claude, "
+                        "codex, and cursor"
+                    )
+        else:
+            errors.append(
+                f"{prefix}.reviews must contain either one code review set or "
+                "behavior and patch_mechanics review sets"
+            )
 
         change_request = branch.get("change_request")
         if not isinstance(change_request, dict):

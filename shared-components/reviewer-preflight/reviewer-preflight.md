@@ -13,6 +13,11 @@ Require:
 Run this only for CLI reviewers; the host reviewer uses the native runtime
 contract.
 
+Reuse a successful preflight for the same repository, provider executable and
+version, selected model, authentication context and host session. Record that
+identity and the evidence path. Rerun only when an identity changes, a reviewer
+fails to launch or resume, or the cached evidence is missing or invalid.
+
 ## Command
 
 Run:
@@ -51,5 +56,6 @@ Report:
 - smoke session/chat id;
 - first prompt status;
 - resume and read-only command status;
+- identity key and whether the result was executed or reused;
 - pass/fail;
 - blocker reason when failed.
