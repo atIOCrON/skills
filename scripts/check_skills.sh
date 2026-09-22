@@ -137,6 +137,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [[ "$(cd "$target_dir" && pwd)" == "$repo_root/skills" ]]; then
   "$repo_root/scripts/sync_bundled_skill.sh" --check
   "$target_dir/merge-stack/scripts/test_merge_stack.sh"
+  python3 "$target_dir/build-branch-stack/scripts/test_evidence_reuse.py"
   "$target_dir/build-branch-stack/scripts/test_launch_reviewers.sh"
   "$target_dir/build-branch-stack/scripts/test_runtime_launchers.sh"
 fi

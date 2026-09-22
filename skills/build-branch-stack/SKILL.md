@@ -103,7 +103,10 @@ fixtures, or disabled components), and whether CI runs on the target branches.
 Detect and select every applicable capability skill for specialized changed surfaces.
 Require each selected capability to define fast authoring checks, exact
 candidate verification, final integration verification, and the immutable
-input identities that permit safe reuse. It must also identify the source
+input identities and equivalence rules that permit safe reuse. A reusable check
+must account for every determining input, including source, configuration,
+locked dependencies and fixtures, toolchain, runtime binding, and effective
+result; otherwise rerun it. The capability must also identify the source
 representation and the effective generated or runtime result reviewers need.
 Record those commands and evidence here without copying ecosystem-specific
 procedures into this orchestration skill.
@@ -144,8 +147,11 @@ For each plan:
    `plan-implement.md`; stop if it exposes a cohesion failure or unauthorized
    architecture. Run the applicable capability's authoring checks during
    implementation and its exact candidate verification before accepting the
-   candidate. Then selectively stage and review
-   any new edits, commit if needed, and verify the exact commit in a clean worktree.
+   candidate. Do not substitute capability final-integration verification for
+   per-plan candidate verification. Then selectively stage and review
+   any new edits, commit if needed, and verify the exact commit in a clean
+   worktree through fresh execution, deterministic evidence reuse, or both, as
+   defined in `verification-runner.md`.
    Create or update the remote branch at the first verified commit. Push each
    verified fix and review the pinned parent-to-commit diff. Keep the feature in
    `in_progress/` through all code review passes and fixes. Update the branch's
@@ -172,7 +178,13 @@ affected descendants to `in_progress/` before restacking; keep each candidate
 there through verification and code review. Synchronize reviewed tips with
 explicit leases.
 Classify each delta as `verbatim`, `mechanical regeneration`, or
-`intentional behavior change`. Verify every new tip. A conflict-free restack
+`intentional behavior change`. Verify every new tip with the smallest sufficient
+combination of fresh checks and deterministic evidence reuse. Verification
+proves that every required check applies to the current tip; it does not require
+rerunning an unchanged check. A new SHA or reviewer pass alone is not grounds
+to rerun one. Do not rerun an expensive deterministic check when the capability's
+equivalence rules prove unchanged determining inputs and effective result.
+A conflict-free restack
 with equal `range-diff` and deterministic identity evidence retains all three
 prior reviews; record their old-to-new SHA mappings. A fresh three-reviewer pass
 is required for manual resolutions, unequal range diffs, changed generated

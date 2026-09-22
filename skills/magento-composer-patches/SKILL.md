@@ -77,7 +77,15 @@ do not repair unrebased later patches in the same branch.
 ### Candidate
 
 Regenerate the owned patch from the correct pristine or preceding-prefix tree.
-Replay each patch in scope with:
+Start from the longest validated cached prefix whose locked package, patch
+bytes and order, strip level, replay tool, and relevant configuration are
+unchanged. Replay from the first changed or added patch through the end of the
+candidate's in-scope suffix. If only the final patch was removed, the validated
+preceding-prefix result is the candidate result; record its identity without
+replaying it. A locked package, strip level, replay tool, or relevant
+configuration change invalidates every prefix. Patch byte or order changes
+invalidate the changed boundary and its suffix. Replay each required suffix
+patch with:
 
 ```bash
 scripts/strict_patch_replay.sh <tree> <patch-file> <log-file> <strip-level>
@@ -97,6 +105,10 @@ cancellation, retries, current-value changes, and replacement at the highest
 practical local seam; source-shape checks remain supplementary.
 
 ### Integration
+
+A per-slice candidate, publication tip, or review SHA is not the final
+integration tip. Do not run complete-sequence replay during candidate
+publication or review.
 
 At the final integration tip, reconstruct the pristine locked package and
 strictly replay the complete registered patch sequence in order. Verify the
