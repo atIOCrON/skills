@@ -79,13 +79,22 @@ do not repair unrebased later patches in the same branch.
 Regenerate the owned patch from the correct pristine or preceding-prefix tree.
 Start from the longest validated cached prefix whose locked package, patch
 bytes and order, strip level, replay tool, and relevant configuration are
-unchanged. Replay from the first changed or added patch through the end of the
-candidate's in-scope suffix. If only the final patch was removed, the validated
-preceding-prefix result is the candidate result; record its identity without
-replaying it. A locked package, strip level, replay tool, or relevant
-configuration change invalidates every prefix. Patch byte or order changes
-invalidate the changed boundary and its suffix. Replay each required suffix
-patch with:
+unchanged.
+
+**Candidate-phase gate:** when the first changed or added patch is `N` and a
+validated unchanged prefix `1…N−1` exists, start from that cached tree and
+replay only `N` through the last in-scope patch. Rebuilding or replaying the
+prefix from pristine is prohibited and does not count as candidate
+verification. If the prefix is unavailable or invalid, build and validate it
+as prerequisite evidence, then run the candidate suffix. Do not replay patches
+outside that suffix to prove the complete registered sequence; final
+integration owns that proof.
+
+If only the final patch was removed, the validated preceding-prefix result is
+the candidate result; record its identity without replaying it. A locked
+package, strip level, replay tool, or relevant configuration change invalidates
+every prefix. Patch byte or order changes invalidate the changed boundary and
+its suffix. Replay each required suffix patch with:
 
 ```bash
 scripts/strict_patch_replay.sh <tree> <patch-file> <log-file> <strip-level>
@@ -103,6 +112,25 @@ the patch source and the effective resulting code. Run syntax and focused
 behavioral tests. For lifecycle changes, exercise state transitions,
 cancellation, retries, current-value changes, and replacement at the highest
 practical local seam; source-shape checks remain supplementary.
+
+Use this candidate evidence shape:
+
+```yaml
+prefix_cache:
+  status: reused | rebuilt | not-applicable
+  key: <cache-key-or-null>
+  manifest: <path-or-null>
+  tree_sha256: <hash-or-null>
+  reason: <required-when-not-reused>
+candidate_start_tree_sha256: <hash>
+first_replayed_patch: <index-and-path-or-none>
+last_replayed_patch: <index-and-path-or-none>
+strict_replay_logs: [<path>, ...]
+result_tree_sha256: <hash>
+```
+
+Use `none` for both replay boundaries when final-patch removal requires no
+replay.
 
 ### Integration
 
@@ -158,6 +186,6 @@ limitations. Preparing this material does not submit it upstream.
 
 Report the ownership classification, changed patches, why each new patch was
 needed, final application and branch landing order, cache identity when used,
-authoring checks, candidate replay and effective-result verification,
-integration-sequence verification, patch-pressure conclusion when applicable,
-and any external acceptance still pending.
+authoring checks, candidate start tree and replay boundaries, effective-result
+verification, integration-sequence verification, patch-pressure conclusion
+when applicable, and any external acceptance still pending.
