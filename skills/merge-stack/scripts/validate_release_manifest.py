@@ -16,6 +16,7 @@ SHA_RE = re.compile(r"^[0-9a-f]{40,64}$")
 STATES = {"building", "frozen", "staged", "accepted", "released"}
 CHECK_KINDS = {"agent", "external"}
 CHECK_STATES = {"passed", "failed", "pending", "blocked_by_environment"}
+CHECK_METHODS = {"direct", "identity_reuse"}
 REVIEW_STATES = {"pending", "clean", "changes_required"}
 REVIEW_METHODS = {"direct", "equal_range_diff"}
 REVIEWERS = {"claude", "codex", "cursor"}
@@ -162,6 +163,32 @@ def validate(data: Any) -> list[str]:
                 errors.append(f"{check_prefix}.command must be a command or procedure")
             if check.get("evidence") is not None and not is_text(check.get("evidence")):
                 errors.append(f"{check_prefix}.evidence must be null or a path")
+            kind = check.get("kind")
+            status = check.get("status")
+            method = check.get("method")
+            origin_sha = check.get("origin_sha")
+            if kind == "agent" and status in {"passed", "failed"}:
+                if method not in CHECK_METHODS:
+                    errors.append(f"{check_prefix}.method is invalid")
+                if not is_sha(origin_sha):
+                    errors.append(f"{check_prefix}.origin_sha must be a full SHA")
+                if not is_sha(check.get("sha")):
+                    errors.append(f"{check_prefix}.sha is required when completed")
+                if method == "direct" and origin_sha != check.get("sha"):
+                    errors.append(f"{check_prefix} direct origin_sha must equal sha")
+                if method == "identity_reuse":
+                    if status != "passed":
+                        errors.append(f"{check_prefix} only a passed check may be reused")
+                    if origin_sha == check.get("sha"):
+                        errors.append(
+                            f"{check_prefix} identity_reuse must map different SHAs"
+                        )
+                if not is_text(check.get("evidence")):
+                    errors.append(f"{check_prefix}.evidence is required when completed")
+            elif method is not None or origin_sha is not None:
+                errors.append(
+                    f"{check_prefix} method and origin_sha require a completed agent check"
+                )
 
         reviews = branch.get("reviews")
         if not isinstance(reviews, list):

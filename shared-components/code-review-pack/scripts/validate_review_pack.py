@@ -57,10 +57,61 @@ def main(pack, repo):
             if not isinstance(check["runtime"], str) or not check["runtime"].strip():
                 raise ValueError("missing runtime")
             sha = check["last_run_sha"]
+            verified_sha = check["verified_sha"]
+            method = check["method"]
+            input_identity = check["input_identity"]
+            result_identity = check["result_identity"]
+            reuse_path = check["reuse_evidence_path"]
+            reuse_hash = check["reuse_evidence_sha256"]
             if sha is not None and not (isinstance(sha, str) and re.fullmatch(r"[0-9a-f]{40,64}", sha)):
                 raise ValueError("invalid last_run_sha")
-            if check["required"] and check["kind"] == "agent" and check["result"] == "passed" and sha != review_sha:
-                raise ValueError("passed required agent check ran on another SHA")
+            if verified_sha is not None and not (
+                isinstance(verified_sha, str)
+                and re.fullmatch(r"[0-9a-f]{40,64}", verified_sha)
+            ):
+                raise ValueError("invalid verified_sha")
+            for name, value in (
+                ("input_identity", input_identity),
+                ("result_identity", result_identity),
+            ):
+                if value is not None and not (isinstance(value, str) and value.strip()):
+                    raise ValueError(f"invalid {name}")
+            if (reuse_path is None) != (reuse_hash is None):
+                raise ValueError("reuse evidence path and hash must both be set or null")
+
+            completed_agent = (
+                check["kind"] == "agent"
+                and check["result"] in ("passed", "failed")
+            )
+            if completed_agent:
+                if method not in ("direct", "identity_reuse"):
+                    raise ValueError("completed agent check needs a valid method")
+                if verified_sha is None:
+                    raise ValueError("completed agent check needs verified_sha")
+                if method == "direct" and sha != verified_sha:
+                    raise ValueError("direct check must run on verified_sha")
+                if method == "identity_reuse":
+                    if check["result"] != "passed":
+                        raise ValueError("only a passed check may be reused")
+                    if sha == verified_sha:
+                        raise ValueError("identity_reuse must map different SHAs")
+                    if not input_identity or not result_identity:
+                        raise ValueError("identity_reuse needs input and result identities")
+                    if reuse_path is None:
+                        raise ValueError("identity_reuse needs current-tip evidence")
+            elif method is not None or verified_sha is not None:
+                raise ValueError("method and verified_sha require a completed agent check")
+            if method != "identity_reuse" and (
+                reuse_path is not None or reuse_hash is not None
+            ):
+                raise ValueError("reuse evidence requires identity_reuse")
+            if (
+                check["required"]
+                and check["kind"] == "agent"
+                and check["result"] == "passed"
+                and verified_sha != review_sha
+            ):
+                raise ValueError("passed required agent check does not verify review_sha")
             path, expected = check["log_path"], check["log_sha256"]
             if (path is None) != (expected is None):
                 raise ValueError("log path and hash must both be set or null")
@@ -72,6 +123,14 @@ def main(pack, repo):
                 log = (pack / path).resolve()
                 if not log.is_file() or digest(log) != expected:
                     raise ValueError(f"missing or changed log: {path}")
+            if reuse_path is not None:
+                if not isinstance(reuse_path, str) or not re.fullmatch(
+                    r"[0-9a-f]{64}", reuse_hash
+                ):
+                    raise ValueError("invalid reuse evidence path or SHA-256")
+                proof = (pack / reuse_path).resolve()
+                if not proof.is_file() or digest(proof) != reuse_hash:
+                    raise ValueError(f"missing or changed reuse evidence: {reuse_path}")
         except (KeyError, TypeError, ValueError) as exc:
             errors.append(f"{label}: {exc}")
 

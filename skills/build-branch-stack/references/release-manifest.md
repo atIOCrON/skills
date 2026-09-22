@@ -37,6 +37,8 @@ from the manifest, never use them to override it silently.
           "kind": "agent",
           "status": "passed",
           "sha": "<full-sha>",
+          "method": "direct",
+          "origin_sha": "<full-sha>",
           "command": "<exact command>",
           "evidence": "<path>"
         }
@@ -85,6 +87,13 @@ Use `building`, `frozen`, `staged`, `accepted`, or `released` for release
 state. Use `agent` for checks Codex can run and `external` for human, live, or
 third-party acceptance. External checks may remain pending when the candidate
 freezes if their procedure and owner are recorded.
+
+For a completed agent check, `sha` is the tip the result verifies and
+`origin_sha` is where the command ran. Use `method: "direct"` when they match.
+Use `method: "identity_reuse"` when capability-defined evidence maps a prior
+passed result to the current tip; then `evidence` must link the originating
+result and current-tip identity proof. Leave `method` and `origin_sha` null for
+pending agent checks and all external checks.
 
 List branches in integration order. `target` is the change-request target;
 `parent` is the demonstrated code prerequisite. They normally match. Use

@@ -45,12 +45,21 @@ identities that determine it. Keep large input or result trees outside the
 pack and link them from `index.md`.
 
 In `evidence-manifest.json`, record the review SHA and one entry per required
-check: `id`, `kind` (`agent` or `external`), `required`, `last_run_sha` (full
-commit SHA or `null`), `command`, `runtime`, `result` (`passed`, `failed`,
-`pending`, or `blocked_by_environment`), `log_path`, and `log_sha256`. Use
-`null` paths and hashes when no log exists. A result from an older SHA must
-remain visible with its old `last_run_sha`; it cannot count as a passed required
-agent check on the current SHA. Link each log from `verification-summary.md`.
+check: `id`, `kind` (`agent` or `external`), `required`, `verified_sha`,
+`last_run_sha`, `method` (`direct`, `identity_reuse`, or `null`), `command`,
+`runtime`, `result` (`passed`, `failed`, `pending`, or
+`blocked_by_environment`), `input_identity`, `result_identity`, `log_path`,
+`log_sha256`, `reuse_evidence_path`, and `reuse_evidence_sha256`. Use `null`
+for inapplicable fields.
+
+For a direct agent result, set `verified_sha` and `last_run_sha` to the tested
+SHA and `method` to `direct`. For reuse, set `verified_sha` to the current review
+SHA, retain the originating run in `last_run_sha`, set `method` to
+`identity_reuse`, and record content-addressed input and result identities plus
+the current-tip reuse proof. The originating log and reuse proof must both
+remain valid. A required passed agent check counts only when `verified_sha`
+matches the review SHA. Link each log and reuse proof from
+`verification-summary.md`.
 Link supporting files with local Markdown links. Run
 `scripts/validate_review_pack.py <pack-dir> <repo-root>` after creating or
 refreshing the manifest; it checks local Markdown links, file hashes, check
@@ -87,7 +96,8 @@ Use explicit object IDs:
 - pinned base and dependency-parent head equality;
 - local branch tip, upstream, fetched remote tip, reviewed, and verified SHA
   equality;
-- clean-worktree verification evidence for `<review-sha>`;
+- clean-worktree current-tip evidence plus direct or reused check evidence for
+  `<review-sha>`;
 - source and effective-result identity plus capability-defined deterministic
   checks where required.
 
@@ -101,7 +111,7 @@ link all three prior clean reviews for a proven equal-range-diff restack;
 otherwise run a fresh three-reviewer discovery pass. Reuse immutable inputs
 only when the applicable capability proves their content, configuration, and
 toolchain identity; never rebuild an unchanged proven input merely to refresh
-the pack.
+the pack. Starting a fresh reviewer pass does not itself rerun checks.
 For evidence-only closure, keep the pinned diff and SHAs, refresh the evidence
 links, manifest, hashes, and affected deterministic results, and record what
 changed in the pack. Rerun the validator after each refresh.

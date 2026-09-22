@@ -1,7 +1,7 @@
 # Verification Runner
 
-Verify one committed revision in a clean detached worktree and hand bounded
-failures back to its implementation worker.
+Verify one committed revision in a clean detached worktree with fresh checks,
+deterministic evidence reuse, or both. Hand bounded failures to its worker.
 
 ## Inputs
 
@@ -11,6 +11,7 @@ Require:
 - plan path and verification commands;
 - exact candidate commit SHA;
 - touched files or modules;
+- prior check evidence and capability-defined equivalence rules, when available;
 - implementation worker reference when available;
 - verification point, such as `initial-candidate` or `post-review-fix`.
 
@@ -28,21 +29,31 @@ setup and commands so the clean-worktree result is reproducible.
 2. Create a temporary detached Git worktree at that SHA. Do not verify the
    mutable implementation checkout.
 3. Confirm the temporary worktree is clean and its `HEAD` is the candidate SHA.
-4. Run every required plan command from the temporary worktree root. Add focused
-   checks when touched-surface risk justifies them. Require proportionate
-   behavioural regression tests even when the plan omits them. For browser or
-   provider lifecycle logic, exercise applicable renderer replacement,
-   concurrent value changes, fresh user activation, cancellation, failure and
-   retry, token invalidation, and reauthorization at the highest practical
-   local seam. Source-text, snapshot, mutation, and generated-artifact-shape
-   checks are supplementary; they cannot be the primary proof of runtime behaviour.
-   Record unavailable real-provider checks as external acceptance rather than
-   replacing local behavioural coverage with structural assertions.
-5. Keep bulk output outside plan artefact folders. Save commands, exit status,
-   concise results, candidate SHA, and evidence links under
+4. Map each changed file and non-versioned dependency to the checks it can
+   affect. Use the capability's complete determining-input identities, not path
+   overlap alone, to decide reuse.
+5. For each required check, either run it from the candidate worktree or map a
+   prior passed result to the candidate. Reuse requires identical determining
+   inputs and effective result, a valid originating log and SHA, and fresh
+   current-tip identity evidence. Rerun when any identity changed, is missing,
+   or cannot be proved. Do not rerun an expensive deterministic check merely
+   because the commit SHA changed. Starting a reviewer pass does not trigger a
+   check; a changed tip or determining input may.
+6. Add focused checks when touched-surface risk justifies them. Require
+   proportionate behavioural regression evidence even when the plan omits it.
+   For browser or provider lifecycle logic, cover applicable renderer
+   replacement, concurrent value changes, fresh user activation, cancellation,
+   failure and retry, token invalidation, and reauthorization at the highest
+   practical local seam. Source-text, snapshot, mutation, and generated-artifact
+   checks may supplement but not replace runtime evidence. Record unavailable
+   real-provider checks as external acceptance.
+7. Keep bulk output outside plan artefact folders. Save each command or reuse
+   mapping, status, current and originating SHAs, input and result identities,
+   concise results, and evidence links under
    `<feature_dir>/<plan_slug>.evidence/` in the primary checkout.
-6. Remove only the explicit temporary worktree after capturing evidence.
-7. Return `verification-passed` only for that SHA.
+8. Remove only the explicit temporary worktree after capturing evidence.
+9. Return `verification-passed` for the candidate SHA only when every required
+   check either passed there or has valid deterministic reuse evidence.
 
 Pass required non-versioned inputs by explicit path. Never copy dirty working
 tree content into the verification worktree.
@@ -51,12 +62,12 @@ tree content into the verification worktree.
 
 On failure, send the original worker the command, concise failure, expected
 behavior, owned scope, and rerun command. The worker must create a new candidate
-commit through `staged-diff-scope` and `git-branch-commit`; verify that new
-SHA from a new clean worktree. Stop after two failed fix attempts at one
-verification point.
+commit through `staged-diff-scope` and `git-branch-commit`; verify the new SHA
+from a new clean worktree, rerunning only affected checks. Stop after two failed
+fix attempts at one verification point.
 
 ## Output
 
-Report the commit SHA, commands and status, focused checks, evidence paths, fix
-attempts, cleanup status, and final `verification-passed` or
-`verification-blocked`.
+Report the commit SHA, directly run and reused checks, originating SHAs,
+identities, evidence paths, fix attempts, cleanup status, and final
+`verification-passed` or `verification-blocked`.
