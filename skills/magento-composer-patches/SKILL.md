@@ -109,9 +109,29 @@ prefix tree identity, ordered patch identities, strip level, GNU patch identity,
 strict replay logs, and effective result tree identity. Compare the resulting
 code byte-for-byte where repository policy requires it. Review and test both
 the patch source and the effective resulting code. Run syntax and focused
-behavioral tests. For lifecycle changes, exercise state transitions,
+behavioral tests for the owned mechanism. When the candidate patch introduces
+or modifies lifecycle logic, exercise applicable state transitions,
 cancellation, retries, current-value changes, and replacement at the highest
-practical local seam; source-shape checks remain supplementary.
+practical local seam; source-shape checks remain supplementary for that owned
+runtime behaviour.
+
+When a project change only exposes an unchanged locked-package lifecycle, prove
+the candidate-owned routing or selection directly, verify the exact effective
+package code and runtime binding, reuse applicable inherited tests only when
+their version, configuration, relevant inputs, and effective result match, and
+record real-provider behaviour as external acceptance. Lightweight test doubles
+may prove the routing boundary. Do not create a local provider, server,
+persistence, account, or order simulator solely to reproduce unchanged package
+behaviour; its state transitions are not evidence of the effective package or
+real provider.
+
+For example, removing a theme method filter and renderer override requires a
+source-contract regression, proof that the locked-package renderer is the
+effective runtime implementation, applicable inherited evidence, and real
+sandbox acceptance. It does not require a local payment-provider, order, or
+account simulator. A patch to that renderer's approval, cancellation,
+tokenization, retry, or order-placement logic does require behavioural
+lifecycle tests.
 
 Use this candidate evidence shape:
 
@@ -140,9 +160,10 @@ publication or review.
 
 At the final integration tip, reconstruct the pristine locked package and
 strictly replay the complete registered patch sequence in order. Verify the
-effective full tree and run combined syntax, build, and behavioral regression
-checks before deployment or promotion. Keep unavailable real-provider checks
-as explicit external acceptance rather than substituting structural evidence.
+effective full tree and run combined syntax, build, existing regression, and
+candidate-owned behavioural checks before deployment or promotion. Keep
+unavailable real-provider checks as explicit external acceptance rather than
+substituting a local simulation or structural evidence for provider behaviour.
 
 ## Immutable Prefix Cache
 
