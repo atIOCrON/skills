@@ -14,10 +14,20 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def is_within(path, root):
+    try:
+        path.relative_to(root)
+        return True
+    except ValueError:
+        return False
+
+
 def main(pack, repo):
     errors = []
     pack = pack.resolve()
     repo = repo.resolve()
+    if not is_within(pack, repo):
+        errors.append("review pack is outside the repository workspace")
     manifest = pack / "evidence-manifest.json"
     try:
         data = json.loads(manifest.read_text())
@@ -165,9 +175,17 @@ def main(pack, repo):
     for page in pack.glob("*.md"):
         for target in re.findall(r"(?<!!)\[[^\]]+\]\(([^)]+)\)", page.read_text()):
             target = unquote(target.split("#", 1)[0].strip("<>"))
-            if not target or re.match(r"[a-z][a-z0-9+.-]*:", target, re.I):
+            if not target:
                 continue
-            if not (page.parent / target).resolve().exists():
+            if target.lower().startswith("file:"):
+                errors.append(f"file URI is not reviewer-portable in {page.name}: {target}")
+                continue
+            if re.match(r"[a-z][a-z0-9+.-]*:", target, re.I):
+                continue
+            resolved_target = (page.parent / target).resolve()
+            if not is_within(resolved_target, repo):
+                errors.append(f"link escapes repository workspace in {page.name}: {target}")
+            elif not resolved_target.exists():
                 errors.append(f"broken link in {page.name}: {target}")
 
     for error in errors:
