@@ -93,12 +93,15 @@ For each pass:
    for the original implementation worker; do not routinely fix nits. Before
    dispatch, ask whether removing or simplifying new machinery is the smaller
    resolution.
-6. If one branch-introduced coordinator, state machine, retry system, or
-   lifecycle interception caused newly discovered material failures in this and
-   the immediately preceding fresh pass, stop the fix loop. Mark the ledger as
-   `architecture-review-required` and return to the design checkpoint for
-   simplification, splitting, upgrade, upstream correction, or a different
-   extension mechanism.
+6. If one branch-introduced coordinator, state machine, retry system, lifecycle
+   interception, or verification model caused newly discovered material
+   failures in this and the immediately preceding fresh pass, stop incremental
+   fixes and mark the ledger `architecture-review-required`. Group the failures by invariant,
+   compare removal, simplification, native ownership, upgrade, narrow dependency
+   correction, and prerequisite splitting, then select the smallest viable
+   design. Amend the plan and design checkpoint, start a new architecture epoch,
+   and continue. Require the user only when every viable option crosses the
+   calling skill's authority boundary.
 7. For accepted fixes, keep the feature in `in_progress/` and resume that
    worker, then:
    - prepare an exact tree through `staged-diff-scope`;
@@ -110,12 +113,14 @@ For each pass:
    current review SHAs, applied changes, and verification evidence. Apply
    proposed ledger transitions through the orchestrator; never share another
    reviewer's findings. Use artefact paths from the feature's current stage.
-9. Repeat fixes and targeted closure until those findings close or need a
-   user decision. Use targeted closure for a rejected material finding when
-   triage is uncertain, evidence conflicts, new evidence addresses it, or the
-   user requests it.
+9. Repeat fixes and targeted closure until those findings close or reach an
+   architecture or authority boundary. Use targeted closure for a rejected
+   material finding when triage is uncertain, evidence conflicts, new evidence
+   addresses it, or the user requests it.
 10. After closure, record eligible test-only mappings or start the next fresh
-    pass. Resolve recurring escalations with the user first.
+    pass. Treat recurring escalations as architecture evidence. Reassess and
+    continue autonomously unless resolution requires product or external
+    authority.
 
 ## Completion
 

@@ -33,6 +33,11 @@ IDs, scope, binding decisions, authorized complexity, and external acceptance
 retain status. After reapproval, revise the decomposition and obtain user
 approval before restoring the slice map to `approved`.
 
+During an authorized build, an implementation-only split that preserves the
+approved outcome, acceptance ownership, exclusions, release scope, and external
+acceptance is a clarification. Record its reason and revised rollback and
+verification boundaries; the specification and slice map remain `approved`.
+
 Each staged feature is one approved vertical slice. Its directory and plan
 filename share a lowercase `snake_case` slug. The plan references its parent
 specification and approved slice map, owns a cohesive set of acceptance IDs,

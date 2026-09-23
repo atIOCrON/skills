@@ -16,8 +16,9 @@ Require:
 - implementation worker reference when available;
 - verification point, such as `initial-candidate` or `post-review-fix`.
 
-Stop if the plan lacks deterministic verification commands or the commit cannot
-be resolved.
+If the plan lacks deterministic verification commands, return it to the runner
+for an in-scope evidence amendment. If the commit cannot be resolved, block the
+affected chain without substituting mutable workspace state.
 
 Use the readiness inventory from `SKILL.md` to prepare exact locked
 dependencies, required services and fixtures, and any isolated setup needed to
@@ -75,8 +76,12 @@ tree content into the verification worktree.
 On failure, send the original worker the command, concise failure, expected
 behavior, owned scope, and rerun command. The worker must create a new candidate
 commit through `staged-diff-scope` and `git-branch-commit`; verify the new SHA
-from a new clean worktree, rerunning only affected checks. Stop after two failed
-fix attempts at one verification point.
+from a new clean worktree, rerunning only affected checks. After two failed fix
+attempts at one verification point, stop repeating that fix and return to the
+design checkpoint. Group the failures by invariant, amend the implementation or
+verification boundary, start a new architecture epoch when the mechanism
+changes, and continue. Block only when every in-scope design conflicts with a
+hard constraint or the approved outcome.
 
 ## Output
 

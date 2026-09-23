@@ -41,7 +41,9 @@ For initial implementation:
 For verification or code-review fixes:
 
 1. Resume the original implementation sub-agent.
-2. Stop if it cannot be resumed; do not silently change implementers.
+2. If it cannot be resumed, record the lost session and dispatch a fresh worker
+   with the plan, design checkpoint, current SHA, accepted findings, ownership,
+   and evidence. Do not rely on missing conversation state.
 3. Read `references/plan-implement.md`, include its operational instructions in
    the worker prompt, then render
    `references/implementation-dispatch-fix-request.md`.
@@ -57,8 +59,8 @@ For verification or code-review fixes:
 - Do not send rejected findings as work.
 - Do not request speculative refactors, compatibility shims, fallback defaults,
   or unrelated cleanup.
-- If a fix request would require changing files outside ownership, stop and ask
-  the runner to expand ownership or split the fix.
+- If a fix needs files outside ownership, return the exact paths and reason. The
+  runner may expand ownership or split the fix within the approved outcome.
 
 ## Output
 

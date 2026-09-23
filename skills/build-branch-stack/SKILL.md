@@ -45,11 +45,12 @@ changing the manifest.
   publisher's evidence that any affected ready CRs are draft.
 
 Input order alone does not establish a dependency. Branch independent plans
-from the base. If a plan needs multiple unmerged predecessors, stop for a
-different split or a merged prerequisite; do not invent a linear parent.
+from the base. If a plan needs multiple unmerged predecessors, split the
+implementation within the selected scope or use a merged prerequisite; do not
+invent a linear parent.
 Release scope follows what must ship. Never impose a branch-count cap. When
-the graph, conflict surface, or acceptance cost is unusually high, return the
-work for a smaller split with concrete evidence. The user controls release
+the graph, conflict surface, or acceptance cost is unusually high, make a
+smaller implementation split with concrete evidence. The user controls release
 scope; this runner controls whether one branch is a safe implementation unit.
 
 ## Progress
@@ -75,6 +76,82 @@ identified retrospectively as the last completed pass after every completion
 condition is satisfied. Before then, call it “pass N,” “the current pass,” or
 “the next fresh pass.”
 
+## Autonomous Decision Authority
+
+An authorized build task permits repository-local implementation,
+verification, architecture, narrow dependency-correction, plan-amendment, and
+implementation-slice decisions needed to complete the selected approved
+release scope without further approval. A decision is within this authority
+when it:
+
+- serves an existing acceptance condition or demonstrated prerequisite;
+- preserves approved outcomes, exclusions, binding contracts, and release
+  membership;
+- keeps coherent implementation and rollback boundaries;
+- adds no independently releasable product capability;
+- uses the narrowest viable native owner or supported extension; and
+- neither waives required evidence nor requires production, destructive,
+  credential, financial, legal, or external-communication authority.
+
+Treat each plan as a controlled implementation hypothesis. When runtime or
+review evidence disproves its mechanism, preserve the evidence; return affected
+features to `in_progress/`; amend the plan, design checkpoint, verification
+boundary, dependency graph, and manifest as needed; then continue. Record the
+failure class, alternatives, decision, added production surface, rollback
+effect, and required evidence before editing.
+
+The runner may create a prerequisite implementation slice when it decomposes
+the same approved acceptance outcome without changing release scope,
+acceptance ownership, or exclusions. Update the slice map, dependency graph,
+and manifest. A new independently releasable outcome remains a product-scope
+decision.
+
+Require a human decision only to change product or release scope, acceptance
+conditions or exclusions, a binding contract or policy, a required evidence
+gate, frozen scope, or broad upstream ownership, or to perform an action outside
+the authority above. Invocation does not supply missing credentials or external
+authority.
+
+An integrity failure such as unexplained branch movement, staged/unstaged
+overlap, a failed lease, or missing artefacts never authorizes overwriting work.
+Diagnose and reconcile it. If that is impossible, block the affected chain and
+continue independent slices.
+
+## Review Convergence
+
+An architecture epoch is a sequence of fixes under one design. Record its
+number, mechanism, and state owner in the design checkpoint. Start a new epoch
+when the mechanism, native owner, state model, dependency strategy, or slice
+boundary materially changes; record the prior epoch's failure class and why the
+new design removes it.
+
+Within an epoch, group findings by invariant or ownership failure and fix one
+root cause instead of adding one guard per example. Do not rerun unchanged
+expensive checks or enlarge tests beyond candidate-owned behaviour.
+
+Before adopting a broader design, record the demonstrated failure, whether
+deletion or simplification resolves it, the existing native owner, whether the
+work is one invariant or several outcomes, whether tests exceed production
+machinery, and any dependency patch's removal condition. Reject a design when
+fewer state owners, async boundaries, patches, or extensions satisfy the same
+approved outcome.
+
+Two successive discovery passes that expose new failures from the same design
+or verification model require an autonomous architecture reassessment before
+more edits. Compare removal, simplification, replacement, upgrade, the native
+owner, a narrow
+dependency correction, and a prerequisite split by production surface, state
+ownership, rollback, verification cost, and maintenance. Select the smallest
+viable design, amend the recorded architecture, and continue with a fresh
+candidate.
+
+If two epochs fail for the same underlying reason, do not try a third variation
+of that mechanism. Remove it, use the native owner, upgrade or narrowly correct
+the owning dependency, split a prerequisite, or use an already-supported
+contract that still satisfies the approved outcome. Mark the affected chain
+blocked only when every viable repository-local option conflicts with a hard
+constraint or the approved outcome.
+
 ## Readiness
 
 Before moving plans or editing code, inspect repository instructions, selected
@@ -94,8 +171,10 @@ before creating or adopting a branch:
 - Does every owned acceptance ID map to this slice, with sibling outcomes
   explicitly excluded?
 
-Stop and return the plan for decomposition when it fails this cohesion gate.
-An explicitly classified legacy plan must meet the same standard.
+When a plan fails this cohesion gate, decompose its implementation within the
+approved outcome and release scope. Stop only when decomposition would change
+product scope, acceptance ownership, or exclusions. An explicitly classified
+legacy plan must meet the same standard.
 
 Before implementation, classify each owned acceptance group by its
 candidate-owned mechanism; whether the candidate introduces or modifies its
@@ -159,11 +238,12 @@ For each plan:
    affected features and descendants back to `in_progress/` when needed.
 3. Follow `from-reviewed-plan-to-git-handoff.md`. Before editing, require the
    implementation worker to create the design checkpoint specified by
-   `plan-implement.md`; stop if it exposes a cohesion failure or unauthorized
-   architecture. Compare the proposed verification machinery with the
-   candidate-owned production mechanism. If verification would introduce a
-   provider simulator, server model, persistence fixture, retry framework, or
-   more lifecycle machinery than the production change, simplify it or return
+   `plan-implement.md`; resolve any cohesion failure or architecture change
+   through the authority and convergence rules above. Compare the proposed
+   verification machinery with the candidate-owned production mechanism. If
+   verification would introduce a provider simulator, server model,
+   persistence fixture, retry framework, or more lifecycle machinery than the
+   production change, simplify it or return
    the verification footprint for correction before editing. Approval of a
    plan does not authorize disproportionate verification machinery; preserve
    the acceptance outcome while amending a test seam that would simulate
@@ -291,18 +371,20 @@ separately from branch readiness.
 - Keep verification machinery proportionate to the candidate-owned production
   mechanism. A test harness's own state transitions do not prove production
   behaviour.
-- Map changed surfaces to plan scope or a binding contract. Stop for user
-  approval before adding an unplanned deliverable.
-- Stop and return to architecture or slice planning when implementation would
-  introduce an unapproved page-global mutable coordinator, cross-provider
-  lifecycle manager, retry or recovery framework, substantial replacement of
-  a dependency-owned surface, one permanent dependency modification spanning
-  independently testable defects, or local ownership of unsupported upstream
-  behaviour. Do the same when the production footprint materially exceeds the
-  design checkpoint. Line counts are signals, not fixed limits.
-- Escalate a permanent dependency modification when no supported extension
-  point exists or the project would assume ongoing ownership of upstream
-  behaviour.
+- Map every changed surface to an acceptance condition, a demonstrated
+  prerequisite, or a binding contract. Record an in-scope plan amendment before
+  committing it. Split a distinct rollback boundary; do not add unrelated work.
+- Reassess the architecture before introducing a page-global mutable
+  coordinator, cross-provider lifecycle manager, retry or recovery framework,
+  substantial dependency-surface replacement, unsupported upstream ownership,
+  or a production footprint beyond the design checkpoint. Continue only with
+  the smallest design allowed by Autonomous Decision Authority. Line counts are
+  signals, not limits.
+- Modify a dependency permanently only for a reproduced locked-version defect
+  that no supported extension can satisfy. Record the defect, rejected
+  extensions, smallest correction, removal condition, source and effective
+  identities, behavioural evidence, replay order, and maintenance effect. Keep
+  one coherent defect per patch and follow the applicable capability skill.
 - Require the first discovery review to assess correctness and proportionality
   separately, including alignment with the platform's native owner. Resolve a
   proportionality failure by simplifying, splitting, upgrading, or choosing a
@@ -310,9 +392,8 @@ separately from branch readiness.
 - Before accepting a finding, ask whether removing or simplifying new machinery
   closes it. A finding does not authorize a new responsibility merely because
   a broad acceptance condition can be cited.
-- If two successive discovery passes expose new failure modes caused by the
-  branch's coordinator, state machine, retry system, or lifecycle interception,
-  stop local fixes and return to architecture review.
+- Apply Review Convergence when successive passes expose failures from the same
+  candidate-owned architecture or verification model.
 - Preserve unrelated dirty work; never broadly stage, clean, or revert it.
 - Review immutable commits, not the index. The index is a candidate-tree gate.
 - Run fresh Claude, Codex, and Cursor reviewers in parallel for every discovery
@@ -321,12 +402,12 @@ separately from branch readiness.
   conflict-free equal-range-diff restacks or eligible test-only remediations
   with the identity, verification, and closure evidence required by
   `code-review-loop.md`.
-- Stop for failed verification, unresolved findings, unsafe commits, revision
-  mismatch, or unpreserved artefacts. A failed branch-level check blocks the
-  feature; a failed final stack check blocks release progression and returns the
-  affected feature and demonstrated descendants to `in_progress/`. When the
-  full-pipeline export test exists, do not skip it for a complete candidate
-  unless the user cancels it.
+- Never promote or parent from a failing candidate. Preserve evidence, identify
+  the owning slice and root cause, return affected slices to `in_progress/`,
+  correct the implementation or recorded design, and verify and review a new
+  immutable candidate. Integrity failures block the affected chain until safely
+  reconciled; continue independent work. When the full-pipeline export test
+  exists, do not skip it for a complete candidate unless the user cancels it.
 - Do not mark a feature `done/` while external acceptance is pending or a
   failure remains unresolved. Record passed checks or an authorized decision
   explicitly accepting each limitation before `done/`; retain the confirmed

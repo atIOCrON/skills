@@ -15,8 +15,9 @@ ownership scope is provided, ask.
    exclusions to match the map.
 3. Open every cited `file:line`. If a line number is stale, search the current
    file for the referenced symbol, behavior, or nearby text and use the current
-   location. Stop only when the claim cannot be verified in the current codebase,
-   contradicts current evidence, or would materially change the approved scope.
+   location. Return unverifiable or contradictory claims to the runner for an
+   evidence-based plan amendment; stop only at the calling skill's authority
+   boundary.
 4. Read applicable `AGENTS.md` files when present and the repository docs,
    configuration, tests, and contracts relevant to the touched surface.
 5. Make a concise scope-to-change map. For each owned acceptance group, record
@@ -29,14 +30,17 @@ ownership scope is provided, ask.
    with local ownership of an unchanged dependency lifecycle.
 6. Confirm the plan has one independently verifiable outcome, one rollback
    boundary, explicit sibling exclusions, and no acceptance group that can ship
-   or fail independently. Stop for decomposition if it does not.
+   or fail independently. Return it to the runner for an in-scope implementation
+   split if it does not.
 7. For any new architectural layer, dependency, configuration option,
    persistent object, public interface, compatibility behavior, or supported
    scenario, identify what requires it. Use a simpler design when it can meet
-   the same requirements. Stop if necessary complexity is not authorized.
+   the same requirements. Return any broader design to the runner's autonomous
+   architecture checkpoint.
 8. Before initial editing, write
    `<feature_dir>/<plan_slug>.execution/design-checkpoint.md`. On a fix dispatch,
    read it and update it only when the design changes. Record:
+   - the architecture epoch, design identity, and prior failure class, if any;
    - the native owner or extension point;
    - the smallest proposed design and expected production surfaces;
    - every new state owner or asynchronous coordinator, or `none`;
@@ -45,7 +49,7 @@ ownership scope is provided, ask.
      options do not satisfy the slice;
    - the verification-ownership classification, proposed local test machinery,
      applicable inherited evidence, and separate external acceptance; and
-   - conditions that require stopping for architecture or slice replanning.
+   - conditions that require architecture or slice reassessment.
 9. For a complex or cross-cutting change, write
    `<feature_dir>/<plan_slug>.execution/implementation-analysis.md` before
    editing. Keep it concise and include:
@@ -86,10 +90,12 @@ Use repository instructions or indexes to choose relevant docs when available.
   the user or binding repository policy remains required; otherwise choose the
   smallest meaningful seam that proves the candidate-owned mechanism.
 - If the plan conflicts with a binding policy, applicable repository standard,
-  or affected contract, stop and report the conflict. Do not broaden scope to
-  resolve it without user approval.
-- If the ownership scope is insufficient, stop and report the needed scope
-  expansion instead of editing outside it.
+  or affected contract, return it to the runner. Continue after an in-scope
+  correction; require a human decision only when the conflict cannot be resolved
+  without changing approved product scope or the binding source.
+- If ownership is insufficient, return the exact expansion or split needed.
+  The runner may expand repository-local ownership within the approved outcome;
+  do not edit outside the assigned scope first.
 - The workspace may contain edits from the user or other agents. Do not revert,
   overwrite, or clean up work you did not make.
 - Update every in-repo reader of a changed schema, CLI flag, view, error shape,
@@ -100,12 +106,14 @@ Use repository instructions or indexes to choose relevant docs when available.
   applicable.
 - Preserve the existing invariants identified for the touched surface,
   including state transitions and failure handling.
-- Stop before implementing an unapproved page-global mutable coordinator,
+- Return to the runner's architecture checkpoint before implementing a
+  page-global mutable coordinator,
   cross-provider lifecycle manager, retry or recovery framework, substantial
   replacement of a dependency-owned surface, or permanent dependency
-  modification spanning independently testable defects. Stop as well when the
-  production footprint materially exceeds the design checkpoint. Line counts
-  are warning evidence, not absolute limits.
+  modification spanning independently testable defects. Do the same when the
+  production footprint materially exceeds the design checkpoint. The runner may
+  amend the design within its recorded authority. Line counts are warning
+  evidence, not absolute limits.
 - Do not stage files, commit, branch, push, or open a pull request.
 
 ## Verification

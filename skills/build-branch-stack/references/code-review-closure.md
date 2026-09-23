@@ -63,8 +63,9 @@ Do not create entries. The orchestrator applies these mappings:
   `resolved` and the concern recurs, preserve `architecture-review-required`
   when already set, otherwise `open`).
 - `## Needs User Decision` -> ledger status remains non-terminal (typically
-  `open` or `accepted-fix-pending`); the orchestrator pauses for user
-  decision before the next pass.
+  `open` or `accepted-fix-pending`); use this only when closure requires product
+  intent or authority outside the calling skill. Insufficient evidence remains
+  `## Still Open` for further investigation or architecture reassessment.
 
 Cite the `ledger_id` for every proposed transition. If a finding cannot be
 matched to an existing ledger entry, treat

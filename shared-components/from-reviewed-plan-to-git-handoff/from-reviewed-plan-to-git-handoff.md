@@ -38,9 +38,14 @@ caller creates or validates and checks out the plan branch first.
    Require the parent head to equal its pinned SHA and remain an ancestor.
    Produce the branch handoff evidence.
 
-Stop for insufficient ownership, ambiguous scope, staged/unstaged overlap,
-failed verification or review, unresolved findings, failed push, parent
-movement, revision mismatch, or unpreserved artefacts.
+Do not promote or parent from a failing candidate. For insufficient ownership,
+in-scope ambiguity, failed verification or review, or unresolved findings,
+preserve evidence, return the feature to `in_progress/`, amend the design or
+ownership, and continue with a new immutable candidate. For staged/unstaged
+overlap, failed push, parent movement, revision mismatch, or missing artefacts,
+do not overwrite work; reconcile the integrity failure or block the affected
+chain. Continue independent branches. Require a human decision only at the
+authority boundary defined by the calling skill.
 
 Report the plan, branch and pinned parent, changed files, candidate and final
 SHAs, upstream SHA, verification, review passes, ledger, artefact paths, and

@@ -39,9 +39,9 @@ non-material plan mismatches, or non-blocking related existing issues.
   the smallest concern phrasing that captures the root cause.
 
 Set `architecture source` to the branch-introduced coordinator, state machine,
-retry system, lifecycle interception, or other architectural layer that caused
-the finding; otherwise use `-`. When updating an older ledger without this
-column, add it and preserve every existing value.
+retry system, lifecycle interception, verification model, or other architectural
+layer that caused the finding; otherwise use `-`. When updating an older ledger
+without this column, add it and preserve every existing value.
 
 ## Recurrence And Re-opening
 
@@ -52,18 +52,25 @@ it to `re-opened` and surface it in the current pass's triage output.
 After applying identity matching for a pass, inspect every non-terminal entry.
 Any non-terminal entry whose `last_pass - first_pass >= 2` (it appeared in
 three or more passes) must be set to status `recurring-escalation` and
-surfaced in the triage output with a one-line user-decision prompt (resolve,
-reject with evidence, defer, or continue investigating). The orchestrator
-pauses for the user before the next pass starts.
+surfaced in the triage output with a one-line root-cause or architecture action.
+The orchestrator reassesses and continues unless the decision changes approved
+product scope or needs external authority.
 
 Independently, if one architecture source causes newly discovered material
 failure modes in two successive fresh discovery passes, set its non-terminal
-entries to `architecture-review-required`. Stop local fixes before another
-worker dispatch. Return to the design checkpoint and decide whether to remove
-or simplify the machinery, split the slice, upgrade, use an upstream fix, or
-choose another extension mechanism. This two-pass ratchet applies across
-distinct findings with the same source; it does not wait for one concern to
-recur in three passes.
+entries to `architecture-review-required`. Stop incremental fixes before
+another worker dispatch. Return to the design checkpoint; group failures by
+invariant; compare removal, simplification, native ownership, upgrade, narrow
+dependency correction, and prerequisite splitting; then record the selected
+design as a new architecture epoch and continue. Record the epoch number and
+prior failure class in `resolution evidence`. This two-pass ratchet applies
+across distinct findings with the same source; it does not wait for one concern
+to recur in three passes.
+
+If two epochs fail for the same underlying reason, do not try a third variation
+of that mechanism. Select a fundamentally different owner or mechanism, or
+block the affected chain when no option can satisfy the approved outcome and
+hard constraints.
 
 ## Consolidation
 
