@@ -244,6 +244,18 @@ assert_exit_code_file() {
   fi
 }
 
+assert_nonempty_raw_output() {
+  local artifact_dir="$1"
+  local reviewer="$2"
+  local file
+
+  for file in "$artifact_dir/${reviewer}-raw-attempt"*.md; do
+    if [ -s "$file" ]; then return 0; fi
+  done
+  echo "expected a non-empty raw output for $reviewer in $artifact_dir" >&2
+  exit 1
+}
+
 run_launcher() {
   local reviewer="$1"
   local prompt_file="$2"
@@ -276,7 +288,7 @@ run_success_case() {
     run_launcher "$reviewer" "$prompt_file" "$artifact_dir"
   )
 
-  test -s "$artifact_dir/${reviewer}.md"
+  assert_nonempty_raw_output "$artifact_dir" "$reviewer"
   test -f "$artifact_dir/${reviewer}-stderr.log"
   test -f "$artifact_dir/${reviewer}-attempts.md"
   test ! -f "$artifact_dir/${reviewer}-failure.md"
@@ -320,7 +332,7 @@ run_large_prompt_stdin_case() {
     run_launcher "$reviewer" "$prompt_file" "$artifact_dir"
   )
 
-  test -s "$artifact_dir/${reviewer}.md"
+  test -s "$artifact_dir/${reviewer}-raw-attempt1.md"
   assert_exit_code_file "$artifact_dir/${reviewer}-exit-code" "0"
   assert_file_contains "$artifact_dir/${reviewer}-attempts.md" "<prompt-file-stdin>"
   assert_file_contains "$artifact_dir/${reviewer}-session.md" "<prompt-file-stdin>"
@@ -413,7 +425,35 @@ run_terminal_empty_case() {
   fi
   test -f "$artifact_dir/${reviewer}-failure.md"
   assert_file_contains "$artifact_dir/${reviewer}-failure.md" "reviewer exited 0 with empty stdout"
+  assert_file_contains "$artifact_dir/${reviewer}-attempts.md" "no fresh retry - resume captured session"
   assert_exit_code_file "$artifact_dir/${reviewer}-exit-code" "5"
+}
+
+run_resumable_empty_case() {
+  local reviewer="$1"
+  local artifact_dir="$tmp_root/${reviewer}-empty-then-success"
+  local prompt_file="$artifact_dir/${reviewer}-prompt.md"
+  local exit_code
+
+  mkdir -p "$artifact_dir"
+  printf 'Reply OK\n' > "$prompt_file"
+  set +e
+  (
+    export STUB_MODE="empty_then_success"
+    export STUB_STATE_DIR="$artifact_dir"
+    export HOME="$tmp_root/home"
+    export PATH="$stub_bin:$PATH"
+    run_launcher "$reviewer" "$prompt_file" "$artifact_dir"
+  ) >/dev/null 2>&1
+  exit_code=$?
+  set -e
+
+  if [ "$exit_code" -ne 5 ]; then
+    echo "expected resumable empty output to exit 5 for $reviewer, got $exit_code" >&2
+    exit 1
+  fi
+  assert_file_contains "$artifact_dir/${reviewer}-attempts.md" "no fresh retry - resume captured session"
+  assert_file_not_contains "$artifact_dir/${reviewer}-attempts.md" "## Attempt 2"
 }
 
 run_empty_deterministic_case() {
@@ -533,19 +573,18 @@ run_success_case claude success
 run_success_case cursor success
 run_large_prompt_stdin_case claude
 run_large_prompt_stdin_case cursor
-run_success_case claude empty_then_success
-assert_file_contains "$tmp_root/claude-empty_then_success/claude-attempts.md" "retry - empty stdout"
-run_success_case cursor empty_then_success
-assert_file_contains "$tmp_root/cursor-empty_then_success/cursor-attempts.md" "retry - empty stdout"
+run_resumable_empty_case claude
+run_resumable_empty_case cursor
 run_success_case claude retryable_stderr_then_success
-assert_file_contains "$tmp_root/claude-retryable_stderr_then_success/claude.md" "CLAUDE_RETRYABLE_STDERR_RETRY_OK"
+assert_file_contains "$tmp_root/claude-retryable_stderr_then_success/claude-raw-attempt2.md" "CLAUDE_RETRYABLE_STDERR_RETRY_OK"
 assert_file_contains "$tmp_root/claude-retryable_stderr_then_success/claude-stderr.log" "connection reset by peer"
 assert_file_contains "$tmp_root/claude-retryable_stderr_then_success/claude-attempts.md" "retry - retryable launcher stderr"
 assert_file_not_contains "$tmp_root/claude-retryable_stderr_then_success/claude-attempts.md" "usage drift"
 run_success_case cursor retryable_stderr_then_success
-assert_file_contains "$tmp_root/cursor-retryable_stderr_then_success/cursor.md" "CURSOR_RETRYABLE_STDERR_RETRY_OK"
+assert_file_contains "$tmp_root/cursor-retryable_stderr_then_success/cursor-raw-attempt2.md" "CURSOR_RETRYABLE_STDERR_RETRY_OK"
 assert_file_contains "$tmp_root/cursor-retryable_stderr_then_success/cursor-stderr.log" "connection reset by peer"
-assert_file_contains "$tmp_root/cursor-retryable_stderr_then_success/cursor-attempts.md" "retry - retryable launcher stderr with fresh chat"
+assert_file_contains "$tmp_root/cursor-retryable_stderr_then_success/cursor-attempts.md" "retry - retryable launcher stderr with same chat"
+assert_file_contains "$tmp_root/cursor-retryable_stderr_then_success/cursor-chat.count" "1"
 assert_file_not_contains "$tmp_root/cursor-retryable_stderr_then_success/cursor-attempts.md" "usage drift"
 run_success_case claude usage_then_success
 assert_file_contains "$tmp_root/claude-usage_then_success/claude-stderr.log" "unknown option"

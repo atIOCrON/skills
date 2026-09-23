@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Resume a provider's original review session for closure.
+# Resume a provider's original review session for closure or format repair.
 set -euo pipefail
 
 if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then
-  echo "usage: resume_review.sh <codex|claude|cursor> <prompt-file> <artifact-dir> <repo-root> [closure-label]" >&2
+  echo "usage: resume_review.sh <codex|claude|cursor> <prompt-file> <artifact-dir> <repo-root> [continuation-label]" >&2
   exit 2
 fi
 
@@ -11,18 +11,18 @@ provider="$1"
 prompt_file="$2"
 artifact_dir="$3"
 repo_root="$4"
-closure_label="${5:-closure}"
-case "$closure_label" in
-  closure|closure-round[0-9]*) ;;
-  *) echo "error: closure-label must be closure or closure-round<N>" >&2; exit 2 ;;
+continuation_label="${5:-closure}"
+case "$continuation_label" in
+  closure|closure-round[0-9]*|format-repair-round[1-3]) ;;
+  *) echo "error: continuation-label must be closure, closure-round<N>, or format-repair-round<1-3>" >&2; exit 2 ;;
 esac
 session_file="$artifact_dir/$provider-session.md"
-output_file="$artifact_dir/$provider-$closure_label.md"
-stderr_file="$artifact_dir/$provider-$closure_label-stderr.log"
-exit_code_file="$artifact_dir/$provider-$closure_label-exit-code"
-events_file="$artifact_dir/$provider-$closure_label-events.jsonl"
+output_file="$artifact_dir/$provider-$continuation_label.md"
+stderr_file="$artifact_dir/$provider-$continuation_label-stderr.log"
+exit_code_file="$artifact_dir/$provider-$continuation_label-exit-code"
+events_file="$artifact_dir/$provider-$continuation_label-events.jsonl"
 
-test -s "$prompt_file" || { echo "error: closure prompt missing or empty: $prompt_file" >&2; exit 2; }
+test -s "$prompt_file" || { echo "error: continuation prompt missing or empty: $prompt_file" >&2; exit 2; }
 test -f "$session_file" || { echo "error: session artifact not found: $session_file" >&2; exit 2; }
 test -d "$repo_root" || { echo "error: repo-root is not a directory: $repo_root" >&2; exit 2; }
 
@@ -83,5 +83,5 @@ done
 
 if [ "$final_exit_code" -eq 0 ] && [ ! -s "$output_file" ]; then final_exit_code=5; fi
 printf '%s\n' "$final_exit_code" > "$exit_code_file"
-echo "$provider closure finished with exit code $final_exit_code (output: $output_file)"
+echo "$provider continuation finished with exit code $final_exit_code (output: $output_file)"
 exit "$final_exit_code"
