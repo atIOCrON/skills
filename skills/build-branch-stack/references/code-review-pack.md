@@ -23,8 +23,8 @@ hash-manifest.sha256
 
 `index.md` records the plan, dependency-parent branch and pinned base SHA,
 plan branch, review commit and tree SHAs, creation time, and evidence paths.
-For a provisional wave descendant, identify the unreviewed ancestor and state
-that the pack covers only this branch's pinned parent-to-tip diff.
+For a provisional wave descendant, identify any unreviewed or moved ancestor
+and state that the pack covers only this branch's pinned parent-to-tip diff.
 Link the slice's parent specification, slice map, and design checkpoint. Record
 whether the actual production surfaces stayed within the checkpoint and identify
 any new state owner, coordinator, lifecycle interception, whole-template
@@ -113,7 +113,8 @@ Use explicit object IDs:
 - scope and patch: `git diff <base-sha>...<review-sha>` and `--binary`;
 - identity: `git rev-parse <review-sha>^{commit}` and `^{tree}`;
 - ancestry: `git merge-base --is-ancestor <base-sha> <review-sha>`;
-- pinned base and dependency-parent head equality;
+- pinned base ancestry and dependency-parent head SHA; record movement as
+  provisional during a wave, not as a failed review check;
 - local branch tip, upstream, fetched remote tip, reviewed, and verified SHA
   equality;
 - clean-worktree current-tip evidence plus direct or reused check evidence for
@@ -121,7 +122,7 @@ Use explicit object IDs:
 - source and effective-result identity plus capability-defined deterministic
   checks where required.
 
-A failed check, unexplained delta, or SHA mismatch blocks review.
+A failed check, unexplained delta, or review-tip SHA mismatch blocks review.
 
 ## Refresh Policy
 

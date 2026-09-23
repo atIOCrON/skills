@@ -65,10 +65,10 @@ verification changes:
 Use `Queued`, `In progress`, `Review cap reached`, `Blocked`, or `Ready for
 human review`. Mark a wave descendant `In progress` and identify its provisional
 parent in `Next action` until every ancestor is clean at its pinned SHA.
-`Review cap reached` is a per-plan terminal state for this build run: keep the
-feature in `in_progress/`, do not publish it or build further descendants, hold
-any existing wave descendants provisional, and continue eligible independent
-plans. `Ready for human review` requires every ancestor clean at its pinned SHA,
+`Review cap reached` ends passes for that plan in this run. Keep it in
+`in_progress/` and unpublished. Existing wave descendants may continue review
+provisionally; start no new wave from it. `Ready for human review`
+requires every ancestor clean at its pinned SHA,
 the feature in `review/`, a verified final SHA matching local,
 upstream, and remote tips, a pinned parent, clean reviews from all three
 providers on that SHA or valid equal-range-diff or test-only-closure mappings,
@@ -180,8 +180,8 @@ across task resumptions, implementation shapes, and architecture epochs. After
 pass 5, finish its accepted in-scope remediation through normal commit,
 verification, push, and targeted-closure rules. If the resulting tip does not
 meet review completion without another discovery pass, do not start pass 6:
-record `review_cap_reached` in the ledger and release manifest, keep the feature
-in `in_progress/`, and continue the next eligible independent plan. This cap
+record `review_cap_reached` in the ledger and manifest. Keep the feature in
+`in_progress/`; continue existing wave descendant reviews and independent plans. This cap
 does not waive a finding, review, verification, or readiness gate.
 
 ## Readiness
@@ -267,10 +267,10 @@ Build bounded review waves. Use about three or four dependent plans as a
 scheduling guide, adjusting for review capacity and coupling. Independent plans
 may proceed concurrently. Within each chain, implement and verify candidates
 in dependency order. A verified, unreviewed parent may support a provisional
-descendant in the same wave; a failed check, accepted material defect, or
-integrity failure stops new descendants on that chain. Pin each parent's exact
-SHA. Keep provisional descendants in `in_progress/`; do not publish their CRs
-or mark them ready for human review.
+descendant in the same wave. A review finding does not stop descendant work;
+failed verification or an integrity failure does. Pin each parent's exact SHA.
+Keep provisional descendants in `in_progress/`; do not publish their CRs or
+mark them ready for human review.
 
 For each plan in the wave:
 
@@ -293,16 +293,18 @@ For each plan in the wave:
    pinned parent and verified tip in the manifest. Keep the feature in
    `in_progress/`.
 
-After the wave's candidates are verified and pushed, run each new candidate's
-first pass concurrently; on repair runs, resume its recorded pass count. Each
-pass reviews only its pinned parent-to-tip diff, with three providers running
-concurrently. Triage each pass and record
-`review_progress.completed_passes`. Fix accepted findings from the earliest
-affected branch forward. Push each verified fix, but defer descendant restacks
-until upstream fixes in that wave settle. Pause affected descendant reviews
-while their pinned parent is stale. At the wave boundary, restack affected
-descendants in dependency order, verify every changed tip, and update pins,
-packs, and manifest entries. Continue later passes only where needed: retain
+After the wave's candidates are verified and pushed, run every eligible
+numbered pass concurrently across branches, including later passes. Each pass
+reviews only its pinned parent-to-tip diff, with three providers running
+concurrently. A branch becomes eligible after its prior findings are handled
+and its new tip is verified and pushed; ancestor reviews need not be clean.
+Triage each pass and record `review_progress.completed_passes`. Fix accepted
+findings from the earliest affected branch forward. Push each verified fix,
+but defer descendant restacks until upstream fixes in that wave settle. A
+descendant may continue fixes and passes against its immutable pinned parent
+while that parent moves; record the stale parent and keep the branch provisional.
+At the wave boundary, restack affected descendants in dependency order, verify
+every changed tip, and update pins, packs, and manifest entries. Retain
 clean reviews for equal `range-diff` only with the required identity evidence;
 manual resolutions, changed behavior, or an invalid mapping require a fresh
 three-reviewer pass. A descendant's equal patch alone does not prove that
@@ -310,10 +312,10 @@ upstream changes preserved its behavior.
 
 If a plan reaches the five-pass cap, finish its accepted in-scope remediation,
 verify and push the candidate when checks pass, preserve its artefacts, and
-record `review_cap_reached` with ledger evidence. Stop work on that chain for
-this run; mark existing wave descendant reviews pending, hold those branches
-provisional, and continue independent plans. Do not move the capped feature to
-`review/` or open its CR.
+record `review_cap_reached` with ledger evidence. Stop fresh passes only for
+that plan. Existing wave descendants may continue reviews on their pinned
+diffs, but remain provisional; start no new wave from the capped branch. Do
+not move the capped feature to `review/` or open its CR.
 
 For each clean plan whose ancestors are also clean at their pinned SHAs, finish
 the handoff. Once all three reviewers are clean and required branch-level agent
@@ -333,8 +335,9 @@ evidence requires it.
 
 Before each plan and final handoff, compare every local parent with its pinned
 SHA and refetch any parent already on `origin`. If a parent moves during a wave,
-pause affected descendants and restack them at the wave boundary after upstream
-fixes settle. On a repair run or unexpected movement, move only affected
+record the movement and restack affected descendants at the wave boundary after
+upstream fixes settle; their pinned-diff reviews may continue. On a repair run
+or unexpected movement, move only affected
 descendants to `in_progress/` before restacking. Keep each candidate there
 through verification and code review. Synchronize tips with explicit leases.
 Classify each delta as `verbatim`, `mechanical regeneration`, or
@@ -462,8 +465,9 @@ separately from branch readiness.
   conflict-free equal-range-diff restacks or eligible test-only remediations
   with the identity, verification, and closure evidence required by
   `code-review-loop.md`.
-- Never promote or parent from a failing candidate. A verified unreviewed
-  candidate may parent only provisional descendants within its bounded wave.
+- Never promote a candidate with failed checks or unresolved material findings.
+  Failed verification or integrity blocks new descendants. A verified candidate
+  with review findings may parent only provisional descendants in its wave.
   Preserve evidence, identify the owning slice and root cause, return affected
   slices to `in_progress/`,
   correct the implementation or recorded design, and verify and review a new

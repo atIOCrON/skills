@@ -70,8 +70,8 @@ views, not competing authorities.
   clean at their pinned SHAs. A feature
   that reaches the five-pass review cap also remains here with a durable
   `review_cap_reached` marker. That state ends work on this plan for the current
-  build run without blocking unrelated plans; leave unbuilt descendants queued
-  and hold existing wave descendants provisional.
+  build run without blocking other plans' reviews; hold existing wave
+  descendants provisional and start no new wave from the capped branch.
 - `review`: the exact branch tip and pinned parent are verified, the local,
   upstream, and remote tips agree, every ancestor is clean at its pinned SHA,
   code review findings are resolved, all three

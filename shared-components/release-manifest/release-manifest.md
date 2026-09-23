@@ -123,8 +123,8 @@ across resumed runs. Its status is `pending`, `clean`, or
 passes and `pass_limit` is the configured cap. Set `evidence` to the triage
 ledger path when the cap is reached. A capped branch remains in the manifest
 and may have a verified, pushed tip, but it is not clean-reviewed, cannot
-freeze, and cannot support further descendants. The build may continue with
-independent branches. A verified provisional wave descendant keeps its pinned
+freeze, and cannot start another dependent wave. Existing wave descendants may
+continue review but remain provisional. A verified provisional wave descendant keeps its pinned
 parent SHA and `pending` review state until its own reviews are clean. Even when
 its own status becomes `clean`, it stays in `in_progress/` and cannot be
 published or promoted until all ancestors are clean at their pinned SHAs.
