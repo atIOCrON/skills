@@ -47,8 +47,10 @@ For verification or code-review fixes:
 3. Read `references/plan-implement.md`, include its operational instructions in
    the worker prompt, then render
    `references/implementation-dispatch-fix-request.md`.
-4. Include only accepted fixes or concrete verification failures. Batch all
-   accepted findings for the same worker into one request.
+4. Include only accepted fixes or concrete verification failures. For each code
+   review fix, include its family ID, `reproduced` or `binding-proof` class,
+   pinned SHA, supported path, and evidence. Batch accepted findings for the
+   same worker into one request.
 5. Include relevant artifact paths, not long copied transcripts unless needed.
 6. Preserve owned-file boundaries.
 7. Require edits on the current plan branch; the orchestrator creates a new
@@ -57,6 +59,10 @@ For verification or code-review fixes:
 ## Guardrails
 
 - Do not send rejected findings as work.
+- Before editing for a code-review finding, independently confirm its pinned
+  SHA and either reproduce it through the cited supported path with existing
+  facilities or confirm its binding proof. Return an unconfirmed finding to
+  triage without changing production code or tests.
 - Do not request speculative refactors, compatibility shims, fallback defaults,
   or unrelated cleanup.
 - If a fix needs files outside ownership, return the exact paths and reason. The

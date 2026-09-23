@@ -13,6 +13,8 @@ repo_root="$3"
 pass_number="$4"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 validator="$script_dir/validate_code_review_output.py"
+review_prompt="$artifact_dir/$provider-prompt.md"
+review_sha=""
 
 case "$provider" in codex|claude|cursor) ;; *) echo "error: unsupported provider: $provider" >&2; exit 2 ;; esac
 case "$pass_number" in ''|*[!0-9]*) echo "error: pass-number must be numeric" >&2; exit 2 ;; esac
@@ -28,6 +30,9 @@ fi
 test -s "$repair_envelope" || { echo "error: repair envelope missing or empty: $repair_envelope" >&2; exit 2; }
 test -d "$artifact_dir" || { echo "error: artifact directory not found: $artifact_dir" >&2; exit 2; }
 test -d "$repo_root" || { echo "error: repo-root is not a directory: $repo_root" >&2; exit 2; }
+if [ -f "$review_prompt" ]; then
+  review_sha="$(sed -nE 's/^Review commit SHA: ([0-9a-f]{40})$/\1/p' "$review_prompt" | head -n 1)"
+fi
 
 canonical="$artifact_dir/$provider.md"
 session_file="$artifact_dir/$provider-session.md"
@@ -59,8 +64,11 @@ rm -f "$canonical"
 validate_candidate() {
   local candidate="$1"
   local validation_file="$2"
+  local -a validator_args
   set +e
-  python3 "$validator" "$candidate" "$provider" "$pass_number" > "$validation_file"
+  validator_args=("$candidate" "$provider" "$pass_number")
+  [ -z "$review_sha" ] || validator_args+=("$review_sha")
+  python3 "$validator" "${validator_args[@]}" > "$validation_file"
   validation_status=$?
   set -e
 }

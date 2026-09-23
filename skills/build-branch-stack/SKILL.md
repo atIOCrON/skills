@@ -129,6 +129,14 @@ Within an epoch, group findings by invariant or ownership failure and fix one
 root cause instead of adding one guard per example. Do not rerun unchanged
 expensive checks or enlarge tests beyond candidate-owned behaviour.
 
+Accept a runtime review finding only when it is reproduced on the pinned SHA
+through an existing supported production-like flow or deductively proven from
+committed code and a binding contract. Give each accepted finding a failure
+family defined by its invariant, runtime owner, supported path, and observable
+failure. Match that family across all passes, files, designs, and epochs. Static
+plausibility is advisory and cannot trigger code, tests, ledger entries,
+closure, or another pass.
+
 Before adopting a broader design, record the demonstrated failure, whether
 deletion or simplification resolves it, the existing native owner, whether the
 work is one invariant or several outcomes, whether tests exceed production
@@ -136,12 +144,13 @@ machinery, and any dependency patch's removal condition. Reject a design when
 fewer state owners, async boundaries, patches, or extensions satisfy the same
 approved outcome.
 
-Two successive discovery passes that expose new failures from the same design
-or verification model require an autonomous architecture reassessment before
-more edits. Compare removal, simplification, replacement, upgrade, the native
-owner, a narrow
-dependency correction, and a prerequisite split by production surface, state
-ownership, rollback, verification cost, and maintenance. Select the smallest
+Two discovery passes anywhere in the ledger that expose new failures from the
+same family, design, or verification model require an autonomous architecture
+reassessment before more edits. Changing implementation shape or epoch does
+not reset this count. Compare removal, simplification, replacement, upgrade,
+the native owner, a narrow dependency correction, and a prerequisite split by
+production surface, state ownership, rollback, verification cost, and
+maintenance. Select the smallest
 viable design, amend the recorded architecture, and continue with a fresh
 candidate.
 
@@ -151,6 +160,14 @@ the owning dependency, split a prerequisite, or use an already-supported
 contract that still satisfies the approved outcome. Mark the affected chain
 blocked only when every viable repository-local option conflicts with a hard
 constraint or the approved outcome.
+
+After two accepted fix cycles in one failure family, prohibit another local
+variation and record an autonomous continuation decision. At pass 5 and before
+every later edit or discovery pass, record the confirmed evidence, rejected
+hypotheses, history, alternatives, decision, and one authorized next action.
+Continue autonomously only for a confirmed defect with a viable, non-repeated
+disposition. Require a human only when every viable option crosses the authority
+boundary above.
 
 ## Readiness
 

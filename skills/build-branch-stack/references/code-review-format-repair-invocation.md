@@ -15,10 +15,10 @@ permitted status line.
 
 ```markdown
 ## Blockers
-- [{finding_id}] [path/to/file.py:line] <finding> - In-scope failure: <scenario, contract, or rule> - Evidence: <citation> - Recommendation: <smallest fix>
+- [{finding_id}] [path/to/file.py:line] <finding> - Failure family: <invariant / runtime owner / supported path / observable failure> - Evidence class: <reproduced|binding-proof> - Pinned SHA: <40-character review SHA> - Supported path: <normal supported operation> - Existing facilities only: yes - Evidence: <Reproduction: command or procedure; Artifact: path; Observed: result | Proof: binding source; Chain: deduction> - Recommendation: <smallest fix>
 
 ## Should-fix
-- [{finding_id}] [path/to/file.py:line] <finding> - In-scope failure: <scenario, contract, or rule> - Evidence: <citation> - Recommendation: <smallest fix>
+- [{finding_id}] [path/to/file.py:line] <finding> - Failure family: <invariant / runtime owner / supported path / observable failure> - Evidence class: <reproduced|binding-proof> - Pinned SHA: <40-character review SHA> - Supported path: <normal supported operation> - Existing facilities only: yes - Evidence: <Reproduction: command or procedure; Artifact: path; Observed: result | Proof: binding source; Chain: deduction> - Recommendation: <smallest fix>
 
 ## Nits
 - [{finding_id}] [path/to/file.py:line] <finding> - Evidence: <citation> - Recommendation: <fix>

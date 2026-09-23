@@ -19,6 +19,7 @@ HEADINGS = (
     "## Skill Feedback",
 )
 FINDING_SECTIONS = HEADINGS[:5]
+MATERIAL_FINDING_SECTIONS = HEADINGS[:2]
 STATUSES = {
     "Fix blockers before next pass",
     "Resolve contradictions",
@@ -41,7 +42,9 @@ def section_lines(lines: list[str], heading: str) -> list[str]:
     return [line for line in lines[start:end] if line.strip()]
 
 
-def validate(path: Path, reviewer: str, pass_number: int) -> tuple[int, list[str]]:
+def validate(
+    path: Path, reviewer: str, pass_number: int, review_sha: str | None = None
+) -> tuple[int, list[str]]:
     if not path.is_file() or path.stat().st_size == 0:
         return FRESH_RETRY_REQUIRED, ["review output is missing or empty"]
 
@@ -109,6 +112,64 @@ def validate(path: Path, reviewer: str, pass_number: int) -> tuple[int, list[str
                     completion_errors.append(f"finding lacks evidence in {heading}: {bullet[:100]}")
                 if " - Recommendation:" not in bullet:
                     completion_errors.append(f"finding lacks recommendation in {heading}: {bullet[:100]}")
+                if heading in MATERIAL_FINDING_SECTIONS:
+                    required_fields = (
+                        " - Failure family:",
+                        " - Evidence class:",
+                        " - Pinned SHA:",
+                        " - Supported path:",
+                    )
+                    for field in required_fields:
+                        if field not in bullet:
+                            completion_errors.append(
+                                f"material finding lacks {field.strip(' -:')} in {heading}: {bullet[:100]}"
+                            )
+
+                    evidence_class = re.search(
+                        r" - Evidence class: (reproduced|binding-proof)(?: - |$)", bullet
+                    )
+                    if not evidence_class:
+                        completion_errors.append(
+                            f"material finding has invalid evidence class in {heading}: {bullet[:100]}"
+                        )
+                    pinned_sha = re.search(r" - Pinned SHA: ([0-9a-f]{40})(?: - |$)", bullet)
+                    if not pinned_sha:
+                        completion_errors.append(
+                            f"material finding lacks a full pinned SHA in {heading}: {bullet[:100]}"
+                        )
+                    elif review_sha and pinned_sha.group(1) != review_sha:
+                        completion_errors.append(
+                            f"material finding uses {pinned_sha.group(1)} instead of review SHA {review_sha}"
+                        )
+                    if not re.search(r" - Failure family: \S.+?(?= - Evidence class:)", bullet):
+                        completion_errors.append(
+                            f"material finding lacks a failure family in {heading}: {bullet[:100]}"
+                        )
+                    if not re.search(r" - Supported path: \S.+?(?= - Existing facilities only:)", bullet):
+                        completion_errors.append(
+                            f"material finding lacks a supported path in {heading}: {bullet[:100]}"
+                        )
+                    if not re.search(r" - Existing facilities only: yes(?: - |$)", bullet):
+                        completion_errors.append(
+                            f"material finding lacks Existing facilities only in {heading}: {bullet[:100]}"
+                        )
+                    if evidence_class and evidence_class.group(1) == "reproduced":
+                        if not all(
+                            marker in bullet
+                            for marker in (
+                                " - Evidence: Reproduction:",
+                                "; Artifact:",
+                                "; Observed:",
+                            )
+                        ):
+                            completion_errors.append(
+                                f"reproduced finding lacks reproduction evidence in {heading}: {bullet[:100]}"
+                            )
+                    if evidence_class and evidence_class.group(1) == "binding-proof":
+                        if " - Evidence: Proof:" not in bullet or "; Chain:" not in bullet:
+                            completion_errors.append(
+                                f"binding-proof finding lacks proof evidence in {heading}: {bullet[:100]}"
+                            )
 
         proportionality = section_lines(lines, "## Proportionality")
         if len(proportionality) != 1 or not re.match(
@@ -128,9 +189,13 @@ def main() -> int:
     parser.add_argument("output", type=Path)
     parser.add_argument("reviewer", choices=("claude", "codex", "cursor"))
     parser.add_argument("pass_number", type=int)
+    parser.add_argument("review_sha", nargs="?", type=str)
     args = parser.parse_args()
 
-    code, errors = validate(args.output, args.reviewer, args.pass_number)
+    if args.review_sha and not re.fullmatch(r"[0-9a-f]{40}", args.review_sha):
+        parser.error("review_sha must be a 40-character lowercase hexadecimal SHA")
+
+    code, errors = validate(args.output, args.reviewer, args.pass_number, args.review_sha)
     labels = {
         0: "valid",
         FORMAT_REPAIRABLE: "format-repairable",
