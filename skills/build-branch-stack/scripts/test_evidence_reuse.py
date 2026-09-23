@@ -342,6 +342,44 @@ class ReleaseManifestReuseTest(unittest.TestCase):
         errors = release_validator.validate(manifest)
         self.assertTrue(any("requires completed_passes equal pass_limit" in error for error in errors))
 
+    def test_provisional_descendant_cannot_have_ready_request(self) -> None:
+        manifest = self.manifest()
+        parent = manifest["branches"][0]
+        child = json.loads(json.dumps(parent))
+        child.update(
+            source="feature/child",
+            target=parent["source"],
+            parent={"branch": parent["source"], "sha": parent["tip_sha"]},
+            dependency_reason="needs parent",
+            tip_sha="e" * 40,
+        )
+        child["review_progress"]["status"] = "clean"
+        for check in child["checks"]:
+            check.update(sha=child["tip_sha"], method="direct", origin_sha=child["tip_sha"])
+        for review in child["reviews"]:
+            review.update(
+                status="clean",
+                sha=child["tip_sha"],
+                method="direct",
+                origin_sha=child["tip_sha"],
+                evidence="evidence/review.md",
+            )
+        manifest["branches"].append(child)
+        self.assertEqual(release_validator.validate(manifest), [])
+        child["change_request"]["state"] = "ready"
+        errors = release_validator.validate(manifest)
+        self.assertTrue(any("requires clean ancestors" in error for error in errors))
+        parent["review_progress"]["status"] = "clean"
+        for review in parent["reviews"]:
+            review.update(
+                status="clean",
+                sha=parent["tip_sha"],
+                method="direct",
+                origin_sha=parent["tip_sha"],
+                evidence="evidence/review.md",
+            )
+        self.assertEqual(release_validator.validate(manifest), [])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -98,6 +98,8 @@ def validate(data: Any) -> list[str]:
 
     seen: set[str] = set()
     available = {base.get("branch")} if is_text(base.get("branch")) else set()
+    clean_lineage: dict[str, bool] = {base.get("branch"): True} if is_text(base.get("branch")) else {}
+    parent_tips = {base.get("branch"): base.get("sha")} if is_text(base.get("branch")) else {}
     for index, branch in enumerate(branches):
         prefix = f"branches[{index}]"
         if not isinstance(branch, dict):
@@ -276,14 +278,14 @@ def validate(data: Any) -> list[str]:
                 errors.append(f"{review_prefix}.evidence is required when clean")
         if seen_reviewers != REVIEWERS:
             errors.append(f"{prefix}.reviews must contain claude, codex, and cursor")
+        clean_on_tip = all(
+            isinstance(review, dict)
+            and review.get("status") == "clean"
+            and review.get("sha") == branch.get("tip_sha")
+            for review in reviews
+        )
         if isinstance(review_progress, dict):
             progress_status = review_progress.get("status")
-            clean_on_tip = all(
-                isinstance(review, dict)
-                and review.get("status") == "clean"
-                and review.get("sha") == branch.get("tip_sha")
-                for review in reviews
-            )
             if progress_status == "clean" and not clean_on_tip:
                 errors.append(f"{prefix}.review_progress clean status requires clean reviews on tip_sha")
             if progress_status == "review_cap_reached" and clean_on_tip:
@@ -297,6 +299,11 @@ def validate(data: Any) -> list[str]:
                 errors.append(f"{prefix}.change_request.state is invalid")
             if change_request.get("url") is not None and not is_text(change_request.get("url")):
                 errors.append(f"{prefix}.change_request.url must be null or a URL")
+            if change_request.get("state") == "ready" and not (
+                clean_lineage.get(parent_branch, False)
+                and parent.get("sha") == parent_tips.get(parent_branch)
+            ):
+                errors.append(f"{prefix}.change_request requires clean ancestors at pinned SHAs")
 
         if state in {"frozen", "staged", "accepted", "released"}:
             tip_sha = branch.get("tip_sha")
@@ -318,6 +325,16 @@ def validate(data: Any) -> list[str]:
 
         if is_text(source):
             available.add(source)
+            parent_tips[source] = branch.get("tip_sha")
+            clean_lineage[source] = (
+                clean_lineage.get(parent_branch, False)
+                and parent.get("sha") == parent_tips.get(parent_branch)
+                and clean_on_tip
+                and (
+                    not isinstance(review_progress, dict)
+                    or review_progress.get("status") == "clean"
+                )
+            )
 
     exclusions = data.get("exclusions")
     if not isinstance(exclusions, list):

@@ -63,11 +63,13 @@ verification changes:
 ```
 
 Use `Queued`, `In progress`, `Review cap reached`, `Blocked`, or `Ready for
-human review`. `Review cap reached` is a per-plan terminal state for this build
-run, not a blocker for the whole queue: keep the feature in `in_progress/`, do
-not parent from or publish it, leave dependent descendants queued, and continue
-the next eligible independent plan. `Ready for human review` requires the
-feature in `review/`, a verified final SHA matching local,
+human review`. Mark a wave descendant `In progress` and identify its provisional
+parent in `Next action` until every ancestor is clean at its pinned SHA.
+`Review cap reached` is a per-plan terminal state for this build run: keep the
+feature in `in_progress/`, do not publish it or build further descendants, hold
+any existing wave descendants provisional, and continue eligible independent
+plans. `Ready for human review` requires every ancestor clean at its pinned SHA,
+the feature in `review/`, a verified final SHA matching local,
 upstream, and remote tips, a pinned parent, clean reviews from all three
 providers on that SHA or valid equal-range-diff or test-only-closure mappings,
 preserved artefacts, passed required branch-level agent checks, and recorded
@@ -261,7 +263,16 @@ For a selected legacy `plans/<slug>.md`, move it and any sibling
 `<slug>.reviews/`, `<slug>.execution/`, and `<slug>.evidence/` into
 `plans/to_do/<slug>/` first. Stop on a destination collision.
 
-For each plan:
+Build bounded review waves. Use about three or four dependent plans as a
+scheduling guide, adjusting for review capacity and coupling. Independent plans
+may proceed concurrently. Within each chain, implement and verify candidates
+in dependency order. A verified, unreviewed parent may support a provisional
+descendant in the same wave; a failed check, accepted material defect, or
+integrity failure stops new descendants on that chain. Pin each parent's exact
+SHA. Keep provisional descendants in `in_progress/`; do not publish their CRs
+or mark them ready for human review.
+
+For each plan in the wave:
 
 1. Record why it depends on its parent. Fetch and pin the parent branch and SHA.
 2. Create its local plan branch from that parent, or validate the selected
@@ -269,59 +280,63 @@ For each plan:
    `to_do/` to `in_progress/` before implementation. On a repair run, verify
    the existing branch and manifest instead of recreating it; move only
    affected features and descendants back to `in_progress/` when needed.
-3. Follow `from-reviewed-plan-to-git-handoff.md`. Before editing, require the
-   implementation worker to create the design checkpoint specified by
-   `plan-implement.md`; resolve any cohesion failure or architecture change
-   through the authority and convergence rules above. Compare the proposed
-   verification machinery with the candidate-owned production mechanism. If
-   verification would introduce a provider simulator, server model,
-   persistence fixture, retry framework, or more lifecycle machinery than the
-   production change, simplify it or return
-   the verification footprint for correction before editing. Approval of a
-   plan does not authorize disproportionate verification machinery; preserve
-   the acceptance outcome while amending a test seam that would simulate
-   unchanged external or dependency-owned behaviour. Run the applicable
-   capability's authoring checks during
-   implementation and its exact candidate verification before accepting the
-   candidate. Do not substitute capability final-integration verification for
-   per-plan candidate verification. Then selectively stage and review
-   any new edits, commit if needed, and verify the exact commit in a clean
-   worktree through fresh execution, deterministic evidence reuse, or both, as
-   defined in `verification-runner.md`.
-   Create or update the remote branch at the first verified commit. Push each
-   verified fix and review the pinned parent-to-commit diff. Keep the feature in
-   `in_progress/` through all code review passes and fixes. Update the branch's
-   manifest entry after every verified tip change and update
-   `review_progress.completed_passes` after every completed discovery pass.
-   If the code-review loop reaches its five-pass cap, commit all accepted
-   in-scope work, verify and push the resulting candidate when verification
-   passes, preserve its artefacts, record the cap state, and end work on that
-   plan for this run. Set `review_progress.status` to `review_cap_reached` and
-   link its ledger evidence. Do not move it to `review/`, open a CR, or use it
-   as a dependency parent. Leave its descendants queued and continue other
-   eligible plans.
-4. Once Claude, Codex, and Cursor have cleanly reviewed the logical change and
-   its required branch-level agent checks pass, preserve the feature's
-   `.reviews/`, `.evidence/`, and any `.execution/` folders before removing a
-   worktree. Record pending human and external checks with procedures and owners.
-   Record release-candidate checks that intrinsically require unbuilt descendant
-   branches or a complete candidate with their prerequisites. Verify that the
-   exact tip matches local, upstream, and remote refs, move the whole feature to
-   `review/`, set `review_progress.status` to `clean`, refresh its manifest and
-   artefact paths, and validate the manifest.
-   A missing prerequisite for a required branch-level check remains a blocker;
-   do not classify it as a deferred release check. If the move or manifest write
-   fails, return any just-moved feature to `in_progress/` and report the blocker.
-   If the current task authorizes CR creation, hand the branch to
-   `open-stack-requests` in draft mode; otherwise record publication as the next
-   action. This skill does not open the CR itself. Use this branch as a parent
-   only where dependency evidence requires it.
+3. Follow `from-reviewed-plan-to-git-handoff.md` through the verified candidate.
+   Require the design checkpoint in `plan-implement.md` before editing. Resolve
+   cohesion or architecture changes under the rules above. Keep verification
+   machinery proportionate to candidate-owned behavior; simplify a seam that
+   simulates unchanged external or dependency-owned lifecycles. Run capability
+   authoring checks and exact candidate verification, then selectively stage,
+   review, commit, and verify the exact SHA in a clean worktree under
+   `verification-runner.md`. Final integration checks do not replace candidate
+   verification.
+   Create or update the remote branch at the first verified commit. Record each
+   pinned parent and verified tip in the manifest. Keep the feature in
+   `in_progress/`.
+
+After the wave's candidates are verified and pushed, run each new candidate's
+first pass concurrently; on repair runs, resume its recorded pass count. Each
+pass reviews only its pinned parent-to-tip diff, with three providers running
+concurrently. Triage each pass and record
+`review_progress.completed_passes`. Fix accepted findings from the earliest
+affected branch forward. Push each verified fix, but defer descendant restacks
+until upstream fixes in that wave settle. Pause affected descendant reviews
+while their pinned parent is stale. At the wave boundary, restack affected
+descendants in dependency order, verify every changed tip, and update pins,
+packs, and manifest entries. Continue later passes only where needed: retain
+clean reviews for equal `range-diff` only with the required identity evidence;
+manual resolutions, changed behavior, or an invalid mapping require a fresh
+three-reviewer pass. A descendant's equal patch alone does not prove that
+upstream changes preserved its behavior.
+
+If a plan reaches the five-pass cap, finish its accepted in-scope remediation,
+verify and push the candidate when checks pass, preserve its artefacts, and
+record `review_cap_reached` with ledger evidence. Stop work on that chain for
+this run; mark existing wave descendant reviews pending, hold those branches
+provisional, and continue independent plans. Do not move the capped feature to
+`review/` or open its CR.
+
+For each clean plan whose ancestors are also clean at their pinned SHAs, finish
+the handoff. Once all three reviewers are clean and required branch-level agent
+checks pass, preserve `.reviews/`, `.evidence/`, and any `.execution/` folders
+before removing a worktree. Record pending human and external checks with
+procedures and owners. Record release-candidate checks that require unbuilt
+descendants or a complete candidate with their prerequisites. Verify that the
+tip matches local, upstream, and remote refs; move the feature to `review/`,
+set `review_progress.status` to `clean`, refresh manifest and artefact paths,
+and validate the manifest. A missing prerequisite for a required branch-level
+check remains a blocker, not a deferred release check. If the move or manifest
+write fails, return the feature to `in_progress/` and report the blocker. If
+the task authorizes CR creation, hand the branch to `open-stack-requests` in
+draft mode; otherwise record publication as the next action. This skill does
+not open the CR itself. Use this branch as a parent only where dependency
+evidence requires it.
 
 Before each plan and final handoff, compare every local parent with its pinned
-SHA and refetch any parent already on `origin`. If a parent moved, move only
-affected descendants to `in_progress/` before restacking; keep each candidate
-there through verification and code review. Synchronize reviewed tips with
-explicit leases.
+SHA and refetch any parent already on `origin`. If a parent moves during a wave,
+pause affected descendants and restack them at the wave boundary after upstream
+fixes settle. On a repair run or unexpected movement, move only affected
+descendants to `in_progress/` before restacking. Keep each candidate there
+through verification and code review. Synchronize tips with explicit leases.
 Classify each delta as `verbatim`, `mechanical regeneration`, or
 `intentional behavior change`. Verify every new tip with the smallest sufficient
 combination of fresh checks and deterministic evidence reuse. Verification
@@ -330,9 +345,10 @@ rerunning an unchanged check. A new SHA or reviewer pass alone is not grounds
 to rerun one. Do not rerun an expensive deterministic check when the capability's
 equivalence rules prove unchanged determining inputs and effective result.
 A conflict-free restack
-with equal `range-diff` and deterministic identity evidence retains all three
-prior reviews; record their old-to-new SHA mappings. A fresh three-reviewer pass
-is required for manual resolutions, unequal range diffs, changed generated
+with equal `range-diff` and deterministic identity evidence for the new parent
+and effective behavior retains all three prior reviews; record their old-to-new
+SHA mappings. A fresh three-reviewer pass is required for manual resolutions,
+unequal range diffs, changed generated
 output, or behavior changes. An unexpected local branch change needs a scope
 decision before it can count as reviewed.
 When an otherwise-clean discovery pass has one accepted finding resolved only
@@ -340,7 +356,9 @@ by an eligible test-only remediation, follow `code-review-loop.md`: verify the
 new SHA, obtain same-session closure from each originating reviewer, and record
 `test_only_closure` mappings instead of running another discovery pass.
 
-After all plans:
+After all plans, run full-stack checks without a blanket code review. Review
+again only where the final restack or integration fixes changed behavior or
+invalidated a review mapping:
 
 1. When every branch in the selected release candidate exists, run deterministic
    pre-handoff checks on every chain head and independent branch. For an ordered
@@ -444,8 +462,10 @@ separately from branch readiness.
   conflict-free equal-range-diff restacks or eligible test-only remediations
   with the identity, verification, and closure evidence required by
   `code-review-loop.md`.
-- Never promote or parent from a failing candidate. Preserve evidence, identify
-  the owning slice and root cause, return affected slices to `in_progress/`,
+- Never promote or parent from a failing candidate. A verified unreviewed
+  candidate may parent only provisional descendants within its bounded wave.
+  Preserve evidence, identify the owning slice and root cause, return affected
+  slices to `in_progress/`,
   correct the implementation or recorded design, and verify and review a new
   immutable candidate. Integrity failures block the affected chain until safely
   reconciled; continue independent work. When the full-pipeline export test

@@ -22,11 +22,14 @@ For a later verified fix, require the fetched remote tip to equal the recorded
 tip and be an ancestor of the new local commit. Push with the same explicit
 refspec without `-u`.
 
-For a reviewed restack, require a recoverable backup ref, the recorded old
-remote tip, and either clean reviews from all three reviewers on the new tip or
-proven equal-range-diff mappings from all three prior reviews. If a change
-request exists, the publication skill must return it and ready descendants to
-draft before the restack. Push only with:
+For a restack, require a recoverable backup ref, the recorded old remote tip,
+the new pinned parent, and exact-tip verification. Push a verified tip with
+pending reviews when it needs a fresh pass; preserve old review evidence and
+keep the manifest review status pending until that pass is clean. A provisional
+wave descendant stays in `in_progress/` and cannot be promoted or have a CR
+published while its ancestors are unreviewed.
+If a change request exists, the publication skill must return it and ready
+descendants to draft before the restack. Push only with:
 
 ```bash
 git push --force-with-lease=refs/heads/<branch-name>:<old-remote-sha> \

@@ -20,6 +20,11 @@ Each numbered pass is a fresh three-reviewer discovery review of
 One completed fresh pass plus terminal closure is sufficient when the reviewed
 commit has not changed. After a material fix, close the originating findings,
 then run a fresh pass on the new commit.
+In a bounded wave, start pass 1 concurrently on each verified branch against
+its pinned parent. An unreviewed but verified parent is allowed only for a
+provisional descendant in that wave. If an ancestor moves, triage completed
+reviews against their immutable SHAs, then pause affected descendant fixes and
+later passes until the wave-boundary restack and verification.
 
 Run at most five completed discovery passes for one plan. A pass counts when
 all three reviewers have produced validated outputs and triage is recorded.
@@ -69,7 +74,9 @@ Retrospectively correct: “Pass 5 was the last required pass; review is complet
 
 A conflict-free restack does not require another discovery review when
 `git range-diff` is equal and deterministic identity checks show the logical
-change is unchanged. Verify the new commit, record the old-to-new SHA mapping,
+change and behavior under the new parent are unchanged. The patch comparison
+alone is insufficient when an ancestor changed. Verify the new commit, record
+the old-to-new SHA mapping,
 refresh the pack, and retain all three prior clean reviews. Any manual resolution,
 unequal range diff, changed generated output, or intentional behavior change
 requires a fresh three-reviewer pass. Do not treat a generated-artifact

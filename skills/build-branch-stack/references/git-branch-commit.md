@@ -69,18 +69,23 @@ first.
 1. Record old base and branch tips, any old remote tip, and the new parent
    SHA. Create a recoverable backup ref for the old tip.
 2. Rebase with `git rebase --onto <new-base-sha> <old-base-sha> <branch-name>`.
-   Abort and stop on conflicts; resolving them changes behavior intentionally.
+   Stop automatic restacking on conflicts. Inspect and resolve each conflict
+   under the plan's scope, preserving a backup of the old tip; every manual
+   resolution requires a fresh three-reviewer pass.
 3. Compare ranges with `git range-diff` and deterministic source, tree, and
    effective-output identity checks. Classify each delta as `verbatim`, `mechanical
    regeneration`, or `intentional behavior change`.
 4. Verify the new tip in a clean detached worktree and update the pinned base
    and review pack. For a conflict-free restack with equal `range-diff` and
-   deterministic identity evidence, record the old-to-new SHA mappings and retain
+   deterministic identity evidence for behavior under the new parent, record
+   the old-to-new SHA mappings and retain
    all three prior reviews. Run a fresh three-reviewer pass for any manual
    resolution, unequal range diff, changed generated output, or intentional
    behavior change.
 
-After all three reviews are clean, use `git-sync-branch.md` for the
-lease-protected push. Stop for an unexpected source change, an existing ready
-change request, or an unclassified delta. Report branch, parent and candidate
-SHAs, verification, restack evidence, and unrelated local files.
+Use `git-sync-branch.md` for the lease-protected push. A provisional wave
+descendant may be pushed before reviews are clean, but remains in `in_progress/`
+until fresh reviews or valid mappings cover its verified tip and every ancestor
+is clean. Stop for an unexpected source change, an existing ready change
+request, or an unclassified delta. Report branch, parent and candidate SHAs,
+verification, restack evidence, and unrelated local files.

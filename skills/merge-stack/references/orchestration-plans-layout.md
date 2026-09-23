@@ -66,13 +66,15 @@ views, not competing authorities.
   Move only selected plans from `backlog`.
 - `in_progress`: implementation, fixes, CLI code review loops, commits,
   restacks, or required branch-level agent checks are underway, or a check found
-  a defect. Keep the feature here throughout the code review loop. A feature
+  a defect. Keep provisional wave descendants here until all ancestors are
+  clean at their pinned SHAs. A feature
   that reaches the five-pass review cap also remains here with a durable
   `review_cap_reached` marker. That state ends work on this plan for the current
-  build run without blocking unrelated plans; leave its dependent descendants
-  queued because the capped branch is not an eligible parent.
+  build run without blocking unrelated plans; leave unbuilt descendants queued
+  and hold existing wave descendants provisional.
 - `review`: the exact branch tip and pinned parent are verified, the local,
-  upstream, and remote tips agree, code review findings are resolved, all three
+  upstream, and remote tips agree, every ancestor is clean at its pinned SHA,
+  code review findings are resolved, all three
   automated reviews are clean or have valid equal-range-diff or
   test-only-closure mappings, required branch-level agent checks pass, and
   artefacts are preserved. Record pending
