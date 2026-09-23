@@ -356,6 +356,37 @@ class ReleaseManifestReuseTest(unittest.TestCase):
         branch["trim_review"].update(sha=branch["tip_sha"], evidence="reviews/trim-review-ledger.md")
         self.assertEqual(release_validator.validate(manifest), [])
 
+    def test_released_waiver_is_complete_without_claiming_clean_review(self) -> None:
+        manifest = self.manifest()
+        branch = manifest["branches"][0]
+        tip = branch["tip_sha"]
+        manifest.update(
+            state="released",
+            accepted_gaps=["User waived automated reviews."],
+            completion={
+                "mode": "authorized_waiver",
+                "authorized_by": "user",
+                "recorded_at": "2026-09-24T00:00:00Z",
+                "evidence": "reviews/review-waiver.md",
+            },
+            integration={"landed_sha": "f" * 40},
+        )
+        branch["change_request"] = {"url": "https://example.com/pr/1", "state": "merged"}
+        branch["review_progress"].update(status="waived", evidence="reviews/review-waiver.md")
+        branch["trim_review"] = {
+            "status": "waived",
+            "sha": tip,
+            "evidence": "reviews/review-waiver.md",
+        }
+        for review in branch["reviews"]:
+            review.update(status="waived", sha=tip, evidence="reviews/review-waiver.md")
+        self.assertEqual(release_validator.validate(manifest), [])
+        branch["reviews"][0]["sha"] = "a" * 40
+        self.assertTrue(any("waived sha must match tip_sha" in error for error in release_validator.validate(manifest)))
+        branch["reviews"][0]["sha"] = tip
+        manifest.pop("completion")
+        self.assertTrue(any("must be complete on tip_sha" in error for error in release_validator.validate(manifest)))
+
     def test_provisional_descendant_cannot_have_ready_request(self) -> None:
         manifest = self.manifest()
         parent = manifest["branches"][0]
