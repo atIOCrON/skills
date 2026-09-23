@@ -17,9 +17,9 @@ STATES = {"building", "frozen", "staged", "accepted", "released"}
 CHECK_KINDS = {"agent", "external"}
 CHECK_STATES = {"passed", "failed", "pending", "blocked_by_environment"}
 CHECK_METHODS = {"direct", "identity_reuse"}
-REVIEW_STATES = {"pending", "clean", "changes_required"}
+REVIEW_STATES = {"pending", "clean", "changes_required", "waived"}
 REVIEW_METHODS = {"direct", "equal_range_diff", "test_only_closure"}
-REVIEW_PROGRESS_STATES = {"pending", "clean", "review_cap_reached"}
+REVIEW_PROGRESS_STATES = {"pending", "clean", "review_cap_reached", "waived"}
 REVIEWERS = {"claude", "codex", "cursor"}
 CR_STATES = {"none", "draft", "ready", "merged", "closed"}
 
@@ -81,6 +81,17 @@ def validate(data: Any) -> list[str]:
     state = data.get("state")
     if state not in STATES:
         errors.append(f"state must be one of {sorted(STATES)}")
+    completion = data.get("completion")
+    waiver_completion = (
+        state == "released"
+        and isinstance(completion, dict)
+        and completion.get("mode") == "authorized_waiver"
+    )
+    if completion is not None:
+        if not waiver_completion:
+            errors.append("completion requires released state and authorized_waiver mode")
+        elif not all(is_text(completion.get(key)) for key in ("authorized_by", "recorded_at", "evidence")):
+            errors.append("completion requires authorized_by, recorded_at, and evidence")
 
     base = data.get("base")
     if not isinstance(base, dict):
@@ -97,6 +108,7 @@ def validate(data: Any) -> list[str]:
         branches = []
 
     seen: set[str] = set()
+    saw_waived_review = False
     available = {base.get("branch")} if is_text(base.get("branch")) else set()
     clean_lineage: dict[str, bool] = {base.get("branch"): True} if is_text(base.get("branch")) else {}
     parent_tips = {base.get("branch"): base.get("sha")} if is_text(base.get("branch")) else {}
@@ -180,6 +192,8 @@ def validate(data: Any) -> list[str]:
                     )
                 if not is_text(progress_evidence):
                     errors.append(f"{progress_prefix}.evidence is required when cap is reached")
+            if progress_status == "waived" and not is_text(progress_evidence):
+                errors.append(f"{progress_prefix}.evidence is required when waived")
 
         trim_review = branch.get("trim_review")
         if trim_review is not None:
@@ -188,13 +202,13 @@ def validate(data: Any) -> list[str]:
                 errors.append(f"{trim_prefix} must be an object")
                 trim_review = {}
             trim_status = trim_review.get("status")
-            if trim_status not in {"pending", "proportionate"}:
+            if trim_status not in {"pending", "proportionate", "waived"}:
                 errors.append(f"{trim_prefix}.status is invalid")
-            if trim_status == "proportionate":
+            if trim_status in {"proportionate", "waived"}:
                 if trim_review.get("sha") != branch.get("tip_sha"):
                     errors.append(f"{trim_prefix}.sha must match tip_sha")
                 if not is_text(trim_review.get("evidence")):
-                    errors.append(f"{trim_prefix}.evidence is required when proportionate")
+                    errors.append(f"{trim_prefix}.evidence is required when complete")
             elif trim_review.get("sha") is not None or trim_review.get("evidence") is not None:
                 errors.append(f"{trim_prefix} pending status requires null sha and evidence")
 
@@ -285,14 +299,19 @@ def validate(data: Any) -> list[str]:
                 is_mapping = method in {"equal_range_diff", "test_only_closure"}
                 if is_mapping and origin_sha == review.get("sha"):
                     errors.append(f"{review_prefix} {method} must map different SHAs")
+            elif review.get("status") == "waived":
+                if review.get("sha") != branch.get("tip_sha"):
+                    errors.append(f"{review_prefix} waived sha must match tip_sha")
+                if method is not None or origin_sha is not None:
+                    errors.append(f"{review_prefix} waived review cannot claim a review method")
             elif method is not None or origin_sha is not None:
                 errors.append(
                     f"{review_prefix} method and origin_sha must be null until clean"
                 )
             if review.get("evidence") is not None and not is_text(review.get("evidence")):
                 errors.append(f"{review_prefix}.evidence must be null or a path")
-            if review.get("status") == "clean" and not is_text(review.get("evidence")):
-                errors.append(f"{review_prefix}.evidence is required when clean")
+            if review.get("status") in {"clean", "waived"} and not is_text(review.get("evidence")):
+                errors.append(f"{review_prefix}.evidence is required when clean or waived")
         if seen_reviewers != REVIEWERS:
             errors.append(f"{prefix}.reviews must contain claude, codex, and cursor")
         clean_on_tip = all(
@@ -301,12 +320,27 @@ def validate(data: Any) -> list[str]:
             and review.get("sha") == branch.get("tip_sha")
             for review in reviews
         )
+        reviewed_or_waived_on_tip = all(
+            isinstance(review, dict)
+            and review.get("status") in {"clean", "waived"}
+            and review.get("sha") == branch.get("tip_sha")
+            for review in reviews
+        )
+        has_waived_review = any(
+            isinstance(review, dict) and review.get("status") == "waived"
+            for review in reviews
+        )
+        saw_waived_review |= has_waived_review or (
+            isinstance(trim_review, dict) and trim_review.get("status") == "waived"
+        )
         if isinstance(review_progress, dict):
             progress_status = review_progress.get("status")
             if progress_status == "clean" and not clean_on_tip:
                 errors.append(f"{prefix}.review_progress clean status requires clean reviews on tip_sha")
             if progress_status == "review_cap_reached" and clean_on_tip:
                 errors.append(f"{prefix}.review_progress must be clean when all reviews are clean on tip_sha")
+            if progress_status == "waived" and not (reviewed_or_waived_on_tip and has_waived_review):
+                errors.append(f"{prefix}.review_progress waived status requires a waived review on tip_sha")
             if (
                 progress_status == "clean"
                 and isinstance(trim_review, dict)
@@ -336,17 +370,24 @@ def validate(data: Any) -> list[str]:
 
         if state in {"frozen", "staged", "accepted", "released"}:
             tip_sha = branch.get("tip_sha")
-            if isinstance(trim_review, dict) and trim_review.get("status") != "proportionate":
-                errors.append(f"{prefix}.trim_review must be proportionate for release state {state}")
-            if isinstance(review_progress, dict) and review_progress.get("status") != "clean":
-                errors.append(f"{prefix}.review_progress must be clean for release state {state}")
+            trim_states = {"proportionate", "waived"} if waiver_completion else {"proportionate"}
+            review_states = {"clean", "waived"} if waiver_completion else {"clean"}
+            if isinstance(trim_review, dict) and trim_review.get("status") not in trim_states:
+                errors.append(f"{prefix}.trim_review is incomplete for release state {state}")
+            if isinstance(review_progress, dict) and review_progress.get("status") not in review_states:
+                errors.append(f"{prefix}.review_progress is incomplete for release state {state}")
             for review_index, review in enumerate(reviews):
                 if not isinstance(review, dict):
                     continue
-                if review.get("status") != "clean" or review.get("sha") != tip_sha:
+                if review.get("status") not in review_states or review.get("sha") != tip_sha:
                     errors.append(
-                        f"{prefix}.reviews[{review_index}] must be clean on tip_sha"
+                        f"{prefix}.reviews[{review_index}] must be complete on tip_sha"
                     )
+            if waiver_completion and (
+                not isinstance(change_request, dict)
+                or change_request.get("state") != "merged"
+            ):
+                errors.append(f"{prefix}.change_request must be merged for waiver completion")
             for check_index, check in enumerate(checks):
                 if isinstance(check, dict) and check.get("kind") == "agent":
                     if check.get("status") != "passed" or check.get("sha") != tip_sha:
@@ -393,14 +434,25 @@ def validate(data: Any) -> list[str]:
 
     if not isinstance(data.get("accepted_gaps"), list):
         errors.append("accepted_gaps must be an array")
+    if waiver_completion and not data.get("accepted_gaps"):
+        errors.append("authorized waiver completion requires accepted_gaps")
+    if waiver_completion and not saw_waived_review:
+        errors.append("authorized waiver completion requires a waived review")
     if data.get("integration") is not None and not isinstance(data.get("integration"), dict):
         errors.append("integration must be null or an object")
+    integration = data.get("integration")
+    if waiver_completion and not (
+        isinstance(integration, dict) and is_sha(integration.get("landed_sha"))
+    ):
+        errors.append("authorized waiver completion requires integration.landed_sha")
 
     freeze = data.get("freeze")
     if not isinstance(freeze, dict):
         errors.append("freeze must be an object")
         freeze = {}
-    if state in {"frozen", "staged", "accepted", "released"}:
+    if state in {"frozen", "staged", "accepted", "released"} and (
+        not waiver_completion or any(freeze.values())
+    ):
         for field in ("frozen_at", "authorized_by", "scope_digest"):
             if not is_text(freeze.get(field)):
                 errors.append(f"freeze.{field} must be set for a frozen release")

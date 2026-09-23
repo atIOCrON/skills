@@ -144,6 +144,23 @@ review. A trim result does not increment `completed_passes` or fill `reviews`.
 Do not mark a branch ready when its trim result is pending or applies to an
 unmapped old tip.
 
+Use `waived` when the user explicitly cancels a review phase for an already
+merged change. It means the review was not performed; never label it `clean`
+or leave it `pending`. Set each waived reviewer entry's `sha` to the verified
+tip, `method` and `origin_sha` to null, and `evidence` to the waiver record.
+Set `review_progress.status` to `waived` with the same evidence. For a waived
+trim phase, set `trim_review.status` to `waived`, its `sha` to the tip, and its
+`evidence` to the waiver record.
+
+An already merged release may use `state: "released"` with a null `freeze`
+when its only unfinished gate was explicitly waived. Keep the authorized gap,
+merged change request, exact-tip checks, and landed SHA. Add
+`completion: {"mode": "authorized_waiver", "authorized_by": "user",
+"recorded_at": "<UTC time>", "evidence": "<waiver path>"}`. This records
+administrative completion after the merge; it does not claim a pre-merge
+freeze or a clean review. Ready, frozen, staged, and accepted candidates still
+require clean reviews under the normal gates.
+
 Keep integration results under `integration`, including ordered input SHAs,
 candidate commit and tree SHAs, toolchain identity, clean-install evidence,
 conflict-resolution report, checks, staging pipeline and deployed release,
