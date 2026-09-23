@@ -27,6 +27,8 @@ reaches `review/`; revisit only its pending cross-branch questions after a teste
 stack snapshot exists. Read `references/release-manifest.md` before creating or
 changing the manifest.
 
+Read `references/trim-review.md` before the wave's review phase.
+
 ## Inputs
 
 - Ordered reviewed vertical-slice plans at
@@ -69,7 +71,8 @@ parent in `Next action` until every ancestor is clean at its pinned SHA.
 `in_progress/` and unpublished. Existing wave descendants may continue review
 provisionally; start no new wave from it. `Ready for human review`
 requires every ancestor clean at its pinned SHA,
-the feature in `review/`, a verified final SHA matching local,
+the feature in `review/`, a proportionate trim result on its tip, and a
+verified final SHA matching local,
 upstream, and remote tips, a pinned parent, clean reviews from all three
 providers on that SHA or valid equal-range-diff or test-only-closure mappings,
 preserved artefacts, passed required branch-level agent checks, and recorded
@@ -293,22 +296,19 @@ For each plan in the wave:
    pinned parent and verified tip in the manifest. Keep the feature in
    `in_progress/`.
 
-After the wave's candidates are verified and pushed, run every eligible
-numbered pass concurrently across branches, including later passes. Each pass
-reviews only its pinned parent-to-tip diff, with three providers running
-concurrently. A branch becomes eligible after its prior findings are handled
-and its new tip is verified and pushed; ancestor reviews need not be clean.
-Triage each pass and record `review_progress.completed_passes`. Fix accepted
-findings from the earliest affected branch forward. Push each verified fix,
-but defer descendant restacks until upstream fixes in that wave settle. A
-descendant may continue fixes and passes against its immutable pinned parent
-while that parent moves; record the stale parent and keep the branch provisional.
-At the wave boundary, restack affected descendants in dependency order, verify
-every changed tip, and update pins, packs, and manifest entries. Retain
-clean reviews for equal `range-diff` only with the required identity evidence;
-manual resolutions, changed behavior, or an invalid mapping require a fresh
-three-reviewer pass. A descendant's equal patch alone does not prove that
-upstream changes preserved its behavior.
+After the wave's candidates are verified and pushed, run the separate trim
+phase in `trim-review.md` across branches before correctness pass 1. Verify and
+push accepted reductions. Then run every eligible numbered correctness pass
+concurrently across branches, including later passes. Each three-provider
+pass reviews only its pinned parent-to-tip diff. Eligibility requires that
+branch's prior findings handled and its new tip verified and pushed; ancestor
+reviews need not be clean. Triage and record completed passes. Fix accepted
+findings from the earliest affected branch forward. Defer descendant restacks
+until upstream fixes in the wave settle; descendants may continue pinned-diff
+reviews provisionally. At the wave boundary, restack affected descendants,
+verify changed tips, and update pins, packs, and manifest entries. Retain clean
+reviews only with valid equal-`range-diff` and identity evidence. Manual
+resolutions, changed behavior, or invalid mappings require a fresh pass.
 
 If a plan reaches the five-pass cap, finish its accepted in-scope remediation,
 verify and push the candidate when checks pass, preserve its artefacts, and
@@ -318,8 +318,8 @@ diffs, but remain provisional; start no new wave from the capped branch. Do
 not move the capped feature to `review/` or open its CR.
 
 For each clean plan whose ancestors are also clean at their pinned SHAs, finish
-the handoff. Once all three reviewers are clean and required branch-level agent
-checks pass, preserve `.reviews/`, `.evidence/`, and any `.execution/` folders
+the handoff. Once trim, all three correctness reviewers, and required
+branch-level agent checks pass, preserve `.reviews/`, `.evidence/`, and any `.execution/` folders
 before removing a worktree. Record pending human and external checks with
 procedures and owners. Record release-candidate checks that require unbuilt
 descendants or a complete candidate with their prerequisites. Verify that the
@@ -448,10 +448,8 @@ separately from branch readiness.
   extensions, smallest correction, removal condition, source and effective
   identities, behavioural evidence, replay order, and maintenance effect. Keep
   one coherent defect per patch and follow the applicable capability skill.
-- Require the first discovery review to assess correctness and proportionality
-  separately, including alignment with the platform's native owner. Resolve a
-  proportionality failure by simplifying, splitting, upgrading, or choosing a
-  different extension mechanism.
+- Complete the separate trim phase before correctness discovery. Correctness
+  reviewers still flag material proportionality failures missed by trimming.
 - Before accepting a finding, ask whether removing or simplifying new machinery
   closes it. A finding does not authorize a new responsibility merely because
   a broad acceptance condition can be cited.

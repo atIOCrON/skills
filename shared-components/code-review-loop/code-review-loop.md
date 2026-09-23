@@ -8,7 +8,9 @@ covers the exact plan-branch tip.
 Require the repository, host mapping, vertical-slice plan and slug, parent
 specification, slice map, design checkpoint, implementation scope,
 dependency-parent branch and pinned base SHA, plan branch, candidate commit,
-neutral pack, reviewer preflight status, and verification evidence.
+neutral pack, reviewer preflight status, verification evidence, and a completed
+trim result on the current tip or a valid restack mapping. Trim passes do not
+count toward this loop's discovery-pass limit or satisfy its review gate.
 
 The cross-pass material concern ledger is
 `<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`.

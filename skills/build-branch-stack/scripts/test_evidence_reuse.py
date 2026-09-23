@@ -342,6 +342,20 @@ class ReleaseManifestReuseTest(unittest.TestCase):
         errors = release_validator.validate(manifest)
         self.assertTrue(any("requires completed_passes equal pass_limit" in error for error in errors))
 
+    def test_trim_review_requires_current_tip_and_evidence(self) -> None:
+        manifest = self.manifest()
+        branch = manifest["branches"][0]
+        branch["trim_review"] = {
+            "status": "proportionate",
+            "sha": "c" * 40,
+            "evidence": None,
+        }
+        errors = release_validator.validate(manifest)
+        self.assertTrue(any("trim_review.sha must match tip_sha" in error for error in errors))
+        self.assertTrue(any("trim_review.evidence is required" in error for error in errors))
+        branch["trim_review"].update(sha=branch["tip_sha"], evidence="reviews/trim-review-ledger.md")
+        self.assertEqual(release_validator.validate(manifest), [])
+
     def test_provisional_descendant_cannot_have_ready_request(self) -> None:
         manifest = self.manifest()
         parent = manifest["branches"][0]

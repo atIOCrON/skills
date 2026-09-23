@@ -33,6 +33,8 @@ sources were found. If `AGENTS.md` is absent,
 say so and identify the applicable plan, repository docs and configuration,
 affected contracts, tests, and nearby patterns used for review. General
 engineering practice may inform a finding but is not a binding repository rule.
+For the trim phase, also identify applicable testing policies, CI rules, and
+nearby test conventions, or state that no explicit testing policy was found.
 `ownership-map.md` maps each changed path to plan scope or owner. Capture each
 deterministic command, exit status, and literal output.
 
