@@ -21,7 +21,7 @@ for arg in "$@"; do
   previous="$arg"
 done
 case "$prompt" in
-  *"Remember token"*) result="REVIEWER_SMOKE_OK" ;;
+  *"Preflight probe"*) result="REVIEWER_SMOKE_OK" ;;
   *"Run these read-only commands"*) result="ORCHESTRATE_SESSION_SMOKE $(git rev-parse HEAD)" ;;
   *"CLOSURE"*) result="CODEX_CLOSURE_OK" ;;
   *) result="CODEX_REVIEW_OK" ;;
@@ -36,7 +36,7 @@ set -euo pipefail
 printf 'claude %s\n' "$*" >> "$STUB_ARGS_LOG"
 prompt="$(cat) $*"
 case "$prompt" in
-  *"Remember token"*) echo "REVIEWER_SMOKE_OK" ;;
+  *"Preflight probe"*) echo "REVIEWER_SMOKE_OK" ;;
   *"Run these read-only commands"*) echo "ORCHESTRATE_SESSION_SMOKE $(git rev-parse HEAD)" ;;
   *"CLOSURE"*) echo "CLAUDE_CLOSURE_OK" ;;
   *) echo "CLAUDE_REVIEW_OK" ;;
@@ -50,7 +50,7 @@ printf 'cursor %s\n' "$*" >> "$STUB_ARGS_LOG"
 if [ "${1:-}" = "create-chat" ]; then echo "cursor-session-1"; exit 0; fi
 prompt="$(cat) $*"
 case "$prompt" in
-  *"Remember token"*) echo "REVIEWER_SMOKE_OK" ;;
+  *"Preflight probe"*) echo "REVIEWER_SMOKE_OK" ;;
   *"Run these read-only commands"*) echo "ORCHESTRATE_SESSION_SMOKE $(git rev-parse HEAD)" ;;
   *"CLOSURE"*) echo "CURSOR_CLOSURE_OK" ;;
   *) echo "CURSOR_REVIEW_OK" ;;
@@ -93,6 +93,7 @@ fi
 grep -qF -- '-s read-only -a never' "$STUB_ARGS_LOG"
 grep -qF -- '--permission-mode plan' "$STUB_ARGS_LOG"
 grep -qF -- '--auto-review --sandbox enabled' "$STUB_ARGS_LOG"
+grep -qF -- '--model grok-4.7-high' "$STUB_ARGS_LOG"
 if grep -qF -- '--mode ask' "$STUB_ARGS_LOG"; then
   echo "cursor launchers must use default agent mode, not ask mode" >&2
   exit 1

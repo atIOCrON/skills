@@ -27,7 +27,7 @@ assert_token() {
 }
 
 head_sha="$(git -C "$repo_root" rev-parse HEAD)"
-capability_prompt="Run these read-only commands from the repository root: git status --short; git diff --name-only HEAD...HEAD; git diff --binary HEAD...HEAD; git show --no-patch --format=%H HEAD. Then run this no-write patch check: printf '%s\\n' 'diff --git a/.orchestration-review-probe b/.orchestration-review-probe' 'new file mode 100644' 'index 0000000..e69de29' | git apply --check -. If every command is permitted and succeeds, return exactly the token you were asked to remember, one space, and the HEAD SHA. Return no other text."
+capability_prompt="Run these read-only commands from the repository root: git status --short; git diff --name-only HEAD...HEAD; git diff --binary HEAD...HEAD; git show --no-patch --format=%H HEAD. Then run this no-write patch check: printf '%s\\n' 'diff --git a/.orchestration-review-probe b/.orchestration-review-probe' 'new file mode 100644' 'index 0000000..e69de29' | git apply --check -. If every command is permitted and succeeds, return exactly: $smoke_token HEAD_SHA, replacing HEAD_SHA with the actual repository HEAD. Return no other text."
 capability_expected="$smoke_token $head_sha"
 
 run_claude() {
@@ -38,7 +38,7 @@ run_claude() {
   (
     cd "$repo_root"
     claude --model "$model" --permission-mode plan --session-id "$session_id" \
-      -p "Remember token $smoke_token. Return exactly: $ok_token" --output-format text
+      -p "Preflight probe. Return exactly: $ok_token" --output-format text
   ) > "$tmp_root/first"
   assert_token "first prompt" "$ok_token" "$tmp_root/first"
   (
@@ -53,12 +53,12 @@ run_claude() {
 run_cursor() {
   command -v cursor-agent >/dev/null 2>&1 || { echo "error: cursor-agent CLI not found on PATH" >&2; exit 3; }
   local chat_id model
-  model="${CURSOR_REVIEW_MODEL:-cursor-grok-4.6-high}"
+  model="${CURSOR_REVIEW_MODEL:-grok-4.7-high}"
   chat_id="$(cursor-agent create-chat)"
   test -n "$chat_id" || { echo "error: cursor-agent create-chat returned no chat id" >&2; exit 4; }
   cursor-agent --model "$model" --trust --auto-review --sandbox enabled \
     --workspace "$repo_root" --resume "$chat_id" \
-    -p "Remember token $smoke_token. Return exactly: $ok_token" --output-format text > "$tmp_root/first"
+    -p "Preflight probe. Return exactly: $ok_token" --output-format text > "$tmp_root/first"
   assert_token "first prompt" "$ok_token" "$tmp_root/first"
   cursor-agent --model "$model" --trust --auto-review --sandbox enabled \
     --workspace "$repo_root" --resume "$chat_id" \
@@ -73,11 +73,11 @@ run_codex() {
   local session_id model
   model="${CODEX_REVIEW_MODEL:-default}"
   if [ "$model" = "default" ]; then
-    printf 'Remember token %s. Return exactly: %s\n' "$smoke_token" "$ok_token" |
+    printf 'Preflight probe. Return exactly: %s\n' "$ok_token" |
       codex -C "$repo_root" -s read-only -a never exec --json \
         -o "$tmp_root/first" - > "$tmp_root/events"
   else
-    printf 'Remember token %s. Return exactly: %s\n' "$smoke_token" "$ok_token" |
+    printf 'Preflight probe. Return exactly: %s\n' "$ok_token" |
       codex -C "$repo_root" -s read-only -a never -m "$model" exec --json \
         -o "$tmp_root/first" - > "$tmp_root/events"
   fi
