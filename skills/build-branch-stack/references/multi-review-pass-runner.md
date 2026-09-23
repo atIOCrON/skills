@@ -124,7 +124,8 @@ in the same session:
 ```
 
 For a native host reviewer, preserve its raw response, run
-`validate_code_review_output.py`, and send
+`validate_code_review_output.py <output> <reviewer> <pass-number> <review-sha>`,
+and send
 `code-review-format-repair-invocation.md` to that same native reviewer. Apply
 the same three-attempt limit and promote its response to `<reviewer>.md` only
 after validation succeeds.

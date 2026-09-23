@@ -62,12 +62,24 @@ Do not treat mere style or architecture preference as a defect. Recommend
 simplifying, splitting, upgrading, or using a narrower extension mechanism
 before adding guards to new machinery.
 
-A blocker or should-fix must establish a reachable supported failure, an
-affected-contract regression, or a binding policy or repository-standard
-violation. Unsupported inputs, hypothetical scale, future use, and architecture
-preferences are advisory. Recommend the smallest sufficient fix; identify any
-new surface and whether it is a prerequisite for the approved outcome or a new
-independently releasable capability.
+A blocker or should-fix must use one evidence class:
+
+- `reproduced`: the failure occurred on the pinned review SHA through a
+  supported production-like path using existing facilities; or
+- `binding-proof`: committed code plus a binding runtime contract, policy, or
+  repository standard deductively establishes the failure.
+
+Static plausibility, defensive speculation, imagined lifecycle sequences,
+unsupported inputs, hypothetical scale, future use, and architecture
+preferences are not findings. Omit them unless they reveal non-blocking
+workflow feedback. A reproduction may use one bounded cycle of existing tests,
+fixtures, services, browser flows, and diagnostics. Do not add or request a
+provider simulator, generalized delay, lifecycle framework, production guard,
+or substantial harness merely to establish a finding.
+
+Recommend the smallest sufficient fix. Identify any new surface and whether it
+is a prerequisite for the approved outcome or a new independently releasable
+capability.
 
 Use `blocker` for safety, security, data loss, or failure of a required outcome;
 `should-fix` for other material defects; and `nit` for preferences. Require
@@ -82,10 +94,10 @@ empty sections.
 
 ```markdown
 ## Blockers
-- [{finding_id}] [path/to/file.py:line] <finding> - In-scope failure: <scenario, contract, or rule> - Evidence: <citation> - Recommendation: <smallest fix>
+- [{finding_id}] [path/to/file.py:line] <finding> - Failure family: <invariant / runtime owner / supported path / observable failure> - Evidence class: <reproduced|binding-proof> - Pinned SHA: <40-character review SHA> - Supported path: <normal supported operation> - Existing facilities only: yes - Evidence: <Reproduction: command or procedure; Artifact: path; Observed: result | Proof: binding source; Chain: deduction> - Recommendation: <smallest fix>
 
 ## Should-fix
-- [{finding_id}] [path/to/file.py:line] <finding> - In-scope failure: <scenario, contract, or rule> - Evidence: <citation> - Recommendation: <smallest fix>
+- [{finding_id}] [path/to/file.py:line] <finding> - Failure family: <invariant / runtime owner / supported path / observable failure> - Evidence class: <reproduced|binding-proof> - Pinned SHA: <40-character review SHA> - Supported path: <normal supported operation> - Existing facilities only: yes - Evidence: <Reproduction: command or procedure; Artifact: path; Observed: result | Proof: binding source; Chain: deduction> - Recommendation: <smallest fix>
 
 ## Nits
 - [{finding_id}] [path/to/file.py:line] <finding> - Evidence: <citation> - Recommendation: <fix>

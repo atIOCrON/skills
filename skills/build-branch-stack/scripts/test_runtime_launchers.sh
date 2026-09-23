@@ -110,6 +110,72 @@ set -e
 test "$validation_exit" -eq 11
 grep -qF 'classification: completion-repairable' "$tmp_root/completion-invalid-validation.md"
 
+material_review="$tmp_root/material-review.md"
+printf '%s\n' \
+  '## Blockers' \
+  '- [code-p2-cursor-01] [src/pay.js:12] Authorization can remain pending - Failure family: authorization settles / wallet owner / supported checkout / pending forever - Evidence class: reproduced - Pinned SHA: 0123456789abcdef0123456789abcdef01234567 - Supported path: checkout with an authorized wallet - Existing facilities only: yes - Evidence: Reproduction: npm test -- wallet; Artifact: evidence/wallet.log; Observed: authorization stayed pending - Recommendation: settle through the wallet owner' \
+  '' \
+  '## Should-fix' '- None' \
+  '' \
+  '## Nits' '- None' \
+  '' \
+  '## Contradictions' '- None' \
+  '' \
+  '## Related Existing Issues' '- None' \
+  '' \
+  '## Proportionality' '- Proportionate - uses the native wallet owner' \
+  '' \
+  '## Skill Feedback' '- None' \
+  '' \
+  'Fix blockers before next pass' > "$material_review"
+review_sha=0123456789abcdef0123456789abcdef01234567
+python3 "$validator" "$material_review" cursor 2 "$review_sha" >/dev/null
+
+sed \
+  -e 's/Evidence class: reproduced/Evidence class: binding-proof/' \
+  -e 's#Evidence: Reproduction: npm test -- wallet; Artifact: evidence/wallet.log; Observed: authorization stayed pending#Evidence: Proof: docs/wallet.md requires settlement; Chain: committed handler omits settlement#' \
+  "$material_review" > "$tmp_root/binding-review.md"
+python3 "$validator" "$tmp_root/binding-review.md" cursor 2 "$review_sha" >/dev/null
+
+sed 's/; Chain: committed handler omits settlement//' \
+  "$tmp_root/binding-review.md" > "$tmp_root/binding-invalid.md"
+set +e
+python3 "$validator" "$tmp_root/binding-invalid.md" cursor 2 "$review_sha" \
+  > "$tmp_root/binding-invalid-validation.md"
+validation_exit=$?
+set -e
+test "$validation_exit" -eq 11
+grep -qF 'binding-proof finding lacks proof evidence' "$tmp_root/binding-invalid-validation.md"
+
+sed 's/Evidence class: reproduced/Evidence class: static-hypothesis/' \
+  "$material_review" > "$tmp_root/hypothesis-invalid.md"
+set +e
+python3 "$validator" "$tmp_root/hypothesis-invalid.md" cursor 2 "$review_sha" \
+  > "$tmp_root/hypothesis-invalid-validation.md"
+validation_exit=$?
+set -e
+test "$validation_exit" -eq 11
+grep -qF 'invalid evidence class' "$tmp_root/hypothesis-invalid-validation.md"
+
+sed 's/ - Existing facilities only: yes//' \
+  "$material_review" > "$tmp_root/facilities-invalid.md"
+set +e
+python3 "$validator" "$tmp_root/facilities-invalid.md" cursor 2 "$review_sha" \
+  > "$tmp_root/facilities-invalid-validation.md"
+validation_exit=$?
+set -e
+test "$validation_exit" -eq 11
+grep -qF 'lacks Existing facilities only' "$tmp_root/facilities-invalid-validation.md"
+
+wrong_review_sha=1123456789abcdef0123456789abcdef01234567
+set +e
+python3 "$validator" "$material_review" cursor 2 "$wrong_review_sha" \
+  > "$tmp_root/sha-invalid-validation.md"
+validation_exit=$?
+set -e
+test "$validation_exit" -eq 11
+grep -qF 'instead of review SHA' "$tmp_root/sha-invalid-validation.md"
+
 empty_dir="$tmp_root/code-review-pass3/claude"
 mkdir -p "$empty_dir"
 printf 'EMPTY_INITIAL\n' > "$empty_dir/claude-prompt.md"

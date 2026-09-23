@@ -1,11 +1,17 @@
 # Cross-Pass Triage Ledger Protocol
 
-The code-review orchestration run maintains a single cross-pass ledger of
-material concerns at `<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`
-with one row per distinct material concern:
+The code-review orchestration run maintains a single cross-pass ledger at
+`<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`. Its concern
+table has one row per distinct material concern:
 
 ```text
 | ledger_id | first_pass | last_pass | reviewers | concern (one line) | files | architecture source | status | resolution evidence |
+```
+
+Its family table tracks recurrence across implementation shapes and epochs:
+
+```text
+| family_id | invariant / runtime owner / supported path / observable failure | first_pass | last_pass | accepted_fix_cycles | epochs | disposition |
 ```
 
 The orchestrator owns ledger writes. It applies entry changes from
@@ -24,12 +30,14 @@ integer when an entry is created.
 
 ## Identity Matching
 
-Before creating a new ledger entry for any material finding accepted or marked
-as a contradiction in a pass, match against existing ledger entries by file
-overlap and concern semantics -- the same root cause, not just overlapping
-wording. Reviewer identity, finding ID, and prose differences do not break a
-match. Do not create ledger entries for rejected nits, advisory comments,
-non-material plan mismatches, or non-blocking related existing issues.
+Before creating a ledger entry, match the finding against every concern and
+failure family from every prior pass and epoch. Match a family by its invariant,
+runtime owner, supported path, and observable failure. Reviewer identity,
+finding ID, wording, files, implementation shape, and epoch do not break a
+match. Match a concern by root cause within that family. Do not create entries
+for static hypotheses, rejected nits, advisory comments, non-material plan
+mismatches, non-blocking related issues, closure observations, or skill
+feedback.
 
 - On match: append the current pass number to `last_pass`, add the reviewer to
   `reviewers` if not already present, and update `concern` or `files` only if
@@ -37,6 +45,10 @@ non-material plan mismatches, or non-blocking related existing issues.
 - On no match: create a new entry with the next sequential `ledger_id`,
   `first_pass` and `last_pass` equal to the current pass, status `open`, and
   the smallest concern phrasing that captures the root cause.
+
+Assign `family_id` values as `family-NN`. On an accepted worker dispatch,
+increment that family's `accepted_fix_cycles`. Record every architecture epoch
+used to address it. Changing files or design does not reset either count.
 
 Set `architecture source` to the branch-introduced coordinator, state machine,
 retry system, lifecycle interception, verification model, or other architectural
@@ -56,28 +68,43 @@ surfaced in the triage output with a one-line root-cause or architecture action.
 The orchestrator reassesses and continues unless the decision changes approved
 product scope or needs external authority.
 
-Independently, if one architecture source causes newly discovered material
-failure modes in two successive fresh discovery passes, set its non-terminal
-entries to `architecture-review-required`. Stop incremental fixes before
+Independently, if one failure family or architecture source causes newly
+discovered material failure modes in any two fresh discovery passes recorded
+in the ledger, set its non-terminal entries to `architecture-review-required`.
+Stop incremental fixes before
 another worker dispatch. Return to the design checkpoint; group failures by
 invariant; compare removal, simplification, native ownership, upgrade, narrow
 dependency correction, and prerequisite splitting; then record the selected
 design as a new architecture epoch and continue. Record the epoch number and
 prior failure class in `resolution evidence`. This two-pass ratchet applies
-across distinct findings with the same source; it does not wait for one concern
-to recur in three passes.
+across distinct findings, implementation shapes, and epochs; it does not wait
+for consecutive passes or one concern to recur three times.
 
 If two epochs fail for the same underlying reason, do not try a third variation
 of that mechanism. Select a fundamentally different owner or mechanism, or
 block the affected chain when no option can satisfy the approved outcome and
 hard constraints.
 
+## Autonomous Continuation Decision
+
+Record a decision after two accepted fix cycles in one family, and after pass 5
+before every later production edit or discovery pass. Include the trigger,
+confirmed evidence, rejected hypotheses, related fixes and epochs, removal or
+simplification options, native owner, upgrade, narrow dependency correction,
+prerequisite split, decision, and one authorized next action.
+
+After two family fix cycles, do not authorize another local variation. Choose
+`reject`, `complete`, `redesign`, `change-owner`, `upgrade`,
+`dependency-correction`, `split`, or `blocked-authority`. Continue only for a
+confirmed material defect with a viable, non-repeated disposition. Ask the user
+only when every viable option crosses the calling skill's authority boundary.
+One decision authorizes at most one edit-and-pass cycle; repeat the decision
+before continuing again after pass 5.
+
 ## Consolidation
 
-Create a consolidation group when three or more entries currently in status
-`open` or `re-opened` cite the same module/file set or the same `docs/`
-standard. Name the group after that module or standard. Produce a single
-consolidated fix request that resolves the grouped entries together rather
-than per-finding fix requests, and tag those entries in the
+Create a consolidation group when three or more `open` or `re-opened` entries
+share a failure family or binding standard. Name the group after that family or
+standard. Produce one fix request for the group, and tag its entries in the
 `resolution evidence` column with a shared `consolidation_group: <short-name>`
 note.

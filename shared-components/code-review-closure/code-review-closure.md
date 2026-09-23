@@ -43,6 +43,8 @@ Require:
 - Do not perform a fresh code review or introduce new findings. New concerns
   noticed during closure are out of scope: surface them as procedural feedback
   under `## Skill Feedback`, not as ledger writes, new findings, or blockers.
+- Skill feedback and closure observations cannot trigger implementation,
+  verification expansion, a ledger entry, or another discovery pass.
 - Closure must not extend the review loop beyond the original requested
   concern. Decide only whether the concern is resolved, reasonably rejected, or
   still materially open.

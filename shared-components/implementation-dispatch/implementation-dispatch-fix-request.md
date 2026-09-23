@@ -9,6 +9,11 @@ Owned files or modules:
 
 Follow the bundled plan-implementation instructions included in this prompt.
 
+Before editing for a code-review finding, confirm its pinned SHA and either
+reproduce it through the cited supported path with existing facilities or
+confirm its binding proof. Return an unconfirmed finding without changing code
+or tests.
+
 Accepted fixes or verification failures to address:
 {fix_requests}
 

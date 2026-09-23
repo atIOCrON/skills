@@ -22,7 +22,17 @@ scope, review base and commit SHAs, neutral pack, and cross-pass ledger path:
 ## Rules
 
 - Treat comments as hypotheses; deduplicate them before acting.
-- Accept only findings that meet the material-finding definition.
+- Independently accept only `reproduced` or `binding-proof` findings that meet
+  the material-finding definition. A reviewer label is not evidence.
+- For `reproduced`, confirm the pinned SHA, supported production-like path,
+  existing-facilities-only claim, command or procedure, artifact, and observed
+  failure. For `binding-proof`, confirm the pinned committed code, binding
+  source, and complete proof chain.
+- Reject static plausibility and any claim that needs a new simulator,
+  generalized delay, lifecycle framework, production guard, or substantial
+  harness to establish it. Allow one bounded reproduction cycle with existing
+  facilities per failure family; do not implement code or tests to prove a
+  review hypothesis.
 - Reject claims based only on unsupported inputs, hypothetical scale, future
   use, or architecture preference.
 - General best practice cannot establish a defect alone.
@@ -46,22 +56,31 @@ product scope or a higher-ranked binding source.
 
 ## Ledger And Handoff
 
-The ledger is the only file triage may write. Apply its canonical identity,
-architecture-source, status, recurrence, and consolidation rules. If the same
-branch-introduced coordinator, state machine, retry system, lifecycle
-interception, or verification model produces newly discovered material failure
-modes in two successive fresh passes, mark `architecture-review-required` and
-do not dispatch another incremental fix. Return it for autonomous architecture
-reassessment. Otherwise send accepted fixes through `implementation-dispatch`,
-including finding ID, owner, required change, evidence, and the verification
-check. The worker must produce a new candidate commit; fixes never mutate the
-reviewed SHA.
+The ledger is the only file triage may write. Apply its failure-family, status,
+recurrence, architecture-source, and consolidation rules across all passes and
+epochs. If the same failure family or branch-introduced coordinator, state
+machine, retry system, lifecycle interception, or verification model produces
+new material failure modes in any two recorded fresh passes, mark
+`architecture-review-required` and do not dispatch another incremental fix.
+Changing implementation shape or epoch does not reset this count. Return it for
+autonomous architecture reassessment. Otherwise send accepted fixes through
+`implementation-dispatch`, including finding ID, family ID, owner, required
+change, evidence class, evidence, and verification check. The worker must
+reproduce the failure or confirm the binding proof before editing. Fixes never
+mutate the reviewed SHA.
+
+After two accepted fix cycles in one failure family, prohibit another local
+variation. After pass 5 and before every later production edit or discovery
+pass, record an autonomous continuation decision under the ledger protocol.
+Continue only for a confirmed material defect with a viable disposition that
+does not repeat an exhausted variation. Ask the user only when every viable
+disposition crosses the calling skill's authority boundary.
 
 ## Output
 
 ```markdown
 ## Accepted Fix Requests
-- [{finding_id}] [{ledger_id}] <owner> - <required change> - In-scope failure: <scenario, contract, or rule> - Evidence: <citation> - Verify: <check>
+- [{finding_id}] [{ledger_id}] [{family_id}] <owner> - <required change> - Evidence class: <reproduced|binding-proof> - Evidence: <citation> - Verify: <check>
 
 ## Rejected
 - [{finding_id}] [{ledger_id}] <reason with evidence>
@@ -78,6 +97,9 @@ reviewed SHA.
 ## Architecture Ratchet
 - [<architecture source>] passes=<previous>,<current> - <why incremental fixes must stop and which architecture alternatives need reconsideration>
 
+## Autonomous Continuation Decision
+- Trigger: <two family fix cycles|pass 5+|None> - Evidence: <confirmed findings and rejected hypotheses> - History: <related fixes and epochs> - Alternatives: <removal, simplification, native owner, upgrade, narrow dependency correction, split> - Decision: <reject|complete|redesign|change-owner|upgrade|dependency-correction|split|blocked-authority> - Next action: <one authorized action or None>
+
 ## Ledger Writes This Pass
 - added: <ledger_id>, ...
 - updated: <ledger_id> (<old_status> -> <new_status>), ...
@@ -86,7 +108,9 @@ reviewed SHA.
 - <concise fix payload, or None>
 ```
 
-Use `- None` for empty sections and `[no-ledger]` for non-material items. End
+Use `- None` for empty sections and `[no-ledger]` for non-material items. Skill
+feedback and closure observations cannot create ledger entries, worker work, or
+another pass. End
 with exactly one: `Resolve contradictions`, `Ready for worker fixes`,
 `Partial - blocker encountered`, `Architecture review required`, `Recurring
 escalations - architecture reassessment required`, or `No code changes needed`.

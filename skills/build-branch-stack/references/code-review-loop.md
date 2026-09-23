@@ -92,19 +92,23 @@ For each pass:
    before triage. Repair malformed or incomplete output in the originating
    session; do not replace a completed reviewer merely because its response
    violated the schema.
-5. Triage all outputs once. Batch accepted blocker and should-fix findings
-   for the original implementation worker; do not routinely fix nits. Before
-   dispatch, ask whether removing or simplifying new machinery is the smaller
-   resolution.
-6. If one branch-introduced coordinator, state machine, retry system, lifecycle
-   interception, or verification model caused newly discovered material
-   failures in this and the immediately preceding fresh pass, stop incremental
-   fixes and mark the ledger `architecture-review-required`. Group the failures by invariant,
-   compare removal, simplification, native ownership, upgrade, narrow dependency
-   correction, and prerequisite splitting, then select the smallest viable
-   design. Amend the plan and design checkpoint, start a new architecture epoch,
-   and continue. Require the user only when every viable option crosses the
-   calling skill's authority boundary.
+5. Triage all outputs once. Batch accepted blocker and should-fix findings for
+   the original implementation worker only after triage independently confirms
+   their evidence class, pinned SHA, supported path, and failure family. Reject
+   static hypotheses. Do not routinely fix nits. Before dispatch, ask whether
+   removing or simplifying new machinery is the smaller resolution. Skill
+   feedback and closure observations cannot trigger a fix, ledger entry, or
+   another pass.
+6. If one failure family or branch-introduced coordinator, state machine, retry
+   system, lifecycle interception, or verification model caused newly
+   discovered material failures in any two fresh passes recorded in the ledger,
+   stop incremental fixes and mark the ledger `architecture-review-required`.
+   Changing implementation shape or epoch does not reset this count. Group
+   failures by invariant; compare removal, simplification, native ownership,
+   upgrade, narrow dependency correction, and prerequisite splitting; then
+   select the smallest viable design. Amend the plan and design checkpoint,
+   start a new architecture epoch, and continue. Require the user only when
+   every viable option crosses the calling skill's authority boundary.
 7. For accepted fixes, keep the feature in `in_progress/` and resume that
    worker, then:
    - prepare an exact tree through `staged-diff-scope`;
@@ -121,9 +125,14 @@ For each pass:
    material finding when triage is uncertain, evidence conflicts, new evidence
    addresses it, or the user requests it.
 10. After closure, record eligible test-only mappings or start the next fresh
-    pass. Treat recurring escalations as architecture evidence. Reassess and
-    continue autonomously unless resolution requires product or external
-    authority.
+    pass. Another pass is not authorized merely because a reviewer proposed an
+    edge case. After two accepted fix cycles in one failure family, prohibit a
+    third local variation and make the autonomous continuation decision defined
+    by the ledger protocol. At pass 5 and before every later edit or discovery
+    pass, record that decision again; it authorizes at most one edit-and-pass
+    cycle. Continue only for a confirmed material defect and a viable,
+    non-repeated disposition. Ask the user only when every viable option crosses
+    the calling skill's authority boundary.
 
 ## Completion
 
