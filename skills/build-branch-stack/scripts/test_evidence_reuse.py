@@ -107,10 +107,14 @@ class ReviewPackReuseTest(unittest.TestCase):
         (self.pack / "evidence-manifest.json").write_text(
             json.dumps(manifest, indent=2) + "\n"
         )
+        self.write_hash_manifest()
+
+    def write_hash_manifest(self) -> None:
         entries = []
-        for path in sorted(self.pack.iterdir()):
-            if path.is_file() and path.name != "hash-manifest.sha256":
-                entries.append(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}")
+        for path in sorted(self.pack.rglob("*")):
+            if path.is_file() and path != self.pack / "hash-manifest.sha256":
+                name = path.relative_to(self.pack).as_posix()
+                entries.append(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {name}")
         (self.pack / "hash-manifest.sha256").write_text("\n".join(entries) + "\n")
 
     def validate(self) -> int:
@@ -142,6 +146,38 @@ class ReviewPackReuseTest(unittest.TestCase):
         )
         self.write_manifest()
         self.assertEqual(self.validate(), 0)
+
+    def test_accepts_pinned_effective_result_in_nested_directory(self) -> None:
+        effective = self.pack / "effective-result" / "applepay-js.phtml"
+        effective.parent.mkdir()
+        effective.write_text("inside sandbox\n")
+        (self.pack / "index.md").write_text(
+            f"Review: {self.review_sha}\n"
+            "[effective result](effective-result/applepay-js.phtml)\n"
+        )
+        self.write_manifest()
+        self.assertEqual(self.validate(), 0)
+
+    def test_hash_manifest_must_cover_nested_files(self) -> None:
+        self.write_manifest()
+        effective = self.pack / "effective-result" / "applepay-js.phtml"
+        effective.parent.mkdir()
+        effective.write_text("unhashed\n")
+        self.assertEqual(self.validate(), 1)
+
+    def test_rejects_evidence_path_outside_pack(self) -> None:
+        self.write_manifest()
+        external = self.repo / "run.log"
+        external.write_text("passed\n")
+        manifest_path = self.pack / "evidence-manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+        manifest["checks"][0]["log_path"] = "../../../run.log"
+        manifest["checks"][0]["log_sha256"] = hashlib.sha256(
+            external.read_bytes()
+        ).hexdigest()
+        manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+        self.write_hash_manifest()
+        self.assertEqual(self.validate(), 1)
 
     def test_rejects_file_uri_outside_reviewer_workspace(self) -> None:
         external = self.root / "effective-result.php"

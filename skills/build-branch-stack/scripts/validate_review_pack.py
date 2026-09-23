@@ -22,6 +22,16 @@ def is_within(path, root):
         return False
 
 
+def resolve_pack_path(pack, name):
+    path = Path(name)
+    if path.is_absolute():
+        raise ValueError(f"absolute review-pack path: {name}")
+    resolved = (pack / path).resolve()
+    if not is_within(resolved, pack):
+        raise ValueError(f"path escapes review pack: {name}")
+    return resolved
+
+
 def main(pack, repo):
     errors = []
     pack = pack.resolve()
@@ -130,7 +140,7 @@ def main(pack, repo):
             if path is not None:
                 if not isinstance(path, str) or not re.fullmatch(r"[0-9a-f]{64}", expected):
                     raise ValueError("invalid log path or SHA-256")
-                log = (pack / path).resolve()
+                log = resolve_pack_path(pack, path)
                 if not log.is_file() or digest(log) != expected:
                     raise ValueError(f"missing or changed log: {path}")
             if reuse_path is not None:
@@ -138,7 +148,7 @@ def main(pack, repo):
                     r"[0-9a-f]{64}", reuse_hash
                 ):
                     raise ValueError("invalid reuse evidence path or SHA-256")
-                proof = (pack / reuse_path).resolve()
+                proof = resolve_pack_path(pack, reuse_path)
                 if not proof.is_file() or digest(proof) != reuse_hash:
                     raise ValueError(f"missing or changed reuse evidence: {reuse_path}")
         except (KeyError, TypeError, ValueError) as exc:
@@ -153,13 +163,22 @@ def main(pack, repo):
                 errors.append(f"invalid hash line: {line}")
                 continue
             expected, name = match.groups()
-            path = (pack / name).resolve()
-            if path.parent != pack or not path.is_file() or digest(path) != expected:
+            try:
+                path = resolve_pack_path(pack, name)
+            except ValueError as exc:
+                errors.append(str(exc))
+                listed.add(name)
+                continue
+            if not path.is_file() or digest(path) != expected:
                 errors.append(f"missing or changed pack file: {name}")
             listed.add(name)
     except OSError as exc:
         errors.append(f"cannot read hash manifest: {exc}")
-    actual = {p.name for p in pack.iterdir() if p.is_file() and p.name != hashes.name}
+    actual = {
+        p.relative_to(pack).as_posix()
+        for p in pack.rglob("*")
+        if p.is_file() and p != hashes
+    }
     if listed != actual:
         errors.append(f"hash manifest coverage differs: missing {sorted(actual - listed)}, extra {sorted(listed - actual)}")
     required_files = {
@@ -172,7 +191,7 @@ def main(pack, repo):
     if review_sha and (pack / "index.md").is_file() and review_sha not in (pack / "index.md").read_text():
         errors.append("index.md does not identify the review SHA")
 
-    for page in pack.glob("*.md"):
+    for page in pack.rglob("*.md"):
         for target in re.findall(r"(?<!!)\[[^\]]+\]\(([^)]+)\)", page.read_text()):
             target = unquote(target.split("#", 1)[0].strip("<>"))
             if not target:
@@ -184,9 +203,9 @@ def main(pack, repo):
                 continue
             resolved_target = (page.parent / target).resolve()
             if not is_within(resolved_target, repo):
-                errors.append(f"link escapes repository workspace in {page.name}: {target}")
+                errors.append(f"link escapes repository workspace in {page.relative_to(pack)}: {target}")
             elif not resolved_target.exists():
-                errors.append(f"broken link in {page.name}: {target}")
+                errors.append(f"broken link in {page.relative_to(pack)}: {target}")
 
     for error in errors:
         print(error, file=sys.stderr)
