@@ -27,7 +27,8 @@ Read `references/release-manifest.md` and validate the manifest first.
 Choose one mode:
 
 - `draft`: require a verified, pushed branch, passed branch-level agent checks,
-  and clean reviews from Claude, Codex, and Cursor. Its plan may be in
+  clean reviews from Claude, Codex, and Cursor, and every ancestor clean at its
+  pinned SHA. Its plan may be in
   `plans/in_progress/` or `plans/review/`. The full candidate need not be frozen
   or integrated.
 - `ready`: require the plan under `plans/review/`, a frozen manifest, final
@@ -38,8 +39,9 @@ reload the canonical manifest; plan paths may have moved during repair.
 
 ## Workflow
 
-1. Fetch the base, dependency parents, and source branches. Require each
-   parent head to equal its pinned SHA. Require each local, upstream, and
+1. Fetch the base, dependency parents, and source branches. Require every
+   ancestor to be clean at its pinned SHA and each parent head to equal its
+   pinned SHA. Require each local, upstream, and
    remote source tip to equal its verified SHA. Require clean reviews from all
    three providers on that SHA or recorded mappings for all three, and require
    the pinned parent to be its ancestor. In ready mode, require final stack checks and artefacts to

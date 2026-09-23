@@ -28,27 +28,38 @@ caller creates or validates and checks out the plan branch first.
 6. Use `git-sync-branch.md` to create or update the remote branch at the
    verified SHA.
 7. Keep the feature in `in_progress/`. Build the neutral commit-pinned review
-   pack and preflight the two non-host providers.
-8. Run `code-review-loop.md`. Verify, push, and review every accepted fix
-   commit. If it returns `Review cap reached`, preserve the committed, verified,
-   pushed work and artefacts, keep the feature in `in_progress/`, and return that
-   state to the caller without starting another discovery pass.
+   pack and preflight the two non-host providers. In a bounded wave, return the
+   verified, pushed candidate here so the caller can schedule eligible passes
+   across the wave concurrently. A provisional descendant cannot be handed off as
+   ready or published.
+8. Run `code-review-loop.md` when scheduled by the caller. Verify, push, and
+   review every accepted fix commit. If it returns `Review cap reached`, preserve
+   the committed, verified, pushed work and artefacts. Keep the feature in
+   `in_progress/` and return that state without another discovery pass. If an
+   ancestor moves, continue eligible passes against this branch's pinned diff
+   and retain the provisional status until wave-boundary restack and review
+   mapping or a fresh pass.
 9. Require the local branch tip, upstream, remote, and latest verified SHA to
    match. Require all three clean reviews for that SHA or recorded
    equal-range-diff or test-only-closure mappings from all three clean-reviewed
    logical changes.
    Require the parent head to equal its pinned SHA and remain an ancestor.
-   Produce the branch handoff evidence.
+   Produce the branch handoff evidence. The caller promotes the feature only
+   after every ancestor is clean at its pinned SHA.
 
-Do not promote or parent from a failing candidate. For insufficient ownership,
-in-scope ambiguity, failed verification or review, or unresolved findings,
-preserve evidence, return the feature to `in_progress/`, amend the design or
-ownership, and continue with a new immutable candidate. For staged/unstaged
-overlap, failed push, parent movement, revision mismatch, or missing artefacts,
-do not overwrite work; reconcile the integrity failure or block the affected
-chain. Continue independent branches. Require a human decision only at the
+Do not promote a candidate with failed checks or unresolved material findings.
+Failed verification or integrity blocks new descendants; a verified candidate
+with review findings may parent provisional descendants within its wave. For
+insufficient ownership, in-scope ambiguity, failed verification or review, or
+unresolved findings, preserve evidence, return the feature to `in_progress/`,
+amend the design or ownership, and continue with a new immutable candidate. For staged/unstaged
+overlap, failed push, unexpected parent movement, revision mismatch, or missing
+artefacts, do not overwrite work; reconcile the integrity failure or block the
+affected chain. Recorded wave parent movement defers restack, not reviews.
+Continue independent branches. Require a human decision only at the
 authority boundary defined by the calling skill.
 
 Report the plan, branch and pinned parent, changed files, candidate and final
 SHAs, upstream SHA, verification, review passes, ledger, artefact paths, and
-one of a blocker, `Review cap reached`, or `Reviewed and pushed`.
+one of a blocker, `Review cap reached`, `Reviewed provisionally`, or
+`Reviewed and pushed`.

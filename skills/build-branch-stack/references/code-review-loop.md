@@ -20,6 +20,12 @@ Each numbered pass is a fresh three-reviewer discovery review of
 One completed fresh pass plus terminal closure is sufficient when the reviewed
 commit has not changed. After a material fix, close the originating findings,
 then run a fresh pass on the new commit.
+In a bounded wave, run every eligible numbered pass concurrently across
+branches. Eligibility requires that branch's prior findings handled and its
+current tip verified and pushed; ancestor reviews need not be clean. A
+descendant may continue passes against its immutable pinned parent after that
+parent moves. Record the movement and keep the descendant provisional until
+the wave-boundary restack, verification, and review mapping or fresh pass.
 
 Run at most five completed discovery passes for one plan. A pass counts when
 all three reviewers have produced validated outputs and triage is recorded.
@@ -69,7 +75,9 @@ Retrospectively correct: “Pass 5 was the last required pass; review is complet
 
 A conflict-free restack does not require another discovery review when
 `git range-diff` is equal and deterministic identity checks show the logical
-change is unchanged. Verify the new commit, record the old-to-new SHA mapping,
+change and behavior under the new parent are unchanged. The patch comparison
+alone is insufficient when an ancestor changed. Verify the new commit, record
+the old-to-new SHA mapping,
 refresh the pack, and retain all three prior clean reviews. Any manual resolution,
 unequal range diff, changed generated output, or intentional behavior change
 requires a fresh three-reviewer pass. Do not treat a generated-artifact
@@ -89,8 +97,9 @@ meets the test-only exception above.
 For each pass:
 
 1. Confirm the review commit equals the local branch tip, upstream, fetched
-   remote tip, and latest verified SHA. Confirm the dependency-parent head
-   still equals the pinned base SHA and remains an ancestor.
+   remote tip, and latest verified SHA. Require the pinned base to remain an
+   ancestor. Record any dependency-parent head movement; it makes a wave
+   descendant provisional but does not block a pass on the pinned diff.
 2. Refresh `code-review-pack` for the base and review SHAs.
 3. Create `<feature_dir>/<plan_slug>.reviews/code-review-pass<N>/`.
 4. Run `multi-review-pass-runner` with `code-review.md` and
@@ -156,8 +165,12 @@ Return `Reviewed and pushed` only when:
 - the same SHA is the local branch tip, upstream, fetched remote tip, and latest
   verified commit, with either direct clean reviews from all three reviewers or
   valid mappings from all three clean-reviewed logical changes; and
-- the dependency-parent head equals the pinned base SHA and remains an
-  ancestor.
+- the pinned base remains an ancestor.
+
+If the parent head has moved, return `Reviewed provisionally` rather than
+`Reviewed and pushed`. The branch stays in `in_progress/`; restack it at the
+wave boundary, verify the new tip, and map prior reviews or run a fresh pass
+before handoff.
 
 Any ineligible fix commit, manual restack resolution, unequal range diff,
 behavior change, or unexplained SHA mismatch invalidates completion and
@@ -168,4 +181,5 @@ accepts its scope.
 
 Report pass outcomes and SHAs, closure rounds, fixes, verification, rejected
 or deferred findings, artefact paths, ledger counts, identity checks, skill
-feedback, and one of `Reviewed and pushed`, `Review cap reached`, or a blocker.
+feedback, and one of `Reviewed and pushed`, `Reviewed provisionally`,
+`Review cap reached`, or a blocker.

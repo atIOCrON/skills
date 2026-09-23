@@ -123,8 +123,13 @@ across resumed runs. Its status is `pending`, `clean`, or
 passes and `pass_limit` is the configured cap. Set `evidence` to the triage
 ledger path when the cap is reached. A capped branch remains in the manifest
 and may have a verified, pushed tip, but it is not clean-reviewed, cannot
-freeze, and is not an eligible dependency parent. The build may continue with
-independent branches.
+freeze, and cannot start another dependent wave. Existing wave descendants may
+continue review but remain provisional. A verified provisional wave descendant keeps its pinned
+parent SHA and `pending` review state until its own reviews are clean. Even when
+its own status becomes `clean`, it stays in `in_progress/` and cannot be
+published or promoted until all ancestors are clean at their pinned SHAs.
+After an ancestor changes, mark affected descendant reviews pending until the
+restack proves a valid mapping or fresh reviews cover the new verified tip.
 
 Keep integration results under `integration`, including ordered input SHAs,
 candidate commit and tree SHAs, toolchain identity, clean-install evidence,
@@ -167,6 +172,7 @@ python <skill-root>/scripts/validate_release_manifest.py <manifest>
 ```
 
 The validator checks required fields, full SHAs, unique ordered branches,
-parent order, branch review and check identity, exclusions, and freeze digest.
+parent order, branch review and check identity, ready CR ancestry, exclusions,
+and freeze digest.
 Validation proves manifest consistency, not that referenced evidence is true;
 the owning skill must verify those files and Git objects.
