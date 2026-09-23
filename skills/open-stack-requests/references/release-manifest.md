@@ -31,6 +31,12 @@ from the manifest, never use them to override it silently.
       "tip_sha": "<full-sha>",
       "tree_sha": "<full-tree-sha>",
       "surfaces": ["storefront"],
+      "review_progress": {
+        "status": "pending",
+        "completed_passes": 0,
+        "pass_limit": 5,
+        "evidence": null
+      },
       "checks": [
         {
           "id": "focused-tests",
@@ -110,6 +116,15 @@ reviews, map each `origin_sha` to the verified new `sha`, and link evidence for
 the test-only delta, unchanged production and effective-result identities,
 exact-tip verification, and same-session closure by each originating reviewer.
 A clean release requires all three entries.
+
+Use optional branch-level `review_progress` to preserve orchestration state
+across resumed runs. Its status is `pending`, `clean`, or
+`review_cap_reached`; `completed_passes` counts only completed fresh discovery
+passes and `pass_limit` is the configured cap. Set `evidence` to the triage
+ledger path when the cap is reached. A capped branch remains in the manifest
+and may have a verified, pushed tip, but it is not clean-reviewed, cannot
+freeze, and is not an eligible dependency parent. The build may continue with
+independent branches.
 
 Keep integration results under `integration`, including ordered input SHAs,
 candidate commit and tree SHAs, toolchain identity, clean-install evidence,

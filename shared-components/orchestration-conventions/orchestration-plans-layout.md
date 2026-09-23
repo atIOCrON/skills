@@ -66,7 +66,11 @@ views, not competing authorities.
   Move only selected plans from `backlog`.
 - `in_progress`: implementation, fixes, CLI code review loops, commits,
   restacks, or required branch-level agent checks are underway, or a check found
-  a defect. Keep the feature here throughout the code review loop.
+  a defect. Keep the feature here throughout the code review loop. A feature
+  that reaches the five-pass review cap also remains here with a durable
+  `review_cap_reached` marker. That state ends work on this plan for the current
+  build run without blocking unrelated plans; leave its dependent descendants
+  queued because the capped branch is not an eligible parent.
 - `review`: the exact branch tip and pinned parent are verified, the local,
   upstream, and remote tips agree, code review findings are resolved, all three
   automated reviews are clean or have valid equal-range-diff or

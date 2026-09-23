@@ -62,8 +62,12 @@ verification changes:
 | Plan | Status | Reviews | Branch | Commit | Next action |
 ```
 
-Use `Queued`, `In progress`, `Blocked`, or `Ready for human review`. The last
-status requires the feature in `review/`, a verified final SHA matching local,
+Use `Queued`, `In progress`, `Review cap reached`, `Blocked`, or `Ready for
+human review`. `Review cap reached` is a per-plan terminal state for this build
+run, not a blocker for the whole queue: keep the feature in `in_progress/`, do
+not parent from or publish it, leave dependent descendants queued, and continue
+the next eligible independent plan. `Ready for human review` requires the
+feature in `review/`, a verified final SHA matching local,
 upstream, and remote tips, a pinned parent, clean reviews from all three
 providers on that SHA or valid equal-range-diff or test-only-closure mappings,
 preserved artefacts, passed required branch-level agent checks, and recorded
@@ -162,12 +166,21 @@ blocked only when every viable repository-local option conflicts with a hard
 constraint or the approved outcome.
 
 After two accepted fix cycles in one failure family, prohibit another local
-variation and record an autonomous continuation decision. At pass 5 and before
-every later edit or discovery pass, record the confirmed evidence, rejected
-hypotheses, history, alternatives, decision, and one authorized next action.
-Continue autonomously only for a confirmed defect with a viable, non-repeated
-disposition. Require a human only when every viable option crosses the authority
-boundary above.
+variation and record an autonomous continuation decision. Continue only for a
+confirmed defect with a viable, non-repeated disposition. Require a human only
+when every viable option crosses the authority boundary above.
+
+Run at most five completed fresh three-reviewer discovery passes for one plan.
+A pass counts when all three validated outputs have been triaged. Targeted
+closure, same-session output repair, transport retry, deterministic review
+mapping, and an incomplete reviewer launch do not count. The count persists
+across task resumptions, implementation shapes, and architecture epochs. After
+pass 5, finish its accepted in-scope remediation through normal commit,
+verification, push, and targeted-closure rules. If the resulting tip does not
+meet review completion without another discovery pass, do not start pass 6:
+record `review_cap_reached` in the ledger and release manifest, keep the feature
+in `in_progress/`, and continue the next eligible independent plan. This cap
+does not waive a finding, review, verification, or readiness gate.
 
 ## Readiness
 
@@ -278,7 +291,15 @@ For each plan:
    Create or update the remote branch at the first verified commit. Push each
    verified fix and review the pinned parent-to-commit diff. Keep the feature in
    `in_progress/` through all code review passes and fixes. Update the branch's
-   manifest entry after every verified tip change.
+   manifest entry after every verified tip change and update
+   `review_progress.completed_passes` after every completed discovery pass.
+   If the code-review loop reaches its five-pass cap, commit all accepted
+   in-scope work, verify and push the resulting candidate when verification
+   passes, preserve its artefacts, record the cap state, and end work on that
+   plan for this run. Set `review_progress.status` to `review_cap_reached` and
+   link its ledger evidence. Do not move it to `review/`, open a CR, or use it
+   as a dependency parent. Leave its descendants queued and continue other
+   eligible plans.
 4. Once Claude, Codex, and Cursor have cleanly reviewed the logical change and
    its required branch-level agent checks pass, preserve the feature's
    `.reviews/`, `.evidence/`, and any `.execution/` folders before removing a
@@ -286,7 +307,8 @@ For each plan:
    Record release-candidate checks that intrinsically require unbuilt descendant
    branches or a complete candidate with their prerequisites. Verify that the
    exact tip matches local, upstream, and remote refs, move the whole feature to
-   `review/`, refresh its manifest and artefact paths, and validate the manifest.
+   `review/`, set `review_progress.status` to `clean`, refresh its manifest and
+   artefact paths, and validate the manifest.
    A missing prerequisite for a required branch-level check remains a blocker;
    do not classify it as a deferred release check. If the move or manifest write
    fails, return any just-moved feature to `in_progress/` and report the blocker.

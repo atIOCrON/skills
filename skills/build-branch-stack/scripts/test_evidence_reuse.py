@@ -214,6 +214,12 @@ class ReleaseManifestReuseTest(unittest.TestCase):
                     "tip_sha": tip_sha,
                     "tree_sha": "d" * 40,
                     "surfaces": ["test"],
+                    "review_progress": {
+                        "status": "pending",
+                        "completed_passes": 0,
+                        "pass_limit": 5,
+                        "evidence": None,
+                    },
                     "checks": [
                         {
                             "id": "focused-tests",
@@ -259,6 +265,13 @@ class ReleaseManifestReuseTest(unittest.TestCase):
                     "evidence": "evidence/review.md",
                 }
             )
+        manifest["branches"][0]["review_progress"].update(
+            {
+                "status": "clean",
+                "completed_passes": 1,
+                "evidence": "reviews/code-review-triage-ledger.md",
+            }
+        )
         manifest["freeze"] = {
             "frozen_at": "2026-09-22T00:00:00Z",
             "authorized_by": "test",
@@ -305,6 +318,29 @@ class ReleaseManifestReuseTest(unittest.TestCase):
         self.assertTrue(
             any("test_only_closure must map different SHAs" in error for error in errors)
         )
+
+    def test_release_review_accepts_cap_reached(self) -> None:
+        manifest = self.manifest()
+        manifest["branches"][0]["review_progress"].update(
+            {
+                "status": "review_cap_reached",
+                "completed_passes": 5,
+                "evidence": "reviews/code-review-triage-ledger.md",
+            }
+        )
+        self.assertEqual(release_validator.validate(manifest), [])
+
+    def test_release_review_rejects_early_cap(self) -> None:
+        manifest = self.manifest()
+        manifest["branches"][0]["review_progress"].update(
+            {
+                "status": "review_cap_reached",
+                "completed_passes": 4,
+                "evidence": "reviews/code-review-triage-ledger.md",
+            }
+        )
+        errors = release_validator.validate(manifest)
+        self.assertTrue(any("requires completed_passes equal pass_limit" in error for error in errors))
 
 
 if __name__ == "__main__":
