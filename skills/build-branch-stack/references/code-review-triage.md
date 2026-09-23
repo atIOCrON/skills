@@ -70,11 +70,12 @@ reproduce the failure or confirm the binding proof before editing. Fixes never
 mutate the reviewed SHA.
 
 After two accepted fix cycles in one failure family, prohibit another local
-variation. After pass 5 and before every later production edit or discovery
-pass, record an autonomous continuation decision under the ledger protocol.
-Continue only for a confirmed material defect with a viable disposition that
-does not repeat an exhausted variation. Ask the user only when every viable
-disposition crosses the calling skill's authority boundary.
+variation and record an autonomous continuation decision under the ledger
+protocol. Continue only for a confirmed material defect with a viable
+disposition that does not repeat an exhausted variation. Ask the user only when
+every viable disposition crosses the calling skill's authority boundary. The
+owning loop, not triage, enforces the five-pass plan cap after pass 5 has been
+triaged and its accepted work processed.
 
 ## Output
 
@@ -98,7 +99,7 @@ disposition crosses the calling skill's authority boundary.
 - [<architecture source>] passes=<previous>,<current> - <why incremental fixes must stop and which architecture alternatives need reconsideration>
 
 ## Autonomous Continuation Decision
-- Trigger: <two family fix cycles|pass 5+|None> - Evidence: <confirmed findings and rejected hypotheses> - History: <related fixes and epochs> - Alternatives: <removal, simplification, native owner, upgrade, narrow dependency correction, split> - Decision: <reject|complete|redesign|change-owner|upgrade|dependency-correction|split|blocked-authority> - Next action: <one authorized action or None>
+- Trigger: <two family fix cycles|None> - Evidence: <confirmed findings and rejected hypotheses> - History: <related fixes and epochs> - Alternatives: <removal, simplification, native owner, upgrade, narrow dependency correction, split> - Decision: <reject|complete|redesign|change-owner|upgrade|dependency-correction|split|blocked-authority> - Next action: <one authorized action or None>
 
 ## Ledger Writes This Pass
 - added: <ledger_id>, ...

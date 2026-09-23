@@ -80,8 +80,10 @@ from a new clean worktree, rerunning only affected checks. After two failed fix
 attempts at one verification point, stop repeating that fix and return to the
 design checkpoint. Group the failures by invariant, amend the implementation or
 verification boundary, start a new architecture epoch when the mechanism
-changes, and continue. Block only when every in-scope design conflicts with a
-hard constraint or the approved outcome.
+changes, and continue. This checkpoint blocks only another repetition of the
+failed fix; it does not block the plan or build run. Block the affected plan only
+when every in-scope design conflicts with a hard constraint or the approved
+outcome, and continue eligible independent plans.
 
 ## Output
 

@@ -30,7 +30,9 @@ caller creates or validates and checks out the plan branch first.
 7. Keep the feature in `in_progress/`. Build the neutral commit-pinned review
    pack and preflight the two non-host providers.
 8. Run `code-review-loop.md`. Verify, push, and review every accepted fix
-   commit.
+   commit. If it returns `Review cap reached`, preserve the committed, verified,
+   pushed work and artefacts, keep the feature in `in_progress/`, and return that
+   state to the caller without starting another discovery pass.
 9. Require the local branch tip, upstream, remote, and latest verified SHA to
    match. Require all three clean reviews for that SHA or recorded
    equal-range-diff or test-only-closure mappings from all three clean-reviewed
@@ -49,4 +51,4 @@ authority boundary defined by the calling skill.
 
 Report the plan, branch and pinned parent, changed files, candidate and final
 SHAs, upstream SHA, verification, review passes, ledger, artefact paths, and
-either a blocker or `Reviewed and pushed`.
+one of a blocker, `Review cap reached`, or `Reviewed and pushed`.

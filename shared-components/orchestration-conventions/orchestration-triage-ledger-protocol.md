@@ -65,8 +65,9 @@ After applying identity matching for a pass, inspect every non-terminal entry.
 Any non-terminal entry whose `last_pass - first_pass >= 2` (it appeared in
 three or more passes) must be set to status `recurring-escalation` and
 surfaced in the triage output with a one-line root-cause or architecture action.
-The orchestrator reassesses and continues unless the decision changes approved
-product scope or needs external authority.
+This is an internal escalation to the orchestrator and design checkpoint. It
+blocks review completion, not further work: reassess the root cause and continue
+unless the decision changes approved product scope or needs external authority.
 
 Independently, if one failure family or architecture source causes newly
 discovered material failure modes in any two fresh discovery passes recorded
@@ -87,19 +88,36 @@ hard constraints.
 
 ## Autonomous Continuation Decision
 
-Record a decision after two accepted fix cycles in one family, and after pass 5
-before every later production edit or discovery pass. Include the trigger,
-confirmed evidence, rejected hypotheses, related fixes and epochs, removal or
-simplification options, native owner, upgrade, narrow dependency correction,
-prerequisite split, decision, and one authorized next action.
+Record a decision after two accepted fix cycles in one family. Include the
+trigger, confirmed evidence, rejected hypotheses, related fixes and epochs,
+removal or simplification options, native owner, upgrade, narrow dependency
+correction, prerequisite split, decision, and one authorized next action.
 
 After two family fix cycles, do not authorize another local variation. Choose
 `reject`, `complete`, `redesign`, `change-owner`, `upgrade`,
 `dependency-correction`, `split`, or `blocked-authority`. Continue only for a
 confirmed material defect with a viable, non-repeated disposition. Ask the user
 only when every viable option crosses the calling skill's authority boundary.
-One decision authorizes at most one edit-and-pass cycle; repeat the decision
-before continuing again after pass 5.
+One decision authorizes at most one edit-and-pass cycle for that failure family.
+
+## Review Pass Cap
+
+After the fifth completed discovery pass, add a durable marker to the ledger:
+
+```text
+## Review Cap
+- status: review_cap_reached
+- limit: 5
+- completed_passes: 5
+- last_reviewed_sha: <full SHA>
+- current_verified_sha: <full SHA>
+- remaining_review_requirement: <why completion still needs another discovery pass>
+```
+
+The cap marker is a plan-level workflow outcome, not a finding status and not a
+whole-run blocker. Keep non-terminal concern rows unchanged, keep the feature in
+`in_progress/`, and do not start pass 6. The caller leaves dependent descendants
+queued and continues the next eligible independent plan.
 
 ## Consolidation
 

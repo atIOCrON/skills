@@ -39,6 +39,8 @@ Include:
   three clean-review SHAs or valid review mappings;
 - clean-worktree verification commands and status;
 - code-review pass count and one-line outcome per pass;
+- review-cap state and marker path when five completed passes did not satisfy
+  review completion;
 - rejected/deferred findings with evidence or recorded reason;
 - reviewer artifact paths, including failures;
 - triage ledger path and terminal-status counts;
@@ -51,8 +53,10 @@ Include:
 - release-progression status and each pending release-candidate check with its
   prerequisite;
 - `## Skill Feedback For User Review` with entries or `- None`;
-- final branch state: branch-level blocker or
-  `Verified and pushed, ready for human review`. A legitimately pending
+- final branch state: branch-level blocker, `Review cap reached`, or `Verified
+  and pushed, ready for human review`. `Review cap reached` keeps the feature in
+  `in_progress/` and prevents it from parenting dependent work, but the build
+  continues with eligible independent plans. A legitimately pending
   release-candidate check is reported separately and does not change that
   branch state.
 

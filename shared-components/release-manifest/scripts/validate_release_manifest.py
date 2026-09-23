@@ -19,6 +19,7 @@ CHECK_STATES = {"passed", "failed", "pending", "blocked_by_environment"}
 CHECK_METHODS = {"direct", "identity_reuse"}
 REVIEW_STATES = {"pending", "clean", "changes_required"}
 REVIEW_METHODS = {"direct", "equal_range_diff", "test_only_closure"}
+REVIEW_PROGRESS_STATES = {"pending", "clean", "review_cap_reached"}
 REVIEWERS = {"claude", "codex", "cursor"}
 CR_STATES = {"none", "draft", "ready", "merged", "closed"}
 
@@ -136,6 +137,48 @@ def validate(data: Any) -> list[str]:
         if not isinstance(surfaces, list) or not all(is_text(item) for item in surfaces):
             errors.append(f"{prefix}.surfaces must be an array of non-empty strings")
 
+        review_progress = branch.get("review_progress")
+        if review_progress is not None:
+            progress_prefix = f"{prefix}.review_progress"
+            if not isinstance(review_progress, dict):
+                errors.append(f"{progress_prefix} must be an object")
+                review_progress = {}
+            progress_status = review_progress.get("status")
+            completed_passes = review_progress.get("completed_passes")
+            pass_limit = review_progress.get("pass_limit")
+            progress_evidence = review_progress.get("evidence")
+            if progress_status not in REVIEW_PROGRESS_STATES:
+                errors.append(f"{progress_prefix}.status is invalid")
+            if (
+                not isinstance(completed_passes, int)
+                or isinstance(completed_passes, bool)
+                or completed_passes < 0
+            ):
+                errors.append(f"{progress_prefix}.completed_passes must be a non-negative integer")
+            if (
+                not isinstance(pass_limit, int)
+                or isinstance(pass_limit, bool)
+                or pass_limit < 1
+            ):
+                errors.append(f"{progress_prefix}.pass_limit must be a positive integer")
+            if (
+                isinstance(completed_passes, int)
+                and not isinstance(completed_passes, bool)
+                and isinstance(pass_limit, int)
+                and not isinstance(pass_limit, bool)
+                and completed_passes > pass_limit
+            ):
+                errors.append(f"{progress_prefix}.completed_passes exceeds pass_limit")
+            if progress_evidence is not None and not is_text(progress_evidence):
+                errors.append(f"{progress_prefix}.evidence must be null or a path")
+            if progress_status == "review_cap_reached":
+                if completed_passes != pass_limit:
+                    errors.append(
+                        f"{progress_prefix} cap status requires completed_passes equal pass_limit"
+                    )
+                if not is_text(progress_evidence):
+                    errors.append(f"{progress_prefix}.evidence is required when cap is reached")
+
         checks = branch.get("checks")
         if not isinstance(checks, list):
             errors.append(f"{prefix}.checks must be an array")
@@ -233,6 +276,18 @@ def validate(data: Any) -> list[str]:
                 errors.append(f"{review_prefix}.evidence is required when clean")
         if seen_reviewers != REVIEWERS:
             errors.append(f"{prefix}.reviews must contain claude, codex, and cursor")
+        if isinstance(review_progress, dict):
+            progress_status = review_progress.get("status")
+            clean_on_tip = all(
+                isinstance(review, dict)
+                and review.get("status") == "clean"
+                and review.get("sha") == branch.get("tip_sha")
+                for review in reviews
+            )
+            if progress_status == "clean" and not clean_on_tip:
+                errors.append(f"{prefix}.review_progress clean status requires clean reviews on tip_sha")
+            if progress_status == "review_cap_reached" and clean_on_tip:
+                errors.append(f"{prefix}.review_progress must be clean when all reviews are clean on tip_sha")
 
         change_request = branch.get("change_request")
         if not isinstance(change_request, dict):
@@ -245,6 +300,8 @@ def validate(data: Any) -> list[str]:
 
         if state in {"frozen", "staged", "accepted", "released"}:
             tip_sha = branch.get("tip_sha")
+            if isinstance(review_progress, dict) and review_progress.get("status") != "clean":
+                errors.append(f"{prefix}.review_progress must be clean for release state {state}")
             for review_index, review in enumerate(reviews):
                 if not isinstance(review, dict):
                     continue

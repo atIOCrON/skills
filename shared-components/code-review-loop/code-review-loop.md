@@ -21,6 +21,13 @@ One completed fresh pass plus terminal closure is sufficient when the reviewed
 commit has not changed. After a material fix, close the originating findings,
 then run a fresh pass on the new commit.
 
+Run at most five completed discovery passes for one plan. A pass counts when
+all three reviewers have produced validated outputs and triage is recorded.
+Targeted closure, same-session format or completion repair, transport retry,
+equal-range-diff or test-only mappings, and an incomplete reviewer launch do
+not count. Preserve the count across task resumptions, implementation shapes,
+and architecture epochs.
+
 Before deciding the post-fix review action, record a risk classification.
 Treat changed production behavior, interfaces, lifecycle ownership, dependency
 inputs, generated or effective output, or invalidated verification as material.
@@ -54,11 +61,11 @@ closure, and another fresh pass. In plans, progress updates, prompts, and
 handoffs, use the numbered pass only. Do not predict that it is the final review
 cycle.
 
-Correct: “Pass 6 is running against the verified SHA.”\
-Correct: “If pass 6 is clean, the branch may satisfy review completion.”\
+Correct: “Pass 5 is running against the verified SHA.”\
+Correct: “If pass 5 is clean, the branch may satisfy review completion.”\
 Incorrect: “The final pass is running.”\
 Incorrect: “This is the last review cycle.”\
-Retrospectively correct: “Pass 6 was the last required pass; review is complete.”
+Retrospectively correct: “Pass 5 was the last required pass; review is complete.”
 
 A conflict-free restack does not require another discovery review when
 `git range-diff` is equal and deterministic identity checks show the logical
@@ -128,11 +135,14 @@ For each pass:
     pass. Another pass is not authorized merely because a reviewer proposed an
     edge case. After two accepted fix cycles in one failure family, prohibit a
     third local variation and make the autonomous continuation decision defined
-    by the ledger protocol. At pass 5 and before every later edit or discovery
-    pass, record that decision again; it authorizes at most one edit-and-pass
-    cycle. Continue only for a confirmed material defect and a viable,
-    non-repeated disposition. Ask the user only when every viable option crosses
-    the calling skill's authority boundary.
+    by the ledger protocol. Continue only for a confirmed material defect and a
+    viable, non-repeated disposition. Ask the user only when every viable option
+    crosses the calling skill's authority boundary. After processing pass 5,
+    commit, verify, and push its accepted in-scope remediation under the normal
+    rules and complete targeted closure. If the resulting tip still requires a
+    fresh discovery pass, do not start pass 6. Record the review-cap marker,
+    return `Review cap reached`, and let the caller continue other eligible
+    plans.
 
 ## Completion
 
@@ -158,4 +168,4 @@ accepts its scope.
 
 Report pass outcomes and SHAs, closure rounds, fixes, verification, rejected
 or deferred findings, artefact paths, ledger counts, identity checks, skill
-feedback, and either a blocker or `Reviewed and pushed`.
+feedback, and one of `Reviewed and pushed`, `Review cap reached`, or a blocker.
