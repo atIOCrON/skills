@@ -181,6 +181,23 @@ def validate(data: Any) -> list[str]:
                 if not is_text(progress_evidence):
                     errors.append(f"{progress_prefix}.evidence is required when cap is reached")
 
+        trim_review = branch.get("trim_review")
+        if trim_review is not None:
+            trim_prefix = f"{prefix}.trim_review"
+            if not isinstance(trim_review, dict):
+                errors.append(f"{trim_prefix} must be an object")
+                trim_review = {}
+            trim_status = trim_review.get("status")
+            if trim_status not in {"pending", "proportionate"}:
+                errors.append(f"{trim_prefix}.status is invalid")
+            if trim_status == "proportionate":
+                if trim_review.get("sha") != branch.get("tip_sha"):
+                    errors.append(f"{trim_prefix}.sha must match tip_sha")
+                if not is_text(trim_review.get("evidence")):
+                    errors.append(f"{trim_prefix}.evidence is required when proportionate")
+            elif trim_review.get("sha") is not None or trim_review.get("evidence") is not None:
+                errors.append(f"{trim_prefix} pending status requires null sha and evidence")
+
         checks = branch.get("checks")
         if not isinstance(checks, list):
             errors.append(f"{prefix}.checks must be an array")
@@ -290,6 +307,12 @@ def validate(data: Any) -> list[str]:
                 errors.append(f"{prefix}.review_progress clean status requires clean reviews on tip_sha")
             if progress_status == "review_cap_reached" and clean_on_tip:
                 errors.append(f"{prefix}.review_progress must be clean when all reviews are clean on tip_sha")
+            if (
+                progress_status == "clean"
+                and isinstance(trim_review, dict)
+                and trim_review.get("status") != "proportionate"
+            ):
+                errors.append(f"{prefix}.review_progress clean status requires a proportionate trim result")
 
         change_request = branch.get("change_request")
         if not isinstance(change_request, dict):
@@ -304,9 +327,17 @@ def validate(data: Any) -> list[str]:
                 and parent.get("sha") == parent_tips.get(parent_branch)
             ):
                 errors.append(f"{prefix}.change_request requires clean ancestors at pinned SHAs")
+            if (
+                change_request.get("state") == "ready"
+                and isinstance(trim_review, dict)
+                and trim_review.get("status") != "proportionate"
+            ):
+                errors.append(f"{prefix}.change_request requires a proportionate trim result")
 
         if state in {"frozen", "staged", "accepted", "released"}:
             tip_sha = branch.get("tip_sha")
+            if isinstance(trim_review, dict) and trim_review.get("status") != "proportionate":
+                errors.append(f"{prefix}.trim_review must be proportionate for release state {state}")
             if isinstance(review_progress, dict) and review_progress.get("status") != "clean":
                 errors.append(f"{prefix}.review_progress must be clean for release state {state}")
             for review_index, review in enumerate(reviews):
@@ -330,6 +361,10 @@ def validate(data: Any) -> list[str]:
                 clean_lineage.get(parent_branch, False)
                 and parent.get("sha") == parent_tips.get(parent_branch)
                 and clean_on_tip
+                and (
+                    not isinstance(trim_review, dict)
+                    or trim_review.get("status") == "proportionate"
+                )
                 and (
                     not isinstance(review_progress, dict)
                     or review_progress.get("status") == "clean"

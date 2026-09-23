@@ -29,10 +29,11 @@ caller creates or validates and checks out the plan branch first.
    verified SHA.
 7. Keep the feature in `in_progress/`. Build the neutral commit-pinned review
    pack and preflight the two non-host providers. In a bounded wave, return the
-   verified, pushed candidate here so the caller can schedule eligible passes
-   across the wave concurrently. A provisional descendant cannot be handed off as
-   ready or published.
-8. Run `code-review-loop.md` when scheduled by the caller. Verify, push, and
+   verified, pushed candidate so the caller can run the separate trim phase
+   across the wave before correctness reviews. A provisional descendant cannot
+   be handed off as ready or published.
+8. Require a proportionate trim result on the current tip or a valid restack
+   mapping before `code-review-loop.md`. Then verify, push, and
    review every accepted fix commit. If it returns `Review cap reached`, preserve
    the committed, verified, pushed work and artefacts. Keep the feature in
    `in_progress/` and return that state without another discovery pass. If an

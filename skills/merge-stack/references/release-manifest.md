@@ -37,6 +37,11 @@ from the manifest, never use them to override it silently.
         "pass_limit": 5,
         "evidence": null
       },
+      "trim_review": {
+        "status": "pending",
+        "sha": null,
+        "evidence": null
+      },
       "checks": [
         {
           "id": "focused-tests",
@@ -130,6 +135,14 @@ its own status becomes `clean`, it stays in `in_progress/` and cannot be
 published or promoted until all ancestors are clean at their pinned SHAs.
 After an ancestor changes, mark affected descendant reviews pending until the
 restack proves a valid mapping or fresh reviews cover the new verified tip.
+
+For a new build, record `trim_review` separately from correctness reviews.
+Set `status` to `pending` or `proportionate`, `sha` to the current verified tip
+when proportionate, and `evidence` to the trim ledger with reviewer outputs and
+any restack mapping. Add this field to older manifests before further branch
+review. A trim result does not increment `completed_passes` or fill `reviews`.
+Do not mark a branch ready when its trim result is pending or applies to an
+unmapped old tip.
 
 Keep integration results under `integration`, including ordered input SHAs,
 candidate commit and tree SHAs, toolchain identity, clean-install evidence,
