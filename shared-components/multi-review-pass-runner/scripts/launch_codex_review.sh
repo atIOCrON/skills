@@ -20,7 +20,7 @@ source "$script_dir/lib_review_launch.sh"
 
 reviewer="codex"
 model="${CODEX_REVIEW_MODEL:-default}"
-output_file="$artifact_dir/codex.md"
+output_file="$artifact_dir/codex-raw-attempt1.md"
 session_file="$artifact_dir/codex-session.md"
 exit_code_file="$artifact_dir/codex-exit-code"
 stderr_file="$artifact_dir/codex-stderr.log"
@@ -75,14 +75,25 @@ failure_class="transient launcher failure"
 failure_detail="unknown launcher failure"
 
 while [ "$attempt" -le "$max_attempts" ]; do
+  output_file="$artifact_dir/codex-raw-attempt$attempt.md"
   attempt_stderr="$(mktemp)"
   attempt_events="$(mktemp)"
   : > "$output_file"
   append_stderr_header "$stderr_file" "$attempt"
-  command_shape="codex -C $repo_root -s read-only -a never <model> exec --json -o <output-file> - < <prompt-file-stdin>"
+  if [ -n "$final_session_id" ]; then
+    command_shape="codex -C $repo_root -s read-only -a never <model> exec resume <session-id> --json -o <output-file> - < <prompt-file-stdin>"
+  else
+    command_shape="codex -C $repo_root -s read-only -a never <model> exec --json -o <output-file> - < <prompt-file-stdin>"
+  fi
 
   set +e
-  if [ "$model" = "default" ]; then
+  if [ -n "$final_session_id" ] && [ "$model" = "default" ]; then
+    codex -C "$repo_root" -s read-only -a never exec resume "$final_session_id" \
+      --json -o "$output_file" - < "$prompt_file" > "$attempt_events" 2> "$attempt_stderr"
+  elif [ -n "$final_session_id" ]; then
+    codex -C "$repo_root" -s read-only -a never -m "$model" exec resume "$final_session_id" \
+      --json -o "$output_file" - < "$prompt_file" > "$attempt_events" 2> "$attempt_stderr"
+  elif [ "$model" = "default" ]; then
     codex -C "$repo_root" -s read-only -a never exec --json -o "$output_file" - \
       < "$prompt_file" > "$attempt_events" 2> "$attempt_stderr"
   else
@@ -96,7 +107,7 @@ while [ "$attempt" -le "$max_attempts" ]; do
   cat "$attempt_stderr" >> "$stderr_file"
   output_bytes="$(artifact_size "$output_file")"
   session_id="$(jq -r 'select(.type == "thread.started") | .thread_id // .thread.id // empty' "$attempt_events" 2>/dev/null | tail -n 1)"
-  final_session_id="$session_id"
+  if [ -n "$session_id" ]; then final_session_id="$session_id"; fi
 
   classify_reviewer_attempt "$exit_code" "$output_bytes" "$attempt_stderr" "$attempt" "$max_attempts" \
     "retry - empty stdout" "retry - retryable launcher stderr" "retry - usage drift"
@@ -104,6 +115,14 @@ while [ "$attempt" -le "$max_attempts" ]; do
   failure_class="$review_failure_class"
   failure_detail="$review_failure_detail"
   retry_decision="$review_retry_decision"
+
+  if [ "$exit_code" -eq 0 ] && [ "$output_bytes" -eq 0 ] && [ -n "$session_id" ] \
+    && ! is_deterministic_setup_error "$attempt_stderr"; then
+    final_exit_code=5
+    failure_class="resumable empty output"
+    failure_detail="reviewer exited 0 with empty stdout after creating a resumable session"
+    retry_decision="no fresh retry - resume captured session"
+  fi
 
   if [ "$exit_code" -eq 0 ] && [ "$output_bytes" -gt 0 ] && [ -n "$session_id" ]; then
     retry_decision="no retry - completed"

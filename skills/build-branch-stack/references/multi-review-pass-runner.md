@@ -42,6 +42,7 @@ Persist for each reviewer:
 
 ```text
 <artifact_dir>/<reviewer>-prompt.md
+<artifact_dir>/<reviewer>-raw-attempt1.md
 <artifact_dir>/<reviewer>.md
 <artifact_dir>/<reviewer>-session.md
 <artifact_dir>/<reviewer>-exit-code
@@ -61,6 +62,17 @@ If closure is later requested by the owning loop, it should persist:
 <artifact_dir>/<reviewer>-closure-round<N>-prompt.md
 <artifact_dir>/<reviewer>-closure-round<N>.md
 ```
+
+For format repair, persist every prompt, response, and validation result:
+
+```text
+<artifact_dir>/<reviewer>-format-repair-round<N>-prompt.md
+<artifact_dir>/<reviewer>-format-repair-round<N>.md
+<artifact_dir>/<reviewer>-format-repair-round<N>-validation.md
+```
+
+`<reviewer>.md` is canonical only after validation succeeds. Never overwrite
+the raw response or a repair attempt.
 
 Session metadata records provider, transport, session reference, phase, pass,
 redacted command or native operation, artifact paths, output bytes, and failure
@@ -91,7 +103,7 @@ Cursor review:
 ```
 
 Each script generates a fresh session, feeds the prompt on stdin, and writes
-`<reviewer>.md` (output),
+`<reviewer>-raw-attempt<N>.md` (one file per transport attempt),
 `<reviewer>-session.md` (session metadata), `<reviewer>-exit-code` (the
 numeric exit status), `<reviewer>-stderr.log` (stderr for each attempt), and
 `<reviewer>-attempts.md` (redacted command shape, byte counts, exit code, and
@@ -104,26 +116,54 @@ For closure, resume the native reviewer through the host or run:
 "$orchestration_skill_root/scripts/resume_review.sh" <codex|claude|cursor> <closure-prompt> <artifact_dir> {repo_root} closure-round<N>
 ```
 
+After each code-review launch, validate and, when necessary, repair the output
+in the same session:
+
+```bash
+"$orchestration_skill_root/scripts/repair_code_review_output.sh" <codex|claude|cursor> <artifact_dir> {repo_root} <pass-number>
+```
+
+For a native host reviewer, preserve its raw response, run
+`validate_code_review_output.py`, and send
+`code-review-format-repair-invocation.md` to that same native reviewer. Apply
+the same three-attempt limit and promote its response to `<reviewer>.md` only
+after validation succeeds.
+
+The validator returns `0` for valid output, `10` for `format-repairable`, `11`
+for `completion-repairable`, and `12` for `fresh-retry-required`. The repair
+runner returns `12` when a fresh reviewer is required after applying the rules
+below.
+
 ## Liveness And Failures
 
 - Start all three reviewers in parallel.
 - Poll on a shared 30-second tick.
 - Treat 10 minutes as a soft checkpoint, not a timeout.
-- Classify each reviewer as `completed`, `failed`, `still-running`, or
-  `liveness-lost`. Base the `completed`/`failed` classification on the
-  persisted `<reviewer>-exit-code` and output files.
-- Retry once for transient failures: non-zero exit, empty output,
-  invalid/non-review output, missing required sections/evidence, lost liveness,
-  or unresumable session/chat.
+- Classify transport as `completed`, `failed`, `still-running`, or
+  `liveness-lost`. Then classify output as `valid`, `format-repairable`,
+  `completion-repairable`, or `fresh-retry-required`.
+- `format-repairable` means non-empty review analysis with malformed
+  presentation. `completion-repairable` means analysis exists but required
+  sections or evidence are missing. Resume the same reviewer with the standard
+  repair envelope for up to three attempts. Preserve its analysis and do not
+  repeat repository inspection or open new findings.
+- Use a fresh reviewer only when the original session cannot be resumed,
+  liveness is lost, the output shows no usable review, the reviewer abandons or
+  materially contradicts its analysis, or three same-session repairs fail.
+- When output is empty but a session ID was captured, try that session once
+  before starting a fresh reviewer. With no captured session ID, use a fresh
+  reviewer.
+- Retry once in a fresh session for transient transport failures only when no
+  resumable session exists.
 - Do not retry deterministic setup failures: auth/login, workspace trust,
   permission denied, command not allowed, inaccessible review scope, or
   interactive prompt requests. Before any owning-loop retry, inspect
   `<reviewer>-failure.md` when present and the final retry decision in
   `<reviewer>-attempts.md`; do not re-launch when the launcher classified the
   failure as deterministic.
-- The CLI launch scripts must treat zero-byte stdout as a launcher failure even
-  when the reviewer exits `0`; they retry once and write a populated failure
-  artifact if the retry does not produce output.
+- Treat zero-byte stdout as failure even when the reviewer exits `0`. Preserve
+  any captured session ID and raw output before deciding whether to resume or
+  launch fresh.
 - Reviewers are read-only and use explicit commit SHAs. Write prompts, then hash
   the neutral pack and every pre-existing artefact. Snapshot repository state
   before launching the parallel group. Exclude only the exact output files each
@@ -153,7 +193,7 @@ template:
 <elapsed time and the liveness checks observed>
 
 ## Failure Class
-<transient or deterministic failure class>
+<failure or repair classification>
 
 ## Pass Outcome
 <stopped-blocked or continued-by-user-override>

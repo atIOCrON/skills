@@ -41,6 +41,7 @@ shared-components/implementation-dispatch/implementation-dispatch-fix-request.md
 shared-components/implementation-dispatch/implementation-dispatch-plan-invocation.md|references/implementation-dispatch-plan-invocation.md
 shared-components/implementation-dispatch/implementation-dispatch.md|references/implementation-dispatch.md
 shared-components/multi-review-pass-runner/multi-review-pass-runner.md|references/multi-review-pass-runner.md
+shared-components/multi-review-pass-runner/code-review-format-repair-invocation.md|references/code-review-format-repair-invocation.md
 shared-components/orchestration-conventions/orchestration-conventions.md|references/orchestration-conventions.md
 shared-components/orchestration-conventions/orchestration-definitions.md|references/orchestration-definitions.md
 shared-components/orchestration-conventions/orchestration-finding-ids.md|references/orchestration-finding-ids.md
@@ -58,8 +59,10 @@ shared-components/multi-review-pass-runner/scripts/launch_cursor_review.sh|scrip
 shared-components/multi-review-pass-runner/scripts/launcher_common.sh|scripts/launcher_common.sh
 shared-components/multi-review-pass-runner/scripts/lib_review_launch.sh|scripts/lib_review_launch.sh
 shared-components/multi-review-pass-runner/scripts/resume_review.sh|scripts/resume_review.sh
+shared-components/multi-review-pass-runner/scripts/repair_code_review_output.sh|scripts/repair_code_review_output.sh
 shared-components/multi-review-pass-runner/scripts/test_launch_reviewers.sh|scripts/test_launch_reviewers.sh
 shared-components/multi-review-pass-runner/scripts/test_runtime_launchers.sh|scripts/test_runtime_launchers.sh
+shared-components/multi-review-pass-runner/scripts/validate_code_review_output.py|scripts/validate_code_review_output.py
 shared-components/reviewer-preflight/scripts/run_reviewer_preflight.sh|scripts/run_reviewer_preflight.sh
 shared-components/release-manifest/release-manifest.md|references/release-manifest.md
 shared-components/release-manifest/scripts/validate_release_manifest.py|scripts/validate_release_manifest.py

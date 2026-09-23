@@ -21,7 +21,7 @@ source "$script_dir/launcher_common.sh"
 # shellcheck source=lib_review_launch.sh
 source "$script_dir/lib_review_launch.sh"
 
-output_file="$artifact_dir/claude.md"
+output_file="$artifact_dir/claude-raw-attempt1.md"
 session_file="$artifact_dir/claude-session.md"
 exit_code_file="$artifact_dir/claude-exit-code"
 stderr_file="$artifact_dir/claude-stderr.log"
@@ -98,22 +98,28 @@ prompt_flag="$(select_prompt_flag claude)"
 attempt=1
 max_attempts=2
 final_exit_code=1
-final_session_id=""
+session_id="$(uuidgen | tr '[:upper:]' '[:lower:]')"
+final_session_id="$session_id"
+resume_existing=0
 failure_class="transient launcher failure"
 failure_detail="unknown launcher failure"
 
 while [ "$attempt" -le "$max_attempts" ]; do
-  session_id="$(uuidgen | tr '[:upper:]' '[:lower:]')"
-  final_session_id="$session_id"
+  output_file="$artifact_dir/claude-raw-attempt$attempt.md"
   attempt_stderr="$(mktemp)"
   : > "$output_file"
 
-  command_shape="claude --model $model --permission-mode plan --session-id <session-id> $prompt_flag --input-format text --output-format text < <prompt-file-stdin>"
+  if [ "$resume_existing" -eq 1 ]; then
+    session_option="--resume"
+  else
+    session_option="--session-id"
+  fi
+  command_shape="claude --model $model --permission-mode plan $session_option <session-id> $prompt_flag --input-format text --output-format text < <prompt-file-stdin>"
   append_stderr_header "$stderr_file" "$attempt"
 
   set +e
   claude --model "$model" --permission-mode plan \
-    --session-id "$session_id" \
+    "$session_option" "$session_id" \
     "$prompt_flag" --input-format text --output-format text \
     < "$prompt_file" \
     > "$output_file" 2> "$attempt_stderr"
@@ -138,6 +144,13 @@ while [ "$attempt" -le "$max_attempts" ]; do
   failure_class="$review_failure_class"
   failure_detail="$review_failure_detail"
   retry_decision="$review_retry_decision"
+  if [ "$exit_code" -eq 0 ] && [ "$output_bytes" -eq 0 ] \
+    && ! is_deterministic_setup_error "$attempt_stderr"; then
+    final_exit_code=5
+    failure_class="resumable empty output"
+    failure_detail="reviewer exited 0 with empty stdout after creating a resumable session"
+    retry_decision="no fresh retry - resume captured session"
+  fi
   if [ "$review_switch_prompt_flag" -eq 1 ]; then
     prompt_flag="$(alternate_prompt_flag "$prompt_flag")"
   fi
@@ -153,6 +166,7 @@ while [ "$attempt" -le "$max_attempts" ]; do
 
   case "$retry_decision" in
     retry*)
+      if [ "$review_switch_prompt_flag" -eq 0 ]; then resume_existing=1; fi
       attempt=$((attempt + 1))
       continue
       ;;

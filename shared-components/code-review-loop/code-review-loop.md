@@ -88,7 +88,10 @@ For each pass:
 3. Create `<feature_dir>/<plan_slug>.reviews/code-review-pass<N>/`.
 4. Run `multi-review-pass-runner` with `code-review.md` and
    `code-review-loop-code-review-invocation.md`. Start all three reviewers fresh
-   and require exhaustive review after the first blocker.
+   and require exhaustive review after the first blocker. Validate each output
+   before triage. Repair malformed or incomplete output in the originating
+   session; do not replace a completed reviewer merely because its response
+   violated the schema.
 5. Triage all outputs once. Batch accepted blocker and should-fix findings
    for the original implementation worker; do not routinely fix nits. Before
    dispatch, ask whether removing or simplifying new machinery is the smaller

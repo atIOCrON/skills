@@ -23,7 +23,7 @@ source "$script_dir/launcher_common.sh"
 # shellcheck source=lib_review_launch.sh
 source "$script_dir/lib_review_launch.sh"
 
-output_file="$artifact_dir/cursor.md"
+output_file="$artifact_dir/cursor-raw-attempt1.md"
 session_file="$artifact_dir/cursor-session.md"
 exit_code_file="$artifact_dir/cursor-exit-code"
 stderr_file="$artifact_dir/cursor-stderr.log"
@@ -137,11 +137,12 @@ chat_exit_code=0
 chat_id=""
 
 while [ "$attempt" -le "$max_attempts" ]; do
+  output_file="$artifact_dir/cursor-raw-attempt$attempt.md"
   attempt_stderr="$(mktemp)"
   : > "$output_file"
   append_stderr_header "$stderr_file" "$attempt"
 
-  if ! create_chat "$attempt_stderr"; then
+  if [ -z "$chat_id" ] && ! create_chat "$attempt_stderr"; then
     cat "$attempt_stderr" >> "$stderr_file"
     final_exit_code=4
     final_chat_id="unavailable"
@@ -208,9 +209,19 @@ while [ "$attempt" -le "$max_attempts" ]; do
   failure_class="$review_failure_class"
   failure_detail="$review_failure_detail"
   retry_decision="$review_retry_decision"
+  if [ "$exit_code" -eq 0 ] && [ "$output_bytes" -eq 0 ] && [ -n "$chat_id" ] \
+    && ! is_deterministic_setup_error "$attempt_stderr"; then
+    final_exit_code=5
+    failure_class="resumable empty output"
+    failure_detail="reviewer exited 0 with empty stdout after creating a resumable chat"
+    retry_decision="no fresh retry - resume captured session"
+  fi
   if [ "$review_switch_prompt_flag" -eq 1 ]; then
     prompt_flag="$(alternate_prompt_flag "$prompt_flag")"
   fi
+  case "$retry_decision" in
+    retry*) retry_decision="${retry_decision/fresh chat/same chat}" ;;
+  esac
 
   if [ "$exit_code" -eq 0 ] && [ "$output_bytes" -gt 0 ]; then
     append_attempt_log "$attempts_file" "$attempt" "$command_shape" "$exit_code" "$output_bytes" "$attempt_stderr_bytes" "$retry_decision"
