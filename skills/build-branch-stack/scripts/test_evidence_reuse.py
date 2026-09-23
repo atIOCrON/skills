@@ -36,9 +36,9 @@ class ReviewPackReuseTest(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
         self.repo = self.root / "repo"
-        self.pack = self.root / "pack"
         self.repo.mkdir()
-        self.pack.mkdir()
+        self.pack = self.repo / "plans" / "test.reviews" / "code-review-pack"
+        self.pack.mkdir(parents=True)
         subprocess.run(["git", "init", "-q", str(self.repo)], check=True)
         subprocess.run(
             ["git", "-C", str(self.repo), "config", "user.email", "test@example.com"],
@@ -123,6 +123,33 @@ class ReviewPackReuseTest(unittest.TestCase):
 
     def test_direct_check_cannot_claim_an_older_run(self) -> None:
         self.write_manifest(method="direct")
+        self.assertEqual(self.validate(), 1)
+
+    def test_rejects_link_outside_reviewer_workspace(self) -> None:
+        external = self.root / "effective-result.php"
+        external.write_text("outside sandbox\n")
+        (self.pack / "index.md").write_text(
+            f"Review: {self.review_sha}\n[effective result]({external})\n"
+        )
+        self.write_manifest()
+        self.assertEqual(self.validate(), 1)
+
+    def test_accepts_pinned_effective_result_in_pack(self) -> None:
+        effective = self.pack / "effective-result.php"
+        effective.write_text("inside sandbox\n")
+        (self.pack / "index.md").write_text(
+            f"Review: {self.review_sha}\n[effective result]({effective.name})\n"
+        )
+        self.write_manifest()
+        self.assertEqual(self.validate(), 0)
+
+    def test_rejects_file_uri_outside_reviewer_workspace(self) -> None:
+        external = self.root / "effective-result.php"
+        external.write_text("outside sandbox\n")
+        (self.pack / "index.md").write_text(
+            f"Review: {self.review_sha}\n[effective result]({external.as_uri()})\n"
+        )
+        self.write_manifest()
         self.assertEqual(self.validate(), 1)
 
 

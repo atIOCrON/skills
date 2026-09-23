@@ -41,8 +41,17 @@ object IDs and SHA-256 hashes in `index.md` or a linked context file. Identify
 each source path and revision; explain omitted links. For generated or derived
 deliverables, show reviewers both the source representation and the effective
 result, plus the capability-provided content, configuration, and toolchain
-identities that determine it. Keep large input or result trees outside the
-pack and link them from `index.md`.
+identities that determine it.
+
+Every source or effective result needed for review must be readable from the
+reviewer's repository workspace. A path, hash, replay log, or reproduction
+command does not replace the content. If the authoritative file is outside the
+repository workspace, copy the exact file or the smallest sufficient pinned
+excerpt into the pack, record its authoritative path, revision or replay input,
+and SHA-256, and include the copy in `hash-manifest.sha256`. Keep large trees
+outside the pack, but include the review-relevant files or excerpts; record
+external bulk paths as code, not local Markdown links. The validator rejects a
+pack outside the repository and local links that escape it.
 
 In `evidence-manifest.json`, record the review SHA and one entry per required
 check: `id`, `kind` (`agent` or `external`), `required`, `verified_sha`,

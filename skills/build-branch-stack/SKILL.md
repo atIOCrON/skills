@@ -194,6 +194,9 @@ must account for every determining input, including source, configuration,
 locked dependencies and fixtures, toolchain, runtime binding, and effective
 result; otherwise rerun it. The capability must also identify the source
 representation and the effective generated or runtime result reviewers need.
+Copy any review-required source or effective result from outside the reviewer
+repository workspace into the neutral review pack; a path, hash, or replay log
+alone is insufficient.
 Record those commands and evidence here without copying ecosystem-specific
 procedures into this orchestration skill.
 Prepare reproducible local checks for requirements CI cannot run. If a required
