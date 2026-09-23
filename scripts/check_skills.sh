@@ -28,6 +28,7 @@ allowed_keys = {
 errors = []
 skill_files = sorted(target.glob("*/SKILL.md"))
 implicit_invocation_exceptions = {
+    "branch-stack-status",
     "magento-composer-patches",
     "write-concisely",
 }
