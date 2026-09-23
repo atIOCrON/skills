@@ -30,10 +30,14 @@ are supported. A patch is appropriate for a narrow locked-package defect or
 authorized customization; clean mechanics do not make broad local ownership
 proportionate.
 
-Stop for architecture approval before a permanent dependency modification
-that lacks a supported extension point, replaces a substantial dependency-owned
-surface, coordinates providers, introduces shared mutable browser state or a
-retry/recovery framework, or makes the project own an upstream subsystem.
+Perform an architecture checkpoint before a permanent dependency modification
+that lacks a supported extension point. Proceed autonomously with the smallest
+narrow locked-package correction allowed by the task and repository policy,
+after recording rejected extensions, maintenance effect, and removal condition.
+Require human authority when the change replaces a substantial
+dependency-owned surface, coordinates providers, introduces shared mutable
+browser state or a retry/recovery framework, or makes the project own an
+upstream subsystem.
 
 ## Patch Ownership and Order
 

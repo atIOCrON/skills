@@ -66,7 +66,8 @@ A blocker or should-fix must establish a reachable supported failure, an
 affected-contract regression, or a binding policy or repository-standard
 violation. Unsupported inputs, hypothetical scale, future use, and architecture
 preferences are advisory. Recommend the smallest sufficient fix; identify any
-unplanned deliverable that needs user approval.
+new surface and whether it is a prerequisite for the approved outcome or a new
+independently releasable capability.
 
 Use `blocker` for safety, security, data loss, or failure of a required outcome;
 `should-fix` for other material defects; and `nit` for preferences. Require
