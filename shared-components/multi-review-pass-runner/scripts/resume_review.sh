@@ -63,7 +63,7 @@ while [ "$attempt" -le "$max_attempts" ]; do
     cursor)
       command -v cursor-agent >/dev/null 2>&1 || { echo "error: cursor-agent CLI not found on PATH" >&2; exit 3; }
       set +e
-      cursor-agent --model "${CURSOR_REVIEW_MODEL:-cursor-grok-4.6-high}" --trust \
+      cursor-agent --model "${CURSOR_REVIEW_MODEL:-grok-4.7-high}" --trust \
         --auto-review --sandbox enabled --workspace "$repo_root" \
         --resume "$session_id" -p --output-format text \
         < "$prompt_file" > "$output_file" 2>> "$stderr_file"
