@@ -36,6 +36,16 @@ valid restack or test-only mappings, and an incomplete reviewer launch do
 not count. Preserve the count across task resumptions, implementation shapes,
 and architecture epochs.
 
+Assess each validated response when it arrives. Independently confirmed
+material findings may start provisional edits in a separate implementation
+checkout while other reviewers run. Keep the reviewed SHA, branch tip, neutral
+pack, and reviewer checkout unchanged apart from expected review artefacts.
+Focused checks may run in the implementation checkout; do not commit or push
+provisional edits.
+The pass remains incomplete until all three outputs are validated, reconciled,
+and recorded in one triage. If later feedback contradicts the fix or triggers
+architecture reassessment, revise or discard the provisional work.
+
 Before deciding the post-fix review action, record a risk classification.
 Treat changed production behavior, interfaces, lifecycle ownership, dependency
 inputs, generated or effective output, or invalidated verification as material.
@@ -129,13 +139,15 @@ For each pass:
    before triage. Repair malformed or incomplete output in the originating
    session; do not replace a completed reviewer merely because its response
    violated the schema.
-5. Triage all outputs once. Batch accepted blocker and should-fix findings for
-   the original implementation worker only after triage independently confirms
-   their evidence class, pinned SHA, supported path, and failure family. Reject
-   static hypotheses. Do not routinely fix nits. Before dispatch, ask whether
-   removing or simplifying new machinery is the smaller resolution. Skill
-   feedback and closure observations cannot trigger a fix, ledger entry, or
-   another pass.
+5. As each output validates, assess its evidence class, pinned SHA, supported
+   path, failure family, and prior ledger history. Reject static hypotheses.
+   Before provisional dispatch, check the architecture and fix-cycle rules and
+   whether removing or simplifying new machinery is the smaller resolution.
+   After all three outputs validate and the runner's mutation check passes,
+   triage them together. Batch accepted blocker and should-fix findings for the
+   original worker, including any needed changes to provisional edits. Do not
+   routinely fix nits. Skill feedback and closure observations cannot trigger
+   a fix, ledger entry, or another pass.
 6. If one failure family or branch-introduced coordinator, state machine, retry
    system, lifecycle interception, or verification model caused newly
    discovered material failures in any two fresh passes recorded in the ledger,

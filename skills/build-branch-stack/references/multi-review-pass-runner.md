@@ -171,6 +171,11 @@ below.
   launcher is expected to create, not whole artefact directories. After all
   reviewers finish, verify the new-file allowlist, pre-existing hashes, and all
   other tracked and untracked state. Stop on any unexplained change.
+- If implementation overlaps this pass, prepare a separate checkout outside
+  the snapshot before launch, or use an independent clone that cannot change
+  reviewer repository metadata. Keep the review commit, branch tip, and pack
+  pinned. Provisional edits must not touch the snapshotted checkout or artefacts.
+  Do not relax the mutation check for implementation changes.
 - Do not leave failed reviewer processes running.
 
 ## Failure Artifact

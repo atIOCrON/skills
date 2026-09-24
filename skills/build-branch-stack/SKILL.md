@@ -299,26 +299,26 @@ For each plan in the wave:
    its first-push plain refspec also needs the explicit lease.
 
 Start each branch's trim once its tip is verified and pushed and its parent SHA
-is pinned. Run eligible trim passes concurrently, subject only to reviewer
-capacity. A moving ancestor makes a descendant provisional, not ineligible.
-Within a branch, triage pass N, apply accepted reductions, verify and push, then
-start pass N+1 immediately. Start correctness pass 1 when that branch's trim is
-proportionate. Run all eligible numbered correctness passes concurrently across
-branches; each three-provider pass reviews only its pinned parent-to-tip diff.
+is pinned. Run eligible trim passes concurrently, subject only to reviewer capacity.
+A moving ancestor makes a descendant provisional, not ineligible. Within a
+branch, triage pass N, apply accepted reductions, verify and push, then start pass N+1.
+Start correctness pass 1 when that branch's trim is proportionate. Run eligible
+numbered correctness passes concurrently across branches on pinned parent-to-tip diffs.
 Eligibility requires handled prior findings and a verified, pushed tip, not
-clean ancestor reviews. Triage completed passes and fix accepted findings from
-the earliest affected branch forward. Defer descendant restacks until upstream
-fixes settle; descendants may keep reviewing pinned diffs provisionally. Do not
-hold trim solely for a restack. At the wave boundary, restack descendants,
-verify new tips, and update pins, packs, and manifests. Retain trim and reviews
-only with valid restack and effective-identity mappings; a new SHA alone does
-not require another trim pass. Manual resolutions, changed behavior, or invalid
-mappings require a fresh pass for the affected phase.
+clean ancestors. Assess validated findings as they arrive; start provisional
+fixes in an isolated checkout under `code-review-loop.md`. Reconcile all three
+before changing the tip. Fix accepted findings from the earliest affected
+branch forward. Defer descendant restacks until upstream fixes settle; they
+may keep reviewing pinned diffs provisionally. Do not hold trim for a restack.
+At the wave boundary, restack descendants, verify tips, and update pins, packs,
+and manifests. Retain trim and reviews only with valid restack and effective
+identity mappings; a new SHA alone needs no trim pass. Manual resolutions,
+changed behavior, or invalid mappings require a fresh pass for the affected phase.
 
-At the five-pass cap, finish accepted in-scope remediation, verify and push, preserve
-artefacts, and record `review_cap_reached` with ledger evidence. Stop fresh passes
-only for that plan. Wave descendants may review pinned diffs provisionally; start
-no new wave from it. Keep the capped feature out of `review/` and do not open its CR.
+At the five-pass cap, finish accepted remediation, verify, push, preserve
+artefacts, and record `review_cap_reached` with ledger evidence. Stop fresh
+passes for that plan. Descendants may review provisionally; start no new wave
+from it. Keep the feature out of `review/` and do not open its CR.
 
 Finish handoff only when the plan and pinned ancestors are clean. Once trim, all
 three correctness reviews, and required branch checks pass, preserve `.reviews/`,
