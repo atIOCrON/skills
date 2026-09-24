@@ -311,9 +311,9 @@ before changing the tip. Fix accepted findings from the earliest affected
 branch forward. Defer descendant restacks until upstream fixes settle; they
 may keep reviewing pinned diffs provisionally. Do not hold trim for a restack.
 At the wave boundary, restack descendants, verify tips, and update pins, packs,
-and manifests. Retain trim and reviews only with valid restack and effective
-identity mappings; a new SHA alone needs no trim pass. Manual resolutions,
-changed behavior, or invalid mappings require a fresh pass for the affected phase.
+and manifests. Retain correctness reviews only with valid identity mappings;
+manual resolutions, changed behavior, or invalid mappings need a fresh correctness
+pass. Under `trim-review.md`, carry trim only if the new diff remains proportionate.
 
 At the five-pass cap, finish accepted remediation, verify, push, preserve
 artefacts, and record `review_cap_reached` with ledger evidence. Stop fresh
