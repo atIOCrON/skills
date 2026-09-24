@@ -90,12 +90,20 @@ reviewed or mapped tip, and ledger path in the manifest.
 
 At the wave boundary, after upstream fixes settle, restack affected descendants
 in dependency order and verify each changed tip. Retain an already proportionate
-trim result when the restack has a valid mapping under `code-review-loop.md`,
-effective-identity evidence, and no new branch-owned machinery. A SHA change
-alone does not require another trim pass; manual resolutions, new machinery,
-changed behavior, or invalid mappings do. Start correctness pass 1 when trim
-is proportionate on its verified tip or valid mapping, even if other branches
-are still trimming.
+trim result through a valid restack mapping under `code-review-loop.md`. For a
+manual resolution, inspect every resolved hunk and the complete new
+parent-to-tip diff against the old proportionate diff. Carry the trim result
+forward only when this inspection and effective-identity evidence establish
+that the resolution added or reworked no branch-owned code, tests, configuration,
+or patch content and introduced no redundancy under the new parent. Record the
+old and new SHAs, diff comparison, resolved hunks, identity proof, and conclusion
+in the trim ledger; update the manifest's trim SHA and evidence. This trim-only
+carry-forward does not preserve correctness reviews: a manual resolution still
+requires a fresh three-reviewer correctness pass. A new SHA alone needs no trim
+pass. New or reworked branch-owned content, changed effective behavior, an
+unexplained diff, or uncertain proportionality requires a fresh trim pass.
+Start correctness pass 1 when trim is proportionate on its verified tip or
+recorded carry-forward, even if other branches are still trimming.
 Keep descendant correctness reviews provisional until parent mappings settle.
 Later correctness fixes need another trim pass only if they introduce
 substantial new code or test machinery or invalidate that mapping. A trim
