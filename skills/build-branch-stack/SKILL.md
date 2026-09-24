@@ -292,23 +292,38 @@ For each plan in the wave:
    review, commit, and verify the exact SHA in a clean worktree under
    `verification-runner.md`. Final integration checks do not replace candidate
    verification.
-   Create or update the remote branch at the first verified commit. Record each
-   pinned parent and verified tip in the manifest. Keep the feature in
-   `in_progress/`.
+   Create or update the remote branch at the first verified commit. A wave
+   descendant may push provisionally on its recorded parent SHA after the
+   ancestor ref advances: require that SHA to remain the tip's ancestor, pass
+   integrity checks, and use an explicit lease for the expected remote branch
+   state, including absence for a new branch. Fetch after the push and confirm
+   local, upstream, remote, and verified tips match. Record the parent movement,
+   pinned parent, and verified tip in the manifest. Keep the feature in
+   `in_progress/`. For this provisional case, the pinned-parent check in
+   `git-sync-branch.md` applies to the recorded SHA, not the ancestor ref head;
+   its first-push plain refspec also needs the explicit lease.
 
-After the wave's candidates are verified and pushed, run the separate trim
-phase in `trim-review.md` across branches before correctness pass 1. Verify and
-push accepted reductions. Then run every eligible numbered correctness pass
-concurrently across branches, including later passes. Each three-provider
-pass reviews only its pinned parent-to-tip diff. Eligibility requires that
-branch's prior findings handled and its new tip verified and pushed; ancestor
-reviews need not be clean. Triage and record completed passes. Fix accepted
-findings from the earliest affected branch forward. Defer descendant restacks
-until upstream fixes in the wave settle; descendants may continue pinned-diff
-reviews provisionally. At the wave boundary, restack affected descendants,
-verify changed tips, and update pins, packs, and manifest entries. Retain clean
-reviews only with valid equal-`range-diff` and identity evidence. Manual
-resolutions, changed behavior, or invalid mappings require a fresh pass.
+Start `trim-review.md` for each branch as soon as its own tip is verified and
+pushed and its parent SHA is pinned. Launch all eligible branch trim passes
+concurrently, subject only to reviewer capacity. An unfinished or moving
+ancestor makes a descendant's result provisional, not ineligible. Within one
+branch, triage trim pass N, apply accepted reductions, verify and push the new
+tip, then start pass N+1 immediately. Passes on other branches may run during
+these steps. Start that branch's correctness pass 1 as soon as its own trim is
+proportionate; do not wait for other branches' trim. Run every eligible numbered
+correctness pass concurrently across branches, including later passes. Each
+three-provider pass reviews only its pinned parent-to-tip diff. Eligibility
+requires that branch's prior findings handled and its new tip verified and
+pushed; ancestor reviews need not be clean. Triage and record completed passes.
+Fix accepted findings from the earliest affected branch forward. Defer
+descendant restacks until upstream fixes in the wave settle; descendants may
+continue trim and correctness passes on their pinned diffs provisionally. Do
+not hold a next trim pass solely for a restack. At the wave boundary, restack
+affected descendants, verify changed tips, and update pins, packs, and manifest
+entries. Retain a proportionate trim result and clean correctness reviews only
+with valid equal-`range-diff` and effective-identity mappings; a SHA change
+alone does not require another trim pass. Manual resolutions, changed behavior,
+or invalid mappings require a fresh pass for the affected review phase.
 
 If a plan reaches the five-pass cap, finish its accepted in-scope remediation,
 verify and push the candidate when checks pass, preserve its artefacts, and
@@ -336,10 +351,14 @@ evidence requires it.
 Before each plan and final handoff, compare every local parent with its pinned
 SHA and refetch any parent already on `origin`. If a parent moves during a wave,
 record the movement and restack affected descendants at the wave boundary after
-upstream fixes settle; their pinned-diff reviews may continue. On a repair run
-or unexpected movement, move only affected
-descendants to `in_progress/` before restacking. Keep each candidate there
-through verification and code review. Synchronize tips with explicit leases.
+upstream fixes settle; their pinned-diff trim and correctness reviews may
+continue. The recorded parent SHA must remain the verified descendant tip's
+ancestor; the parent ref need not still point to it for a provisional push.
+Require the normal integrity checks and an explicit lease against the expected
+remote branch state for that push. On a repair run or unexpected movement,
+move only affected descendants to `in_progress/` before restacking. Keep each
+candidate there through verification and code review. Synchronize tips with
+explicit leases.
 Classify each delta as `verbatim`, `mechanical regeneration`, or
 `intentional behavior change`. Verify every new tip with the smallest sufficient
 combination of fresh checks and deterministic evidence reuse. Verification
@@ -448,7 +467,7 @@ separately from branch readiness.
   extensions, smallest correction, removal condition, source and effective
   identities, behavioural evidence, replay order, and maintenance effect. Keep
   one coherent defect per patch and follow the applicable capability skill.
-- Complete the separate trim phase before correctness discovery. Correctness
+- Complete each branch's trim phase before its correctness discovery. Correctness
   reviewers still flag material proportionality failures missed by trimming.
 - Before accepting a finding, ask whether removing or simplifying new machinery
   closes it. A finding does not authorize a new responsibility merely because
