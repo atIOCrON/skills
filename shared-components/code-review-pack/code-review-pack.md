@@ -89,11 +89,13 @@ required status for the later acceptance or production decision.
 After a restack, link its old/new ranges, `range-diff`, delta classifications,
 and deterministic evidence from `index.md`. Include evidence that the changed
 parent preserves this branch's effective behavior; an equal patch alone is not
-enough. When the range diff is equal, the restack is conflict-free, and that
-evidence holds, record the old-to-new SHA mappings and retained
-evidence from all three reviews. Require a fresh three-reviewer discovery pass
-for manual resolutions, unequal range diffs, changed generated output, or
-behavior changes.
+enough. For an equal range diff, record the old-to-new SHA mappings and all
+three retained reviews. For a `reviewed_restack` mapping, also record each
+commit's stable patch ID and exact changed-line comparison, every explained
+inequality, the old and new affected tests, direct exact-tip test results, and
+all three original-session confirmations required by `code-review-loop.md`.
+Require a fresh three-reviewer discovery pass for any unmapped inequality,
+manual resolution, changed generated output, or behavior change.
 
 After an eligible test-only remediation, link the old and new SHAs, exact-tip
 verification, changed-test results, unchanged production and effective-result
@@ -130,7 +132,7 @@ A failed check, unexplained delta, or review-tip SHA mismatch blocks review.
 
 Build the pack before pass 1. After a fix commit or restack, refresh the commit,
 diff, hashes, deterministic results, and verification evidence. Preserve and
-link all three prior clean reviews for a proven equal-range-diff restack or an
+link all three prior clean reviews for a proven valid restack mapping or an
 eligible test-only remediation with recorded closure; otherwise run a fresh
 three-reviewer discovery pass. Reuse immutable inputs
 only when the applicable capability proves their content, configuration, and

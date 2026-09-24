@@ -75,7 +75,7 @@ views, not competing authorities.
 - `review`: the exact branch tip and pinned parent are verified, the local,
   upstream, and remote tips agree, every ancestor is clean at its pinned SHA,
   code review findings are resolved, all three
-  automated reviews are clean or have valid equal-range-diff or
+  automated reviews are clean or have valid restack or
   test-only-closure mappings, required branch-level agent checks pass, and
   artefacts are preserved. Record pending
   human or external acceptance checks with their procedures and owners. Record

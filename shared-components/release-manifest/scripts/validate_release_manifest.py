@@ -18,7 +18,7 @@ CHECK_KINDS = {"agent", "external"}
 CHECK_STATES = {"passed", "failed", "pending", "blocked_by_environment"}
 CHECK_METHODS = {"direct", "identity_reuse"}
 REVIEW_STATES = {"pending", "clean", "changes_required", "waived"}
-REVIEW_METHODS = {"direct", "equal_range_diff", "test_only_closure"}
+REVIEW_METHODS = {"direct", "equal_range_diff", "reviewed_restack", "test_only_closure"}
 REVIEW_PROGRESS_STATES = {"pending", "clean", "review_cap_reached", "waived"}
 REVIEWERS = {"claude", "codex", "cursor"}
 CR_STATES = {"none", "draft", "ready", "merged", "closed"}
@@ -296,7 +296,7 @@ def validate(data: Any) -> list[str]:
                     errors.append(f"{review_prefix}.origin_sha must be a full SHA")
                 if method == "direct" and origin_sha != review.get("sha"):
                     errors.append(f"{review_prefix} direct origin_sha must equal sha")
-                is_mapping = method in {"equal_range_diff", "test_only_closure"}
+                is_mapping = method in {"equal_range_diff", "reviewed_restack", "test_only_closure"}
                 if is_mapping and origin_sha == review.get("sha"):
                     errors.append(f"{review_prefix} {method} must map different SHAs")
             elif review.get("status") == "waived":

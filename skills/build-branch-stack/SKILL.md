@@ -64,26 +64,21 @@ verification changes:
 | Plan | Status | Reviews | Branch | Commit | Next action |
 ```
 
-Use `Queued`, `In progress`, `Review cap reached`, `Blocked`, or `Ready for
-human review`. Mark a wave descendant `In progress` and identify its provisional
-parent in `Next action` until every ancestor is clean at its pinned SHA.
-`Review cap reached` ends passes for that plan in this run. Keep it in
-`in_progress/` and unpublished. Existing wave descendants may continue review
-provisionally; start no new wave from it. `Ready for human review`
-requires every ancestor clean at its pinned SHA,
-the feature in `review/`, a proportionate trim result on its tip, and a
-verified final SHA matching local,
-upstream, and remote tips, a pinned parent, clean reviews from all three
-providers on that SHA or valid equal-range-diff or test-only-closure mappings,
-preserved artefacts, passed required branch-level agent checks, and recorded
-human, external, and not-yet-runnable release-candidate checks. Final stack
-checks gate release progression, not this feature status.
-Pending external acceptance or not-yet-runnable release-candidate checks do not
-make the branch `Blocked`. Number review passes. Never describe a current or
-future pass as “final,” “last,” “closing,” or “concluding.” A pass can only be
-identified retrospectively as the last completed pass after every completion
-condition is satisfied. Before then, call it “pass N,” “the current pass,” or
-“the next fresh pass.”
+Use `Queued`, `In progress`, `Review cap reached`, `Blocked`, or `Ready for human review`.
+A wave descendant stays `In progress` with its provisional parent in `Next action`
+until every ancestor is clean at its pinned SHA. `Review cap reached` ends passes
+for that plan in this run; keep it in `in_progress/` and unpublished. Existing
+wave descendants may continue provisionally, but start no new wave from it.
+`Ready for human review` requires clean pinned ancestors, the feature in `review/`,
+proportionate trim on its tip, a pinned parent, and one verified final SHA matching
+local, upstream, and remote tips. It also requires preserved artefacts, passed
+branch-level agent checks, recorded human, external, and pending release-candidate
+checks, and three clean reviews on that SHA or valid restack or test-only mappings.
+Final stack checks gate release progression, not feature status. Pending external
+or not-yet-runnable release-candidate checks do not make the branch `Blocked`.
+Number review passes. Call an ongoing pass “pass N,” “the current pass,” or “the
+next fresh pass”; call it “final,” “last,” “closing,” or “concluding” only after
+all completion conditions are satisfied.
 
 ## Autonomous Decision Authority
 
@@ -303,50 +298,40 @@ For each plan in the wave:
    `git-sync-branch.md` applies to the recorded SHA, not the ancestor ref head;
    its first-push plain refspec also needs the explicit lease.
 
-Start `trim-review.md` for each branch as soon as its own tip is verified and
-pushed and its parent SHA is pinned. Launch all eligible branch trim passes
-concurrently, subject only to reviewer capacity. An unfinished or moving
-ancestor makes a descendant's result provisional, not ineligible. Within one
-branch, triage trim pass N, apply accepted reductions, verify and push the new
-tip, then start pass N+1 immediately. Passes on other branches may run during
-these steps. Start that branch's correctness pass 1 as soon as its own trim is
-proportionate; do not wait for other branches' trim. Run every eligible numbered
-correctness pass concurrently across branches, including later passes. Each
-three-provider pass reviews only its pinned parent-to-tip diff. Eligibility
-requires that branch's prior findings handled and its new tip verified and
-pushed; ancestor reviews need not be clean. Triage and record completed passes.
-Fix accepted findings from the earliest affected branch forward. Defer
-descendant restacks until upstream fixes in the wave settle; descendants may
-continue trim and correctness passes on their pinned diffs provisionally. Do
-not hold a next trim pass solely for a restack. At the wave boundary, restack
-affected descendants, verify changed tips, and update pins, packs, and manifest
-entries. Retain a proportionate trim result and clean correctness reviews only
-with valid equal-`range-diff` and effective-identity mappings; a SHA change
-alone does not require another trim pass. Manual resolutions, changed behavior,
-or invalid mappings require a fresh pass for the affected review phase.
+Start each branch's trim once its tip is verified and pushed and its parent SHA
+is pinned. Run eligible trim passes concurrently, subject only to reviewer
+capacity. A moving ancestor makes a descendant provisional, not ineligible.
+Within a branch, triage pass N, apply accepted reductions, verify and push, then
+start pass N+1 immediately. Start correctness pass 1 when that branch's trim is
+proportionate. Run all eligible numbered correctness passes concurrently across
+branches; each three-provider pass reviews only its pinned parent-to-tip diff.
+Eligibility requires handled prior findings and a verified, pushed tip, not
+clean ancestor reviews. Triage completed passes and fix accepted findings from
+the earliest affected branch forward. Defer descendant restacks until upstream
+fixes settle; descendants may keep reviewing pinned diffs provisionally. Do not
+hold trim solely for a restack. At the wave boundary, restack descendants,
+verify new tips, and update pins, packs, and manifests. Retain trim and reviews
+only with valid restack and effective-identity mappings; a new SHA alone does
+not require another trim pass. Manual resolutions, changed behavior, or invalid
+mappings require a fresh pass for the affected phase.
 
-If a plan reaches the five-pass cap, finish its accepted in-scope remediation,
-verify and push the candidate when checks pass, preserve its artefacts, and
-record `review_cap_reached` with ledger evidence. Stop fresh passes only for
-that plan. Existing wave descendants may continue reviews on their pinned
-diffs, but remain provisional; start no new wave from the capped branch. Do
-not move the capped feature to `review/` or open its CR.
+At the five-pass cap, finish accepted in-scope remediation, verify and push, preserve
+artefacts, and record `review_cap_reached` with ledger evidence. Stop fresh passes
+only for that plan. Wave descendants may review pinned diffs provisionally; start
+no new wave from it. Keep the capped feature out of `review/` and do not open its CR.
 
-For each clean plan whose ancestors are also clean at their pinned SHAs, finish
-the handoff. Once trim, all three correctness reviewers, and required
-branch-level agent checks pass, preserve `.reviews/`, `.evidence/`, and any `.execution/` folders
-before removing a worktree. Record pending human and external checks with
-procedures and owners. Record release-candidate checks that require unbuilt
-descendants or a complete candidate with their prerequisites. Verify that the
-tip matches local, upstream, and remote refs; move the feature to `review/`,
-set `review_progress.status` to `clean`, refresh manifest and artefact paths,
-and validate the manifest. A missing prerequisite for a required branch-level
-check remains a blocker, not a deferred release check. If the move or manifest
-write fails, return the feature to `in_progress/` and report the blocker. If
-the task authorizes CR creation, hand the branch to `open-stack-requests` in
-draft mode; otherwise record publication as the next action. This skill does
-not open the CR itself. Use this branch as a parent only where dependency
-evidence requires it.
+Finish handoff only when the plan and pinned ancestors are clean. Once trim, all
+three correctness reviews, and required branch checks pass, preserve `.reviews/`,
+`.evidence/`, and `.execution/` before removing a worktree. Record pending human
+and external checks with owners and procedures; record release-candidate checks
+blocked by unbuilt descendants with prerequisites. Confirm local, upstream, and
+remote tips match, move the feature to `review/`, set `review_progress.status`
+to `clean`, refresh paths, and validate the manifest. A missing branch-check
+prerequisite blocks handoff, not merely release. On move or manifest failure,
+return to `in_progress/` and report it. If CR creation is authorized, hand the
+branch to `open-stack-requests` in draft mode; otherwise record publication as
+next action. This skill does not open the CR. Use the branch as a parent only
+where dependency evidence requires it.
 
 Before each plan and final handoff, compare every local parent with its pinned
 SHA and refetch any parent already on `origin`. If a parent moves during a wave,
@@ -366,13 +351,11 @@ proves that every required check applies to the current tip; it does not require
 rerunning an unchanged check. A new SHA or reviewer pass alone is not grounds
 to rerun one. Do not rerun an expensive deterministic check when the capability's
 equivalence rules prove unchanged determining inputs and effective result.
-A conflict-free restack
-with equal `range-diff` and deterministic identity evidence for the new parent
-and effective behavior retains all three prior reviews; record their old-to-new
-SHA mappings. A fresh three-reviewer pass is required for manual resolutions,
-unequal range diffs, changed generated
-output, or behavior changes. An unexpected local branch change needs a scope
-decision before it can count as reviewed.
+A conflict-free restack retains reviews through an equal `range-diff` with
+deterministic identity proof, or the narrow `reviewed_restack` test-context
+mapping in `code-review-loop.md`. Record SHA mappings and required confirmations.
+Manual resolutions, unmapped inequalities, changed generated output, or behavior
+need a fresh three-reviewer pass. An unexpected local change needs a scope decision.
 When an otherwise-clean discovery pass has one accepted finding resolved only
 by an eligible test-only remediation, follow `code-review-loop.md`: verify the
 new SHA, obtain same-session closure from each originating reviewer, and record
@@ -479,7 +462,7 @@ separately from branch readiness.
 - Run fresh Claude, Codex, and Cursor reviewers in parallel for every discovery
   pass. All three must complete successfully.
 - Do not amend a published commit. Preserve clean review evidence across only
-  conflict-free equal-range-diff restacks or eligible test-only remediations
+  conflict-free restacks with valid mappings or eligible test-only remediations
   with the identity, verification, and closure evidence required by
   `code-review-loop.md`.
 - Never promote a candidate with failed checks or unresolved material findings.

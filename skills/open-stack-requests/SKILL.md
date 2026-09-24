@@ -16,7 +16,7 @@ pass. Do not implement plans or push branches.
 
 Require the canonical release manifest, its plan and evidence paths, local and
 remote branches, pinned parent SHAs, verified tips, review evidence from all
-three providers or their equal-range-diff mappings, and intended base branch.
+three providers or valid review mappings, and intended base branch.
 Infer the forge from `origin` only when unambiguous. Read
 `references/change-request-lifecycle.md`,
 `references/orchestration-change-requests.md`,

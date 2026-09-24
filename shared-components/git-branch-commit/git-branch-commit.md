@@ -53,7 +53,7 @@ below. Never amend a published commit.
 
 Before handoff, require the local branch tip, upstream, fetched remote tip, and
 latest verified SHA to match. Require clean reviews from all three reviewers on
-that SHA or valid equal-range-diff or test-only-closure mappings from all three
+that SHA or valid restack or test-only-closure mappings from all three
 prior reviews.
 Require the parent head to equal its pinned SHA and remain an ancestor. A
 changed parent needs a restack, verification, review-policy decision, and
@@ -76,12 +76,12 @@ first.
    effective-output identity checks. Classify each delta as `verbatim`, `mechanical
    regeneration`, or `intentional behavior change`.
 4. Verify the new tip in a clean detached worktree and update the pinned base
-   and review pack. For a conflict-free restack with equal `range-diff` and
-   deterministic identity evidence for behavior under the new parent, record
-   the old-to-new SHA mappings and retain
-   all three prior reviews. Run a fresh three-reviewer pass for any manual
-   resolution, unequal range diff, changed generated output, or intentional
-   behavior change.
+   and review pack. Retain prior reviews only for an equal `range-diff` with
+   effective-identity evidence or the narrow `reviewed_restack` mapping in
+   `code-review-loop.md`. Record the old-to-new SHA mappings and required
+   evidence. Run a fresh three-reviewer pass for any manual resolution,
+   unmapped inequality, changed generated output, or intentional behavior
+   change.
 
 Use `git-sync-branch.md` for the lease-protected push. A provisional wave
 descendant may be pushed before reviews are clean, but remains in `in_progress/`

@@ -319,6 +319,23 @@ class ReleaseManifestReuseTest(unittest.TestCase):
             any("test_only_closure must map different SHAs" in error for error in errors)
         )
 
+    def test_release_review_accepts_reviewed_restack(self) -> None:
+        manifest = self.manifest()
+        tip_sha = manifest["branches"][0]["tip_sha"]
+        for review in manifest["branches"][0]["reviews"]:
+            review.update(
+                status="clean",
+                sha=tip_sha,
+                method="reviewed_restack",
+                origin_sha="e" * 40,
+                evidence="evidence/reviewed-restack.md",
+            )
+        self.assertEqual(release_validator.validate(manifest), [])
+
+        manifest["branches"][0]["reviews"][0]["origin_sha"] = tip_sha
+        errors = release_validator.validate(manifest)
+        self.assertTrue(any("reviewed_restack must map different SHAs" in error for error in errors))
+
     def test_release_review_accepts_cap_reached(self) -> None:
         manifest = self.manifest()
         manifest["branches"][0]["review_progress"].update(
