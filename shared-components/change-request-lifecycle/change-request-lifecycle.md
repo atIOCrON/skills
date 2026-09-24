@@ -44,7 +44,7 @@ provider, and no dirty file overlapping the CR diff. Use
 `origin/<target>...refs/heads/<source>` for log and diff inspection. For create,
 refresh, and ready modes, require synchronized upstream; require the source
 SHA to equal the local branch ref, upstream, and verified SHA. When ready, also
-require all three latest clean review SHAs or valid equal-range-diff or
+require all three latest clean review SHAs or valid restack or
 test-only-closure mappings.
 Require the target SHA to equal the pinned base and remain an ancestor.
 For return to draft after detected movement, allow only the SHA or upstream
@@ -55,7 +55,7 @@ Create exactly one draft CR with the manifest source and target. Generate its
 title and description from current manifest and branch evidence; refresh them
 after every accepted source or target change. Record its URL and state in the
 manifest. Return it and all ready descendants to draft before a changed source
-or target is reviewed. A proven equal-range-diff mechanical restack or eligible
+or target is reviewed. A proven valid restack mapping or eligible
 test-only remediation may retain all three reviews through its valid mapping,
 but the CR must still point at the verified new SHA.
 

@@ -29,7 +29,7 @@ Work read-only. Do not edit files, refs, plans, or the manifest.
      numbered passes against their ledgers.
    - Do not count launched but incomplete passes, reviewer transport retries,
      same-session format repairs, targeted closures, test-only closure
-     mappings, or equal-range-diff restack mappings.
+     mappings, or valid restack mappings.
    - A documented zero-diff trim applicability decision counts as zero loops.
    - If counts conflict or cannot be verified, show "Unclear" and explain.
 4. Assign one status using this precedence:

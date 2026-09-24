@@ -128,9 +128,12 @@ For each ordered branch:
 
    Record both SHAs. The script aborts conflicts. After any rewrite, use
    `git range-diff` and verify the new head. A conflict-free rebase with equal
-   range diff retains all three prior reviews; record their old-to-new SHA
-   mappings. A manual resolution, unequal range diff, changed generated output,
-   or behavior change requires a fresh Claude, Codex, and Cursor review pass.
+   range diff retains all three prior reviews. The narrow `reviewed_restack`
+   method in `build-branch-stack/references/code-review-loop.md` also applies
+   when its evidence and original-session confirmations cover this rebase.
+   Record the old-to-new SHA mappings. A manual resolution, unmapped inequality, changed
+   generated output, or behavior change requires a fresh Claude, Codex, and
+   Cursor review pass.
    Exact-head forge approval and checks still apply when repository policy
    requires them.
 

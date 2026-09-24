@@ -42,7 +42,7 @@ caller creates or validates and checks out the plan branch first.
    mapping or a fresh pass.
 9. Require the local branch tip, upstream, remote, and latest verified SHA to
    match. Require all three clean reviews for that SHA or recorded
-   equal-range-diff or test-only-closure mappings from all three clean-reviewed
+   valid restack or test-only-closure mappings from all three clean-reviewed
    logical changes.
    Require the parent head to equal its pinned SHA and remain an ancestor.
    Produce the branch handoff evidence. The caller promotes the feature only

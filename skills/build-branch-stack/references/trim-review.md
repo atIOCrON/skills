@@ -90,10 +90,10 @@ reviewed or mapped tip, and ledger path in the manifest.
 
 At the wave boundary, after upstream fixes settle, restack affected descendants
 in dependency order and verify each changed tip. Retain an already proportionate
-trim result when the restack has a valid equal `range-diff` and
-effective-identity mapping for the new parent and branch behavior. A SHA change
-alone does not require another trim pass; manual resolutions, changed behavior,
-or invalid mappings do. Start a branch's correctness pass 1 when its own trim
+trim result when the restack has a valid mapping under `code-review-loop.md`,
+effective-identity evidence, and no new branch-owned machinery. A SHA change
+alone does not require another trim pass; manual resolutions, new machinery,
+changed behavior, or invalid mappings do. Start correctness pass 1 when trim
 is proportionate on its verified tip or valid mapping, even if other branches
 are still trimming.
 Keep descendant correctness reviews provisional until parent mappings settle.

@@ -28,7 +28,7 @@ metadata:
 - Preserve source branches. When review is required for manual conflict
   resolutions, integration-specific behavior, or unexplained deltas, run
   Claude, Codex, and Cursor. Retain all three reviews for unchanged branches
-  and proven equal-range-diff restacks.
+  and proven valid restack mappings.
 - Use the repository's pinned CI container or exact PHP, Composer, architecture,
   and lock versions. Record any unavoidable mismatch.
 - Reuse persistent Composer and pristine-vendor caches only when keyed by exact

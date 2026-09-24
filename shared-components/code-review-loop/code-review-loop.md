@@ -32,7 +32,7 @@ the wave-boundary restack, verification, and review mapping or fresh pass.
 Run at most five completed discovery passes for one plan. A pass counts when
 all three reviewers have produced validated outputs and triage is recorded.
 Targeted closure, same-session format or completion repair, transport retry,
-equal-range-diff or test-only mappings, and an incomplete reviewer launch do
+valid restack or test-only mappings, and an incomplete reviewer launch do
 not count. Preserve the count across task resumptions, implementation shapes,
 and architecture epochs.
 
@@ -75,16 +75,35 @@ Incorrect: “The final pass is running.”\
 Incorrect: “This is the last review cycle.”\
 Retrospectively correct: “Pass 5 was the last required pass; review is complete.”
 
-A conflict-free restack does not require another discovery review when
-`git range-diff` is equal and deterministic identity checks show the logical
-change and behavior under the new parent are unchanged. The patch comparison
-alone is insufficient when an ancestor changed. Verify the new commit, record
-the old-to-new SHA mapping,
-refresh the pack, and retain all three prior clean reviews. Any manual resolution,
-unequal range diff, changed generated output, or intentional behavior change
-requires a fresh three-reviewer pass. Do not treat a generated-artifact
-conflict by itself as a behavioral change when deterministic regeneration
-proves equality.
+A conflict-free restack retains prior clean reviews when `git range-diff` is
+equal and deterministic checks prove the logical change and effective behavior
+under the new parent are unchanged. Verify the new tip, record old-to-new SHA
+mappings, and refresh the pack. An unequal range diff may instead use a
+`reviewed_restack` mapping only when all of these hold:
+
+- Each old child commit maps to one new commit in the same order, with matching
+  stable patch IDs and byte-identical added and deleted lines in each path.
+  No child hunk, file ownership, or commit is added, dropped, or manually
+  resolved.
+- Every range-diff inequality is explained by inherited test context or commit
+  metadata. Inspect the complete old and new tests, not just their changed
+  lines. The parent change is separately verified and reviewed; deterministic
+  checks prove unchanged production and effective behavior under that parent.
+- Verify the exact new tip and directly run every affected test. Give all three
+  original reviewers the old and new ranges, parent delta, unequal hunks, full
+  affected tests, and verification evidence. Each must confirm in its original
+  session that its clean conclusion still applies under the new context.
+
+Record those confirmations, the identity proof, and any intermediate review
+mappings from each directly reviewed SHA in the pack. This focused
+mapping does not count as a discovery pass. Matching patch IDs or passing tests
+alone never establish it. A manual resolution, unexplained inequality, changed
+child behavior or generated output, failed check, unavailable confirmation, or
+reviewer concern requires a fresh three-reviewer pass. Do not treat a
+generated-artifact conflict by itself as a behavioral change when deterministic
+regeneration proves equality; a manual resolution still needs fresh review.
+If the pass cap was reached before this mapping, retain the cap event and pass
+count in the ledger; mark the manifest clean only after all mapping gates pass.
 
 When only explanatory or verification evidence changes, confirm the pinned
 base, commit, and tree SHAs are unchanged. Refresh the pack's evidence and
@@ -160,7 +179,7 @@ For each pass:
 Return `Reviewed and pushed` only when:
 
 - at least one fresh pass from all three reviewers covered the logical change,
-  directly on the current SHA or through recorded equal-range-diff or
+  directly on the current SHA or through recorded valid restack or
   test-only-closure mappings, and no material finding or contradiction remains
   unresolved after targeted closure;
 - all ledger entries are terminal and required closure is complete;
@@ -174,10 +193,10 @@ If the parent head has moved, return `Reviewed provisionally` rather than
 wave boundary, verify the new tip, and map prior reviews or run a fresh pass
 before handoff.
 
-Any ineligible fix commit, manual restack resolution, unequal range diff,
-behavior change, or unexplained SHA mismatch invalidates completion and
-requires verification plus a fresh pass. Equal-range-diff restacks and eligible
-test-only remediations need verification and recorded mappings, not another
+Any ineligible fix commit, manual restack resolution, unexplained range-diff
+inequality, behavior change, or unexplained SHA mismatch invalidates completion
+and requires verification plus a fresh pass. Valid restack and eligible
+test-only mappings need verification and recorded evidence, not another
 discovery review. An unexpected remote source change blocks until the user
 accepts its scope.
 
