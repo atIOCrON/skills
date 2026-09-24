@@ -1,10 +1,14 @@
 # Trim Review
 
-Run this phase after every candidate in a bounded wave is implemented,
-verified, and pushed, and before any correctness discovery pass for that wave.
-Review branches concurrently against their own pinned parent-to-tip diffs.
-An unreviewed or moving parent leaves a descendant provisional; it does not
-pause that descendant's trim review.
+Start a branch's trim as soon as its own tip is verified and pushed and its
+parent SHA is pinned. Launch all eligible branches concurrently, subject only
+to reviewer capacity. Review each pinned parent-to-tip diff. An unfinished or
+moving ancestor leaves a descendant provisional; it does not delay its trim
+pass. A verified descendant may push provisionally on its recorded parent SHA
+even if the ancestor ref advanced, provided the pinned SHA remains the tip's
+ancestor, integrity checks pass, and the push uses an explicit lease against
+the expected remote branch state, including absence for a new branch. Restack
+at the wave boundary.
 
 ## Standards and scope
 
@@ -68,18 +72,31 @@ trim findings or correctness approval.
 
 Fix accepted findings from the earliest affected branch forward. Use the
 normal selective stage, new commit, exact-tip verification, and leased push
-rules. Refresh its pack and run another trim pass on the changed branch until
-no accepted reduction remains. If the same concern recurs after two passes,
-reassess the design checkpoint and resolve its cause instead of polishing
-incrementally. Trim passes are separate from the five-pass correctness cap.
+rules. Within one branch, triage pass N, apply accepted reductions, verify and
+push the new tip, refresh its pack, then start pass N+1 immediately. Do not wait
+solely for an ancestor restack. Passes on different branches may overlap.
+Continue until no accepted reduction remains. If the same concern recurs after
+two passes, reassess the design checkpoint and resolve its cause instead of
+polishing incrementally. Trim passes are separate from the five-pass
+correctness cap.
 
-After upstream trim fixes settle, restack affected descendants in dependency
-order and verify each changed tip. Preserve a trim result across a restack
-only with an equal `range-diff` and evidence that the new parent preserves the
-branch's effective behavior; otherwise run a new trim pass. Record each
-branch's trim status, reviewed or mapped tip, and ledger path in the manifest.
-Start correctness pass 1 for the wave only after every branch has a
-proportionate trim result on its current verified tip or valid mapping. Later
-correctness fixes need another trim pass only if they introduce substantial
-new code or test machinery or invalidate that mapping. A trim result never
-counts as a correctness review.
+For each pass, record its UTC completion time at triage, reviewed SHA, accepted
+fix SHA, and any reason pass N+1 is waiting in the trim ledger. Mark the fix
+SHA pending until its verified push; use `null` only if no fix was accepted.
+Name the concrete missing gate, such as an unverified tip, unpushed tip, failed
+integrity check, or reviewer capacity. Use `null` when no next pass is needed.
+Ancestor movement alone is not a blocker. Record each branch's trim status,
+reviewed or mapped tip, and ledger path in the manifest.
+
+At the wave boundary, after upstream fixes settle, restack affected descendants
+in dependency order and verify each changed tip. Retain an already proportionate
+trim result when the restack has a valid equal `range-diff` and
+effective-identity mapping for the new parent and branch behavior. A SHA change
+alone does not require another trim pass; manual resolutions, changed behavior,
+or invalid mappings do. Start a branch's correctness pass 1 when its own trim
+is proportionate on its verified tip or valid mapping, even if other branches
+are still trimming.
+Keep descendant correctness reviews provisional until parent mappings settle.
+Later correctness fixes need another trim pass only if they introduce
+substantial new code or test machinery or invalidate that mapping. A trim
+result never counts as a correctness review.
