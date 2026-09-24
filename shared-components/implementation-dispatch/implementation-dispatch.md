@@ -53,8 +53,13 @@ For verification or code-review fixes:
    same worker into one request.
 5. Include relevant artifact paths, not long copied transcripts unless needed.
 6. Preserve owned-file boundaries.
-7. Require edits on the current plan branch; the orchestrator creates a new
-   commit after the worker returns.
+7. Normally require edits on the current plan branch; the orchestrator creates
+   a new commit after the worker returns. For a provisional code-review fix,
+   assign a separate checkout at the reviewed SHA and identify the request as
+   provisional. Keep edits uncommitted until all three responses are triaged.
+   Then reconcile the worker's edits with every accepted finding, transfer only
+   triaged changes to the plan branch, and follow normal staging, commit,
+   verification, and push rules.
 
 ## Guardrails
 
