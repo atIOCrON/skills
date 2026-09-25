@@ -311,9 +311,9 @@ before changing the tip. Fix accepted findings from the earliest affected
 branch forward. Defer descendant restacks until upstream fixes settle; they
 may keep reviewing pinned diffs provisionally. Do not hold trim for a restack.
 At the wave boundary, restack descendants, verify tips, and update pins, packs,
-and manifests. Retain correctness reviews only with valid identity mappings;
-manual resolutions, changed behavior, or invalid mappings need a fresh correctness
-pass. Under `trim-review.md`, carry trim only if the new diff remains proportionate.
+and manifests. Retain reviews only through the mappings in `code-review-loop.md`;
+unmapped changes need a fresh correctness pass. Carry trim under `trim-review.md`
+only while the new diff remains proportionate.
 
 At the five-pass cap, finish accepted remediation, verify, push, preserve
 artefacts, and record `review_cap_reached` with ledger evidence. Stop fresh
@@ -351,11 +351,11 @@ proves that every required check applies to the current tip; it does not require
 rerunning an unchanged check. A new SHA or reviewer pass alone is not grounds
 to rerun one. Do not rerun an expensive deterministic check when the capability's
 equivalence rules prove unchanged determining inputs and effective result.
-A conflict-free restack retains reviews through an equal `range-diff` with
-deterministic identity proof, or the narrow `reviewed_restack` test-context
-mapping in `code-review-loop.md`. Record SHA mappings and required confirmations.
-Manual resolutions, unmapped inequalities, changed generated output, or behavior
-need a fresh three-reviewer pass. An unexpected local change needs a scope decision.
+A restack retains reviews through an equal `range-diff` with effective-identity
+proof, or a focused `reviewed_restack` mapping under `code-review-loop.md`.
+That mapping permits a proven generated-metadata-only manual resolution; other
+manual resolutions, unmapped changes, or changed behavior need a fresh pass.
+Record SHA mappings and confirmations. Scope unexpected local changes.
 When an otherwise-clean discovery pass has one accepted finding resolved only
 by an eligible test-only remediation, follow `code-review-loop.md`: verify the
 new SHA, obtain same-session closure from each originating reviewer, and record

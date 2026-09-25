@@ -115,11 +115,11 @@ Record one review entry for each of `claude`, `codex`, and `cursor`. For a
 direct review, set `method` to `direct` and use the reviewed tip for both `sha`
 and `origin_sha`. After a proven mechanical restack, set `method` to
 `equal_range_diff`, set `sha` to the verified new tip, `origin_sha` to the
-directly reviewed old tip, and link the mapping evidence. For the narrow
-unequal test-context case in the build skill's `code-review-loop.md`, use
+directly reviewed old tip, and link the mapping evidence. For either focused
+unequal-restack path in the build skill's `code-review-loop.md`, use
 `reviewed_restack`, set `origin_sha` to each directly reviewed SHA, and link
-any intermediate mappings, the per-commit comparison, current-tip checks, and
-all three focused original-session confirmations. After an eligible test-only
+intermediate mappings, per-commit comparison, current-tip checks, and the
+path's required reviewer confirmations. After an eligible test-only
 remediation, set `method` to `test_only_closure` for all three prior
 reviews, map each `origin_sha` to the verified new `sha`, and link evidence for
 the test-only delta, unchanged production and effective-result identities,
