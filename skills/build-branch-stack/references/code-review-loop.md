@@ -88,8 +88,10 @@ Retrospectively correct: “Pass 5 was the last required pass; review is complet
 A conflict-free restack retains prior clean reviews when `git range-diff` is
 equal and deterministic checks prove the logical change and effective behavior
 under the new parent are unchanged. Verify the new tip, record old-to-new SHA
-mappings, and refresh the pack. An unequal range diff may instead use a
-`reviewed_restack` mapping only when all of these hold:
+mappings, and refresh the pack. For an unequal range diff, use `reviewed_restack`
+only through one of these focused paths:
+
+**Inherited test context.** Require all of these:
 
 - Each old child commit maps to one new commit in the same order, with matching
   stable patch IDs and byte-identical added and deleted lines in each path.
@@ -104,14 +106,28 @@ mappings, and refresh the pack. An unequal range diff may instead use a
   affected tests, and verification evidence. Each must confirm in its original
   session that its clean conclusion still applies under the new context.
 
-Record those confirmations, the identity proof, and any intermediate review
-mappings from each directly reviewed SHA in the pack. This focused
-mapping does not count as a discovery pass. Matching patch IDs or passing tests
-alone never establish it. A manual resolution, unexplained inequality, changed
-child behavior or generated output, failed check, unavailable confirmation, or
-reviewer concern requires a fresh three-reviewer pass. Do not treat a
-generated-artifact conflict by itself as a behavioral change when deterministic
-regeneration proves equality; a manual resolution still needs fresh review.
+**Generated metadata conflict.** A manual resolution may retain prior clean
+reviews only when every resolved hunk changes generated metadata, such as a
+`composer.lock` root content hash, and all of these hold:
+
+- Inspect every resolved hunk and both complete commit ranges. Reproduce the
+  new metadata byte-for-byte from the combined inputs. Confirm unchanged locked
+  packages, dependency graph, and patch order; require byte-identical child
+  source, tests, configuration, and non-metadata generated output.
+- Prove unchanged effective behavior under the new parent. Its own changes must
+  be separately verified and reviewed or validly mapped; until then, retain
+  only provisional descendant status.
+- Verify the exact new tip and directly run affected integration tests. Give one
+  independent reviewer the old/new ranges, resolved hunks, parent delta,
+  identity proof, and test results. Record its focused conclusion on the
+  resolution and parent interaction. A concern blocks the mapping.
+
+Record the chosen path, confirmations, identity proof, and intermediate SHA
+mappings from all three directly reviewed tips in the pack. This focused review
+does not count as a discovery pass. Matching patch IDs or passing tests alone
+never establish the mapping. Unexplained inequality, changed child behavior or
+effective output, failed check, missing proof, or reviewer concern requires a
+fresh three-reviewer pass.
 If the pass cap was reached before this mapping, retain the cap event and pass
 count in the ledger; mark the manifest clean only after all mapping gates pass.
 
@@ -205,12 +221,12 @@ If the parent head has moved, return `Reviewed provisionally` rather than
 wave boundary, verify the new tip, and map prior reviews or run a fresh pass
 before handoff.
 
-Any ineligible fix commit, manual restack resolution, unexplained range-diff
-inequality, behavior change, or unexplained SHA mismatch invalidates completion
-and requires verification plus a fresh pass. Valid restack and eligible
-test-only mappings need verification and recorded evidence, not another
-discovery review. An unexpected remote source change blocks until the user
-accepts its scope.
+Any ineligible fix commit, manual resolution outside the generated-metadata
+path, unexplained range-diff inequality, behavior change, or unexplained SHA
+mismatch invalidates completion and requires verification plus a fresh pass.
+Valid restack and eligible test-only mappings need verification and recorded
+evidence, not another discovery review. An unexpected remote source change
+blocks until the user accepts its scope.
 
 Report pass outcomes and SHAs, closure rounds, fixes, verification, rejected
 or deferred findings, artefact paths, ledger counts, identity checks, skill

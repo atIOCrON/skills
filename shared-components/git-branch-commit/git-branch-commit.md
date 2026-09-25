@@ -70,8 +70,8 @@ first.
    SHA. Create a recoverable backup ref for the old tip.
 2. Rebase with `git rebase --onto <new-base-sha> <old-base-sha> <branch-name>`.
    Stop automatic restacking on conflicts. Inspect and resolve each conflict
-   under the plan's scope, preserving a backup of the old tip; every manual
-   resolution requires a fresh three-reviewer pass.
+   under the plan's scope, preserving a backup of the old tip. Apply the
+   generated-metadata exception in `code-review-loop.md` only with its proof.
 3. Compare ranges with `git range-diff` and deterministic source, tree, and
    effective-output identity checks. Classify each delta as `verbatim`, `mechanical
    regeneration`, or `intentional behavior change`.
@@ -79,9 +79,8 @@ first.
    and review pack. Retain prior reviews only for an equal `range-diff` with
    effective-identity evidence or the narrow `reviewed_restack` mapping in
    `code-review-loop.md`. Record the old-to-new SHA mappings and required
-   evidence. Run a fresh three-reviewer pass for any manual resolution,
-   unmapped inequality, changed generated output, or intentional behavior
-   change.
+   evidence. Run a fresh three-reviewer pass for unmapped manual resolutions,
+   inequalities, changed effective output, or intentional behavior changes.
 
 Use `git-sync-branch.md` for the lease-protected push. A provisional wave
 descendant may be pushed before reviews are clean, but remains in `in_progress/`

@@ -90,12 +90,13 @@ After a restack, link its old/new ranges, `range-diff`, delta classifications,
 and deterministic evidence from `index.md`. Include evidence that the changed
 parent preserves this branch's effective behavior; an equal patch alone is not
 enough. For an equal range diff, record the old-to-new SHA mappings and all
-three retained reviews. For a `reviewed_restack` mapping, also record each
-commit's stable patch ID and exact changed-line comparison, every explained
-inequality, the old and new affected tests, direct exact-tip test results, and
-all three original-session confirmations required by `code-review-loop.md`.
-Require a fresh three-reviewer discovery pass for any unmapped inequality,
-manual resolution, changed generated output, or behavior change.
+three retained reviews. For a `reviewed_restack` mapping, record the chosen
+path and proof under `code-review-loop.md`: per-commit patch IDs and changed-line
+comparison, explained inequalities, affected tests, exact-tip results, and either
+three original-session confirmations for inherited test context or one focused
+independent conclusion
+for a generated metadata conflict. Require a fresh discovery pass for unmapped
+changes or changed behavior or effective output.
 
 After an eligible test-only remediation, link the old and new SHAs, exact-tip
 verification, changed-test results, unchanged production and effective-result
