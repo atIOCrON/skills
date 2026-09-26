@@ -27,9 +27,11 @@ caller creates or validates and checks out the plan branch first.
 6. Use `git-sync-branch.md` to create or update the remote branch at the
    verified SHA.
 7. Keep the feature in `in_progress/`. Build the neutral commit-pinned review
-   pack and preflight the two non-host providers. In a bounded wave, return the
-   verified, pushed candidate so the caller can run trim across the wave before
-   correctness reviews. An unfinished descendant is not release-ready.
+   pack and preflight the two non-host providers. Return the verified, pushed
+   candidate immediately so the caller can dispatch this branch's trim and
+   eligible descendant implementation concurrently. Each branch starts
+   correctness after its own trim; no cross-branch trim barrier applies. An unfinished
+   descendant is not release-ready.
 8. Require a proportionate trim result on the current tip or a valid restack
    mapping before `code-review-loop.md`. Then verify, push, and
    review every accepted fix commit. If it returns `Review cap reached`, preserve
@@ -37,8 +39,8 @@ caller creates or validates and checks out the plan branch first.
    for the caller to move into `review/` with a durable `review_handoff`;
    human disposition remains a separate release gate. If an
    ancestor moves, continue eligible passes against this branch's pinned diff
-   and retain the provisional status until wave-boundary restack and review
-   mapping or a fresh pass.
+   and retain provisional status until upstream fixes settle and restack,
+   verification, and review mapping or a fresh pass finish.
 9. Require local, upstream, remote, and verified tips to match; require the
    pinned parent to be an ancestor. Return clean reviews or a cap record with
    unresolved findings, trim, checks, and exact-tip evidence. The caller moves
@@ -56,7 +58,8 @@ unresolved findings needing implementation, preserve evidence, return the featur
 amend the design or ownership, and continue with a new immutable candidate. For staged/unstaged
 overlap, failed push, unexpected parent movement, revision mismatch, or missing
 artefacts, do not overwrite work; reconcile the integrity failure or block the
-affected chain. Recorded wave parent movement defers restack, not reviews.
+affected chain. Recorded parent movement defers restack until upstream fixes
+settle, not reviews.
 Continue independent branches. Require a human decision only at the
 authority boundary defined by the calling skill.
 

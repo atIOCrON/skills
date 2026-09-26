@@ -14,6 +14,11 @@ stable branch in the canonical release manifest. Use `open-stack-requests` in
 draft mode as branches stabilize when the task authorizes change-request (CR)
 publication; do not wait for release assembly.
 
+Minimize elapsed time to verified release handoff without weakening any gate.
+Dispatch all eligible work up to actual worker, reviewer, and resource capacity.
+Impose no branch-count or wave-size limit; reuse proven equivalent evidence.
+Follow `references/scheduling.md` throughout execution.
+
 ## Resources
 
 Resolve `orchestration_skill_root` to this directory. Read
@@ -27,7 +32,7 @@ reaches `review/`; revisit only its pending cross-branch questions after a teste
 stack snapshot exists. Read `references/release-manifest.md` before creating or
 changing the manifest.
 
-Read `references/trim-review.md` before the wave's review phase.
+Read `references/trim-review.md` before launching the first trim pass.
 
 ## Inputs
 
@@ -61,8 +66,12 @@ Keep one compact table and update it on state, review, commit, restack, or
 verification changes:
 
 ```text
-| Plan | Status | Reviews | Branch | Commit | Next action |
+| Plan | Status | Reviews | Branch | Commit | Next action | Waiting on |
 ```
+
+Record active work and eligible queued work. For every waiting task, name the
+concrete prerequisite, conflicting owner, constrained resource, or capacity
+limit; use `none` when it can start.
 
 Use `Queued`, `In progress`, `Review cap reached`, `In review`, `Release ready`,
 or `Blocked`. `In review` means this slice's implementation, trim, and
@@ -254,18 +263,13 @@ For a selected legacy `plans/<slug>.md`, move it and any sibling
 `<slug>.reviews/`, `<slug>.execution/`, and `<slug>.evidence/` into
 `plans/to_do/<slug>/` first. Stop on a destination collision.
 
-Build bounded review waves. Use about three or four dependent plans as a
-scheduling guide, adjusting for review capacity and coupling. Independent plans
-may proceed concurrently. Within each chain, implement and verify candidates
-in dependency order. A verified parent may support provisional descendant
-work before its reviews finish, including in a later wave. Review status alone
-does not stop descendant work;
-failed verification or an integrity failure does. Pin each parent's exact SHA.
-Keep descendants in `in_progress/` until their own trim and correctness passes
-finish. Ancestor review status does not delay that stage move. Draft CRs may
+Use the scheduling contract to dispatch work as each branch becomes eligible.
+Pin each parent's exact SHA. Failed verification or integrity blocks new
+descendants; unfinished ancestor reviews do not. Keep descendants in
+`in_progress/` until their own trim and correctness passes finish. Draft CRs may
 publish on verified pinned branches; ready CRs still need a qualified chain.
 
-For each plan in the wave:
+For each eligible implementation, dispatch these branch-local steps:
 
 1. Record why it depends on its parent. Fetch and pin the parent branch and SHA.
 2. Create its local plan branch from that parent, or validate the selected
@@ -283,7 +287,7 @@ For each plan in the wave:
    review, commit, and verify the exact SHA in a clean worktree under
    `verification-runner.md`. Final integration checks do not replace candidate
    verification.
-   Create or update the remote branch at the first verified commit. A wave
+   Create or update the remote branch at the first verified commit. A provisional
    descendant may push provisionally on its recorded parent SHA after the
    ancestor ref advances: require that SHA to remain the tip's ancestor, pass
    integrity checks, and use an explicit lease for the expected remote branch
@@ -306,8 +310,8 @@ fixes in an isolated checkout under `code-review-loop.md`. Reconcile all three
 before changing the tip. Fix accepted findings from the earliest affected
 branch forward. Defer descendant restacks until upstream fixes settle; they
 may keep reviewing pinned diffs provisionally. Do not hold trim for a restack.
-At the wave boundary, restack descendants, verify tips, and update pins, packs,
-and manifests. Retain reviews only through `code-review-loop.md` mappings;
+Once upstream fixes settle, restack affected descendants, verify tips, and
+update pins, packs, and manifests. Retain reviews only through `code-review-loop.md` mappings;
 below the cap, unmapped changes need a fresh pass. For an accepted capped
 slice, carry the human decision through a proven unchanged-behavior restack
 mapping and unchanged finding risk; otherwise remediate or seek a new decision.
@@ -327,11 +331,11 @@ validate the manifest. On move failure, return to `in_progress/`. Hand an
 authorized draft CR to `open-stack-requests`; this skill opens no CR.
 
 Before each plan and final handoff, compare every local parent with its pinned
-SHA and refetch any parent already on `origin`. If a parent moves during a wave,
-record the movement and restack affected descendants at the wave boundary after
-upstream fixes settle; their pinned-diff trim and correctness reviews may
-continue. The recorded parent SHA must remain the verified descendant tip's
-ancestor; the parent ref need not still point to it for a provisional push.
+SHA and refetch any parent already on `origin`. If a parent moves, record the
+movement and restack affected descendants once upstream fixes settle. Continue
+eligible pinned-diff trim and correctness reviews. The recorded parent SHA
+must remain an ancestor of the verified descendant tip; the parent ref need
+not still point to it for a provisional push.
 Require the normal integrity checks and an explicit lease against the expected
 remote branch state for that push. On a repair run or unexpected movement,
 restack affected descendants in their current stage and mark current-tip

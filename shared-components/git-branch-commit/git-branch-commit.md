@@ -87,7 +87,7 @@ first.
    mapping when the accepted findings' risk is unchanged; seek a new decision
    only when that applicability cannot be proved.
 
-Use `git-sync-branch.md` for the lease-protected push. A provisional wave
+Use `git-sync-branch.md` for the lease-protected push. A provisional
 descendant stays `in_progress/` until its own trim and correctness reviews
 finish or reach the cap. A routine restack of a completed slice leaves it in
 `review/` while current-tip evidence is refreshed. Stop for an unexpected

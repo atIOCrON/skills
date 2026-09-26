@@ -38,7 +38,7 @@ For a restack, require a recoverable backup ref, the recorded old remote tip,
 the new pinned parent, and exact-tip verification. Push a verified tip with
 pending reviews when it needs a fresh pass; preserve old review evidence and
 keep current-tip review evidence pending until mapped or freshly reviewed.
-A capped slice retains its cap status. A provisional wave descendant stays in
+A capped slice retains its cap status. A provisional descendant stays in
 `in_progress/` until its own review passes finish or
 reach the cap. A routine restack leaves a completed slice in `review/` while
 current-tip evidence is refreshed. Ancestor review status gates ready CRs and
