@@ -1,8 +1,7 @@
 # From Reviewed Plan To Git Handoff
 
-Implement one reviewed vertical-slice plan, push each verified revision, and
-obtain clean reviews from Claude, Codex, and Cursor. Do not create a change
-request.
+Implement one reviewed vertical-slice plan, push verified revisions, and finish
+trim and correctness reviews or reach the correctness cap. Do not create a CR.
 
 ## Inputs
 
@@ -29,30 +28,31 @@ caller creates or validates and checks out the plan branch first.
    verified SHA.
 7. Keep the feature in `in_progress/`. Build the neutral commit-pinned review
    pack and preflight the two non-host providers. In a bounded wave, return the
-   verified, pushed candidate so the caller can run the separate trim phase
-   across the wave before correctness reviews. A provisional descendant cannot
-   be handed off as ready or published.
+   verified, pushed candidate so the caller can run trim across the wave before
+   correctness reviews. An unfinished descendant is not release-ready.
 8. Require a proportionate trim result on the current tip or a valid restack
    mapping before `code-review-loop.md`. Then verify, push, and
    review every accepted fix commit. If it returns `Review cap reached`, preserve
-   the committed, verified, pushed work and artefacts. Keep the feature in
-   `in_progress/` and return that state without another discovery pass. If an
+   the committed, verified, pushed work and artefacts. Return the capped result
+   for the caller to move into `review/` with a durable `review_handoff`;
+   human disposition remains a separate release gate. If an
    ancestor moves, continue eligible passes against this branch's pinned diff
    and retain the provisional status until wave-boundary restack and review
    mapping or a fresh pass.
-9. Require the local branch tip, upstream, remote, and latest verified SHA to
-   match. Require all three clean reviews for that SHA or recorded
-   valid restack or test-only-closure mappings from all three clean-reviewed
-   logical changes.
-   Require the parent head to equal its pinned SHA and remain an ancestor.
-   Produce the branch handoff evidence. The caller promotes the feature only
-   after every ancestor is clean at its pinned SHA.
+9. Require local, upstream, remote, and verified tips to match; require the
+   pinned parent to be an ancestor. Return clean reviews or a cap record with
+   unresolved findings, trim, checks, and exact-tip evidence. The caller moves
+   the slice to `review/` after its own passes finish, regardless of ancestor
+   review status. Release readiness separately requires qualified ancestors
+   and clean reviews or an accepted capped disposition on the current tip.
 
-Do not promote a candidate with failed checks or unresolved material findings.
+Do not mark a candidate release-ready with failed checks or unresolved material findings
+unless an authorized human explicitly accepts each finding on the exact
+review-capped tip in the separate disposition.
 Failed verification or integrity blocks new descendants; a verified candidate
-with review findings may parent provisional descendants within its wave. For
+with review findings may parent provisional descendants. For
 insufficient ownership, in-scope ambiguity, failed verification or review, or
-unresolved findings, preserve evidence, return the feature to `in_progress/`,
+unresolved findings needing implementation, preserve evidence, return the feature to `in_progress/`,
 amend the design or ownership, and continue with a new immutable candidate. For staged/unstaged
 overlap, failed push, unexpected parent movement, revision mismatch, or missing
 artefacts, do not overwrite work; reconcile the integrity failure or block the

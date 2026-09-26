@@ -217,13 +217,19 @@ Return `Reviewed and pushed` only when:
 - the pinned base remains an ancestor.
 
 If the parent head has moved, return `Reviewed provisionally` rather than
-`Reviewed and pushed`. The branch stays in `in_progress/`; restack it at the
-wave boundary, verify the new tip, and map prior reviews or run a fresh pass
-before handoff.
+`Reviewed and pushed`. Restack at the wave boundary and verify the new tip;
+keep an already completed slice in `review/`. Map prior reviews or run a fresh pass
+when below the cap. For a capped branch, carry an accepted human disposition
+through a recorded valid restack mapping only when effective behavior and the
+accepted unresolved findings' risk remain unchanged. Keep the original
+decision SHA and map it to the new verified tip; do not repeat the human decision.
 
 Any ineligible fix commit, manual resolution outside the generated-metadata
 path, unexplained range-diff inequality, behavior change, or unexplained SHA
-mismatch invalidates completion and requires verification plus a fresh pass.
+mismatch invalidates completion and requires verification plus a fresh pass
+when below the cap. At the cap, remediate or seek a new human decision only if
+the old acceptance cannot be proven applicable to the new verified tip. Never
+mark automated reviews clean on the strength of human acceptance.
 Valid restack and eligible test-only mappings need verification and recorded
 evidence, not another discovery review. An unexpected remote source change
 blocks until the user accepts its scope.

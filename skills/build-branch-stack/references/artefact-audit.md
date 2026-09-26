@@ -38,10 +38,12 @@ define an outcome, substantial enough for the planning workflow, and not
 already covered. Do not turn a rejected or deferred review finding into a plan
 solely because it appears in an artefact. If evidence is insufficient, record
 what remains unknown rather than inventing a plan. A demonstrated acceptance
-failure, an unimplemented acceptance condition, or an unresolved material
-review finding is a current-plan fix:
-return the affected feature and descendants to `in_progress/` for verification
-and review, then repeat the affected branch checks, manifest refresh, and audit.
+failure, an unimplemented acceptance condition, or a confirmed defect needing
+code is a current-plan fix: return its owner to `in_progress/`, then restack
+affected descendants in their current stage. At the review cap, record
+unresolved findings as pending human disposition; do not demote a completed
+slice solely because that decision is pending. Repeat affected checks and audit
+after a fix.
 Repeat release-candidate checks when their evidence was invalidated. Do not move
 that gap to the backlog. A pending external or not-yet-runnable release-candidate
 check alone is not a current-plan fix.

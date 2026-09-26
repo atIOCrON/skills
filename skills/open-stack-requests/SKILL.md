@@ -14,9 +14,9 @@ pass. Do not implement plans or push branches.
 
 ## Inputs
 
-Require the canonical release manifest, its plan and evidence paths, local and
-remote branches, pinned parent SHAs, verified tips, review evidence from all
-three providers or valid review mappings, and intended base branch.
+Require the canonical manifest, plan and evidence paths, branches, pinned
+parent SHAs, verified tips, and intended base branch. Ready mode also needs
+current-tip reviews or an accepted capped disposition.
 Infer the forge from `origin` only when unambiguous. Read
 `references/change-request-lifecycle.md`,
 `references/orchestration-change-requests.md`,
@@ -27,25 +27,24 @@ Read `references/release-manifest.md` and validate the manifest first.
 Choose one mode:
 
 - `draft`: require a verified, pushed branch, passed branch-level agent checks,
-  clean reviews from Claude, Codex, and Cursor, and every ancestor clean at its
-  pinned SHA. Its plan may be in
-  `plans/in_progress/` or `plans/review/`. The full candidate need not be frozen
-  or integrated.
+  and a pinned parent that is an ancestor. Its plan may be in
+  `plans/in_progress/` or `plans/review/`; ancestor reviews and the full
+  candidate may still be pending.
 - `ready`: require the plan under `plans/review/`, a frozen manifest, final
-  stack checks, and applicable forge checks on the exact source SHA.
+  stack checks, current-tip trim and reviews or accepted capped disposition,
+  qualified pinned ancestors, and forge checks on the exact source SHA.
 
 Exclude confirmed merged branches under `plans/done/`. After a repair run,
 reload the canonical manifest; plan paths may have moved during repair.
 
 ## Workflow
 
-1. Fetch the base, dependency parents, and source branches. Require every
-   ancestor to be clean at its pinned SHA and each parent head to equal its
-   pinned SHA. Require each local, upstream, and
-   remote source tip to equal its verified SHA. Require clean reviews from all
-   three providers on that SHA or recorded mappings for all three, and require
-   the pinned parent to be its ancestor. In ready mode, require final stack checks and artefacts to
-   cover those exact SHAs. If any
+1. Fetch the base, parents, and source branches. Require local, upstream, and
+   remote source tips to equal the verified SHA, and the pinned parent to be
+   its ancestor. In ready mode, require each parent head at its pin, every
+   required ancestor's review gate, proportionate trim, clean reviews or an
+   accepted capped disposition on each current tip, and final stack checks
+   and artefacts on those SHAs. If any
    check failed or SHA changed, return affected ready CRs and descendants to
    draft before sending their branches to `build-branch-stack` for restack,
    verification, and review. An unexpected source change also needs the
@@ -67,7 +66,8 @@ reload the canonical manifest; plan paths may have moved during repair.
    verification, review, and final stack checks. Resume at step 1, then
    refresh the CRs.
 5. Refetch parents and CRs. Require local, upstream, verified, and CR source
-   SHAs to match; require all three direct clean reviews or their mappings;
+   SHAs to match; require automation-clean reviews or an accepted capped
+   disposition on each exact tip;
    and require each target head to equal its pinned parent.
    Mark CRs ready and request qualified independent reviewers only after all
    applicable checks pass. On movement, return affected ready CRs to draft

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 import hashlib
 import json
 import pathlib
@@ -20,6 +21,8 @@ CHECK_METHODS = {"direct", "identity_reuse"}
 REVIEW_STATES = {"pending", "clean", "changes_required", "waived"}
 REVIEW_METHODS = {"direct", "equal_range_diff", "reviewed_restack", "test_only_closure"}
 REVIEW_PROGRESS_STATES = {"pending", "clean", "review_cap_reached", "waived"}
+HUMAN_DISPOSITION_STATES = {"pending", "accepted", "rejected"}
+DISPOSITION_MAPPING_METHODS = {"equal_range_diff", "reviewed_restack"}
 REVIEWERS = {"claude", "codex", "cursor"}
 CR_STATES = {"none", "draft", "ready", "merged", "closed"}
 
@@ -30,6 +33,18 @@ def is_text(value: Any) -> bool:
 
 def is_sha(value: Any) -> bool:
     return isinstance(value, str) and bool(SHA_RE.fullmatch(value))
+
+
+def is_utc_timestamp(value: Any) -> bool:
+    if not isinstance(value, str) or not re.fullmatch(
+        r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", value
+    ):
+        return False
+    try:
+        datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+    except ValueError:
+        return False
+    return True
 
 
 def scope_payload(data: dict[str, Any]) -> dict[str, Any]:
@@ -110,7 +125,7 @@ def validate(data: Any) -> list[str]:
     seen: set[str] = set()
     saw_waived_review = False
     available = {base.get("branch")} if is_text(base.get("branch")) else set()
-    clean_lineage: dict[str, bool] = {base.get("branch"): True} if is_text(base.get("branch")) else {}
+    handoff_lineage: dict[str, bool] = {base.get("branch"): True} if is_text(base.get("branch")) else {}
     parent_tips = {base.get("branch"): base.get("sha")} if is_text(base.get("branch")) else {}
     for index, branch in enumerate(branches):
         prefix = f"branches[{index}]"
@@ -211,6 +226,80 @@ def validate(data: Any) -> list[str]:
                     errors.append(f"{trim_prefix}.evidence is required when complete")
             elif trim_review.get("sha") is not None or trim_review.get("evidence") is not None:
                 errors.append(f"{trim_prefix} pending status requires null sha and evidence")
+
+        review_handoff = branch.get("review_handoff")
+        if review_handoff is not None:
+            handoff_prefix = f"{prefix}.review_handoff"
+            if not isinstance(review_handoff, dict):
+                errors.append(f"{handoff_prefix} must be an object")
+            else:
+                if not is_sha(review_handoff.get("sha")):
+                    errors.append(f"{handoff_prefix}.sha must be a full SHA")
+                if review_handoff.get("outcome") not in {"clean", "review_cap_reached"}:
+                    errors.append(f"{handoff_prefix}.outcome is invalid")
+                if not is_text(review_handoff.get("evidence")):
+                    errors.append(f"{handoff_prefix}.evidence is required")
+
+        disposition = branch.get("human_disposition")
+        accepted_disposition = False
+        if disposition is not None:
+            disposition_prefix = f"{prefix}.human_disposition"
+            if not isinstance(disposition, dict):
+                errors.append(f"{disposition_prefix} must be an object")
+                disposition = {}
+            disposition_status = disposition.get("status")
+            if disposition_status not in HUMAN_DISPOSITION_STATES:
+                errors.append(f"{disposition_prefix}.status is invalid")
+            findings = disposition.get("unresolved_findings")
+            if not isinstance(findings, list) or not all(is_text(item) for item in findings):
+                errors.append(f"{disposition_prefix}.unresolved_findings must be an array of non-empty strings")
+            mappings = disposition.get("mappings", [])
+            if not isinstance(mappings, list):
+                errors.append(f"{disposition_prefix}.mappings must be an array")
+                mappings = []
+            if disposition_status in {"accepted", "rejected"}:
+                if not is_sha(disposition.get("sha")):
+                    errors.append(f"{disposition_prefix}.sha must be a full SHA")
+                for field in ("decided_by", "reason", "evidence"):
+                    if not is_text(disposition.get(field)):
+                        errors.append(f"{disposition_prefix}.{field} is required")
+                if not is_utc_timestamp(disposition.get("decided_at")):
+                    errors.append(f"{disposition_prefix}.decided_at must be a UTC timestamp")
+                if not isinstance(review_progress, dict) or review_progress.get("status") != "review_cap_reached":
+                    errors.append(f"{disposition_prefix} requires review_cap_reached status")
+                if disposition_status == "accepted":
+                    mapped_sha = disposition.get("sha")
+                    mapping_valid = is_sha(mapped_sha)
+                    for mapping_index, mapping in enumerate(mappings):
+                        mapping_prefix = f"{disposition_prefix}.mappings[{mapping_index}]"
+                        if not isinstance(mapping, dict):
+                            errors.append(f"{mapping_prefix} must be an object")
+                            mapping_valid = False
+                            continue
+                        if mapping.get("method") not in DISPOSITION_MAPPING_METHODS:
+                            errors.append(f"{mapping_prefix}.method is invalid")
+                            mapping_valid = False
+                        if not is_text(mapping.get("evidence")):
+                            errors.append(f"{mapping_prefix}.evidence is required")
+                            mapping_valid = False
+                        if mapping.get("from_sha") != mapped_sha:
+                            errors.append(f"{mapping_prefix}.from_sha must continue the disposition SHA chain")
+                            mapping_valid = False
+                        next_sha = mapping.get("to_sha")
+                        if not is_sha(next_sha) or next_sha == mapped_sha:
+                            errors.append(f"{mapping_prefix}.to_sha must be a different full SHA")
+                            mapping_valid = False
+                        mapped_sha = next_sha
+                    accepted_disposition = mapping_valid and mapped_sha == branch.get("tip_sha")
+                elif mappings:
+                    errors.append(f"{disposition_prefix} rejected status cannot have mappings")
+            elif disposition_status == "pending":
+                if any(disposition.get(field) is not None for field in (
+                    "sha", "decided_by", "decided_at", "reason", "evidence"
+                )):
+                    errors.append(f"{disposition_prefix} pending status requires null decision fields")
+                if mappings:
+                    errors.append(f"{disposition_prefix} pending status cannot have mappings")
 
         checks = branch.get("checks")
         if not isinstance(checks, list):
@@ -348,6 +437,32 @@ def validate(data: Any) -> list[str]:
             ):
                 errors.append(f"{prefix}.review_progress clean status requires a proportionate trim result")
 
+        automation_clean = (
+            clean_on_tip
+            and isinstance(review_progress, dict)
+            and review_progress.get("status") == "clean"
+        )
+        checks_on_tip = all(
+            not isinstance(check, dict)
+            or check.get("kind") != "agent"
+            or (check.get("status") == "passed" and check.get("sha") == branch.get("tip_sha"))
+            for check in checks
+        )
+        handoff_on_tip = (
+            (automation_clean or accepted_disposition)
+            and isinstance(trim_review, dict)
+            and trim_review.get("status") == "proportionate"
+            and trim_review.get("sha") == branch.get("tip_sha")
+            and checks_on_tip
+        )
+        ancestors_ready = (
+            handoff_lineage.get(parent_branch, False)
+            and parent.get("sha") == parent_tips.get(parent_branch)
+        )
+        plan = branch.get("plan")
+        if is_text(plan) and plan.startswith("plans/review/") and not isinstance(review_handoff, dict):
+            errors.append(f"{prefix}.plan in review requires review_handoff")
+
         change_request = branch.get("change_request")
         if not isinstance(change_request, dict):
             errors.append(f"{prefix}.change_request must be an object")
@@ -356,28 +471,32 @@ def validate(data: Any) -> list[str]:
                 errors.append(f"{prefix}.change_request.state is invalid")
             if change_request.get("url") is not None and not is_text(change_request.get("url")):
                 errors.append(f"{prefix}.change_request.url must be null or a URL")
-            if change_request.get("state") == "ready" and not (
-                clean_lineage.get(parent_branch, False)
-                and parent.get("sha") == parent_tips.get(parent_branch)
-            ):
-                errors.append(f"{prefix}.change_request requires clean ancestors at pinned SHAs")
+            if change_request.get("state") == "ready" and not ancestors_ready:
+                errors.append(f"{prefix}.change_request requires accepted or clean ancestors at pinned SHAs")
+            if change_request.get("state") == "ready" and not handoff_on_tip:
+                errors.append(f"{prefix}.change_request requires branch handoff on tip_sha")
             if (
                 change_request.get("state") == "ready"
                 and isinstance(trim_review, dict)
                 and trim_review.get("status") != "proportionate"
             ):
                 errors.append(f"{prefix}.change_request requires a proportionate trim result")
+            if is_text(plan) and plan.startswith("plans/done/") and change_request.get("state") != "merged":
+                errors.append(f"{prefix}.plan in done requires a merged change_request")
 
         if state in {"frozen", "staged", "accepted", "released"}:
             tip_sha = branch.get("tip_sha")
             trim_states = {"proportionate", "waived"} if waiver_completion else {"proportionate"}
+            progress_states = {"clean", "waived"} if waiver_completion else {"clean", "review_cap_reached"}
             review_states = {"clean", "waived"} if waiver_completion else {"clean"}
             if isinstance(trim_review, dict) and trim_review.get("status") not in trim_states:
                 errors.append(f"{prefix}.trim_review is incomplete for release state {state}")
-            if isinstance(review_progress, dict) and review_progress.get("status") not in review_states:
+            if isinstance(review_progress, dict) and review_progress.get("status") not in progress_states:
                 errors.append(f"{prefix}.review_progress is incomplete for release state {state}")
             for review_index, review in enumerate(reviews):
                 if not isinstance(review, dict):
+                    continue
+                if not waiver_completion and accepted_disposition:
                     continue
                 if review.get("status") not in review_states or review.get("sha") != tip_sha:
                     errors.append(
@@ -394,23 +513,15 @@ def validate(data: Any) -> list[str]:
                         errors.append(
                             f"{prefix}.checks[{check_index}] agent check must pass on tip_sha"
                         )
+            # Older released manifests predate the separate progress and trim fields.
+            legacy_released = state == "released" and review_progress is None and trim_review is None
+            if not waiver_completion and not legacy_released and not (ancestors_ready and handoff_on_tip):
+                errors.append(f"{prefix} requires branch handoff and accepted or clean ancestors for release state {state}")
 
         if is_text(source):
             available.add(source)
             parent_tips[source] = branch.get("tip_sha")
-            clean_lineage[source] = (
-                clean_lineage.get(parent_branch, False)
-                and parent.get("sha") == parent_tips.get(parent_branch)
-                and clean_on_tip
-                and (
-                    not isinstance(trim_review, dict)
-                    or trim_review.get("status") == "proportionate"
-                )
-                and (
-                    not isinstance(review_progress, dict)
-                    or review_progress.get("status") == "clean"
-                )
-            )
+            handoff_lineage[source] = ancestors_ready and handoff_on_tip
 
     exclusions = data.get("exclusions")
     if not isinstance(exclusions, list):
