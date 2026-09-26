@@ -51,13 +51,14 @@ below. Never amend a published commit.
 
 ## Reviewed Revision
 
-Before handoff, require the local branch tip, upstream, fetched remote tip, and
-latest verified SHA to match. Require clean reviews from all three reviewers on
-that SHA or valid restack or test-only-closure mappings from all three
-prior reviews.
-Require the parent head to equal its pinned SHA and remain an ancestor. A
-changed parent needs a restack, verification, review-policy decision, and
-synchronized push.
+Before `review/` handoff, require the local, upstream, fetched remote, and
+verified tips to match, plus proportionate trim and clean correctness reviews
+or the exhausted cap after fixes and closure. Keep automated review state and
+unresolved findings. Require the pinned parent SHA to be an ancestor; its ref
+may have advanced. Ready CRs and release progression require the parent head
+at its pin and clean current-tip reviews or an accepted capped disposition.
+Restack a changed parent, verify, map reviews or run a fresh pass when allowed,
+and synchronize the new tip before release progression.
 
 ## Restack
 
@@ -79,12 +80,17 @@ first.
    and review pack. Retain prior reviews only for an equal `range-diff` with
    effective-identity evidence or the narrow `reviewed_restack` mapping in
    `code-review-loop.md`. Record the old-to-new SHA mappings and required
-   evidence. Run a fresh three-reviewer pass for unmapped manual resolutions,
-   inequalities, changed effective output, or intentional behavior changes.
+   evidence. Unmapped manual resolutions, inequalities, changed effective
+   output, or behavior changes need a fresh three-reviewer pass when below the
+   cap. At the cap, keep the actual review state and finish exact-tip verification.
+   Carry the accepted human disposition through a valid behavior-preserving
+   mapping when the accepted findings' risk is unchanged; seek a new decision
+   only when that applicability cannot be proved.
 
 Use `git-sync-branch.md` for the lease-protected push. A provisional wave
-descendant may be pushed before reviews are clean, but remains in `in_progress/`
-until fresh reviews or valid mappings cover its verified tip and every ancestor
-is clean. Stop for an unexpected source change, an existing ready change
-request, or an unclassified delta. Report branch, parent and candidate SHAs,
+descendant stays `in_progress/` until its own trim and correctness reviews
+finish or reach the cap. A routine restack of a completed slice leaves it in
+`review/` while current-tip evidence is refreshed. Stop for an unexpected
+source change, an existing ready change request, or an unclassified delta.
+Report branch, parent and candidate SHAs,
 verification, restack evidence, and unrelated local files.

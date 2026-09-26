@@ -132,7 +132,11 @@ For each ordered branch:
    in `build-branch-stack/references/code-review-loop.md` also apply with their
    required evidence and confirmations. Record old-to-new SHA mappings.
    Unmapped manual resolutions or inequalities, changed effective output, or
-   behavior changes require a fresh Claude, Codex, and Cursor pass.
+   behavior changes require a fresh Claude, Codex, and Cursor pass when below
+   the cap. For a capped slice, carry its accepted human disposition through a
+   proven unchanged-behavior mapping only while each accepted finding's risk
+   remains unchanged. Otherwise return it to the build workflow for remediation
+   or a new decision before merging. Keep automated review results truthful.
    Exact-head forge approval and checks still apply when repository policy
    requires them.
 

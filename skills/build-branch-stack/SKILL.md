@@ -64,21 +64,15 @@ verification changes:
 | Plan | Status | Reviews | Branch | Commit | Next action |
 ```
 
-Use `Queued`, `In progress`, `Review cap reached`, `Blocked`, or `Ready for human review`.
-A wave descendant stays `In progress` with its provisional parent in `Next action`
-until every ancestor is clean at its pinned SHA. `Review cap reached` ends passes
-for that plan in this run; keep it in `in_progress/` and unpublished. Existing
-wave descendants may continue provisionally, but start no new wave from it.
-`Ready for human review` requires clean pinned ancestors, the feature in `review/`,
-proportionate trim on its tip, a pinned parent, and one verified final SHA matching
-local, upstream, and remote tips. It also requires preserved artefacts, passed
-branch-level agent checks, recorded human, external, and pending release-candidate
-checks, and three clean reviews on that SHA or valid restack or test-only mappings.
-Final stack checks gate release progression, not feature status. Pending external
-or not-yet-runnable release-candidate checks do not make the branch `Blocked`.
-Number review passes. Call an ongoing pass “pass N,” “the current pass,” or “the
-next fresh pass”; call it “final,” “last,” “closing,” or “concluding” only after
-all completion conditions are satisfied.
+Use `Queued`, `In progress`, `Review cap reached`, `In review`, `Release ready`,
+or `Blocked`. `In review` means this slice's implementation, trim, and
+correctness passes finished or reached the cap; it does not depend on ancestor
+review decisions or descendants. Record the transition SHA in `review_handoff`.
+`Release ready` requires current-tip checks, clean reviews or accepted capped
+disposition, qualified pinned ancestors, and final stack checks. A routine
+restack makes current-tip evidence pending without changing `In review`.
+Number review passes. Call an ongoing pass “pass N” or “next fresh pass”; use
+“final,” “last,” or “closing” only after all completion conditions are satisfied.
 
 ## Autonomous Decision Authority
 
@@ -171,16 +165,15 @@ confirmed defect with a viable, non-repeated disposition. Require a human only
 when every viable option crosses the authority boundary above.
 
 Run at most five completed fresh three-reviewer discovery passes for one plan.
-A pass counts when all three validated outputs have been triaged. Targeted
-closure, same-session output repair, transport retry, deterministic review
-mapping, and an incomplete reviewer launch do not count. The count persists
-across task resumptions, implementation shapes, and architecture epochs. After
-pass 5, finish its accepted in-scope remediation through normal commit,
-verification, push, and targeted-closure rules. If the resulting tip does not
-meet review completion without another discovery pass, do not start pass 6:
-record `review_cap_reached` in the ledger and manifest. Keep the feature in
-`in_progress/`; continue existing wave descendant reviews and independent plans. This cap
-does not waive a finding, review, verification, or readiness gate.
+A pass counts after all three validated outputs are triaged. Closure, output
+repair, transport retry, review mapping, and incomplete launches do not count.
+The count persists across resumptions, designs, and epochs. After pass 5,
+finish accepted remediation, verification, push, and targeted closure. If
+another discovery pass would be needed, record `review_cap_reached`; do not
+start pass 6. Move the verified pushed slice to `review/` with a capped
+`review_handoff` once accepted fixes and closure finish. Seek a separate human
+disposition for release readiness; preserve automated review state and follow
+`release-manifest.md`.
 
 ## Readiness
 
@@ -264,11 +257,13 @@ For a selected legacy `plans/<slug>.md`, move it and any sibling
 Build bounded review waves. Use about three or four dependent plans as a
 scheduling guide, adjusting for review capacity and coupling. Independent plans
 may proceed concurrently. Within each chain, implement and verify candidates
-in dependency order. A verified, unreviewed parent may support a provisional
-descendant in the same wave. A review finding does not stop descendant work;
+in dependency order. A verified parent may support provisional descendant
+work before its reviews finish, including in a later wave. Review status alone
+does not stop descendant work;
 failed verification or an integrity failure does. Pin each parent's exact SHA.
-Keep provisional descendants in `in_progress/`; do not publish their CRs or
-mark them ready for human review.
+Keep descendants in `in_progress/` until their own trim and correctness passes
+finish. Ancestor review status does not delay that stage move. Draft CRs may
+publish on verified pinned branches; ready CRs still need a qualified chain.
 
 For each plan in the wave:
 
@@ -277,7 +272,8 @@ For each plan in the wave:
    existing plan branch with `git-branch-commit.md`, then move its feature from
    `to_do/` to `in_progress/` before implementation. On a repair run, verify
    the existing branch and manifest instead of recreating it; move only
-   affected features and descendants back to `in_progress/` when needed.
+   affected features to `in_progress/` only when implementation work is needed;
+   restack descendants in their current stage.
 3. Follow `from-reviewed-plan-to-git-handoff.md` through the verified candidate.
    Require the design checkpoint in `plan-implement.md` before editing. Resolve
    cohesion or architecture changes under the rules above. Keep verification
@@ -311,27 +307,24 @@ before changing the tip. Fix accepted findings from the earliest affected
 branch forward. Defer descendant restacks until upstream fixes settle; they
 may keep reviewing pinned diffs provisionally. Do not hold trim for a restack.
 At the wave boundary, restack descendants, verify tips, and update pins, packs,
-and manifests. Retain reviews only through the mappings in `code-review-loop.md`;
-unmapped changes need a fresh correctness pass. Carry trim under `trim-review.md`
-only while the new diff remains proportionate.
+and manifests. Retain reviews only through `code-review-loop.md` mappings;
+below the cap, unmapped changes need a fresh pass. For an accepted capped
+slice, carry the human decision through a proven unchanged-behavior restack
+mapping and unchanged finding risk; otherwise remediate or seek a new decision.
+Carry trim only while the new diff remains proportionate.
 
-At the five-pass cap, finish accepted remediation, verify, push, preserve
-artefacts, and record `review_cap_reached` with ledger evidence. Stop fresh
-passes for that plan. Descendants may review provisionally; start no new wave
-from it. Keep the feature out of `review/` and do not open its CR.
+At the five-pass cap, finish accepted remediation and closure, verify, push,
+and preserve artefacts. Record unresolved findings and `review_cap_reached`;
+seek human disposition separately for release readiness.
 
-Finish handoff only when the plan and pinned ancestors are clean. Once trim, all
-three correctness reviews, and required branch checks pass, preserve `.reviews/`,
-`.evidence/`, and `.execution/` before removing a worktree. Record pending human
-and external checks with owners and procedures; record release-candidate checks
-blocked by unbuilt descendants with prerequisites. Confirm local, upstream, and
-remote tips match, move the feature to `review/`, set `review_progress.status`
-to `clean`, refresh paths, and validate the manifest. A missing branch-check
-prerequisite blocks handoff, not merely release. On move or manifest failure,
-return to `in_progress/` and report it. If CR creation is authorized, hand the
-branch to `open-stack-requests` in draft mode; otherwise record publication as
-next action. This skill does not open the CR. Use the branch as a parent only
-where dependency evidence requires it.
+Move each slice to `review/` when its verified pushed tip has proportionate
+trim, passed branch checks, and clean correctness reviews or the exhausted cap.
+Require a valid pinned parent, not ancestor review completion. Preserve
+`.reviews/`, `.evidence/`, and `.execution/`; record `review_handoff` with the
+transition SHA, outcome, and evidence. Record pending human, external, and
+release-candidate checks with owners and prerequisites. Refresh paths and
+validate the manifest. On move failure, return to `in_progress/`. Hand an
+authorized draft CR to `open-stack-requests`; this skill opens no CR.
 
 Before each plan and final handoff, compare every local parent with its pinned
 SHA and refetch any parent already on `origin`. If a parent moves during a wave,
@@ -341,9 +334,9 @@ continue. The recorded parent SHA must remain the verified descendant tip's
 ancestor; the parent ref need not still point to it for a provisional push.
 Require the normal integrity checks and an explicit lease against the expected
 remote branch state for that push. On a repair run or unexpected movement,
-move only affected descendants to `in_progress/` before restacking. Keep each
-candidate there through verification and code review. Synchronize tips with
-explicit leases.
+restack affected descendants in their current stage and mark current-tip
+evidence pending. Move a slice to `in_progress/` only when implementation work
+is needed. Synchronize tips with explicit leases.
 Classify each delta as `verbatim`, `mechanical regeneration`, or
 `intentional behavior change`. Verify every new tip with the smallest sufficient
 combination of fresh checks and deterministic evidence reuse. Verification
@@ -381,8 +374,8 @@ invalidated a review mapping:
    completed feature out of `review/`, but they block freeze, ready CRs, staging,
    and merge. If a required final stack check is absent or cannot run for a
    complete candidate, block release progression. If it fails, return the
-   affected feature and demonstrated descendants to `in_progress/` for a fix,
-   fresh verification, and code review. Record human or external acceptance as
+   owning slice to `in_progress/` when a fix is needed; restack and re-verify
+   affected descendants in their current stage. Record human or external acceptance as
    pending with its procedure and owner when it cannot yet be performed.
 2. For a complete candidate, when
    `scripts/codex/protected_full_pipeline.py` exists, run it with the committed
@@ -402,12 +395,13 @@ the last plan. Never publish or refresh protected seed or baseline data here.
 Treat a lock mismatch or unexpected output as a blocker.
 
 Leave completed features in `review/` while release-candidate or human and
-external checks are pending. If any later check reveals a defect, return the
-affected feature and demonstrated descendants to `in_progress/` for a fix,
-fresh verification, and code review. Refresh the canonical manifest at its
+external checks are pending. If a later check reveals a defect, return its
+owner to `in_progress/` for a fix; restack affected descendants without
+changing their stage unless they need implementation work. Refresh the canonical manifest at its
 stable release path and check every recorded plan and artefact path. Freeze only
 when the user selects a complete candidate, final stack checks pass, and all
-included branch tips, all three clean reviews or mappings, and required agent
+included branch tips, automation-clean reviews or SHA-pinned accepted capped
+dispositions, and required agent
 checks agree. Record the freeze authorization and scope digest, then validate
 the manifest. Do not add scope after freeze. A critical addition requires an
 authorized thaw, a new digest, and invalidation of affected integration,
@@ -465,11 +459,14 @@ separately from branch readiness.
   conflict-free restacks with valid mappings or eligible test-only remediations
   with the identity, verification, and closure evidence required by
   `code-review-loop.md`.
-- Never promote a candidate with failed checks or unresolved material findings.
+- Never promote a candidate with failed checks or unresolved material findings
+  that the recorded human disposition has not explicitly accepted on its exact
+  review-capped SHA.
   Failed verification or integrity blocks new descendants. A verified candidate
-  with review findings may parent only provisional descendants in its wave.
-  Preserve evidence, identify the owning slice and root cause, return affected
-  slices to `in_progress/`,
+  with review findings may parent provisional descendants; release readiness
+  still waits for a qualified ancestor chain.
+  Preserve evidence, identify the owning slice and root cause, return slices
+  needing implementation fixes to `in_progress/`,
   correct the implementation or recorded design, and verify and review a new
   immutable candidate. Integrity failures block the affected chain until safely
   reconciled; continue independent work. When the full-pipeline export test
@@ -488,10 +485,9 @@ Save and validate the canonical manifest at
 path. It records the base, ordered branches, dependencies, targets, tips,
 surfaces, checks, all three review mappings, CRs, exclusions, freeze, integration,
 acceptance, and deployment state; link detailed evidence instead of duplicating
-it. Report
-`Verified and pushed, ready for human review` for every feature that meets the
-branch-level criteria, even when release-candidate checks are legitimately
-pending. Separately report whether release progression is ready or blocked,
+it. Report each slice's stage, `review_handoff`, current-tip review and check
+state, and release readiness separately. State pending human dispositions,
+restacks, and release-candidate checks with prerequisites. Separately report whether release progression is ready or blocked,
 including each pending check and prerequisite. Also report each feature's audit
 ledger path and decisions, any specifications, slice maps, or backlog plans
 created or reused, and incomplete audit work. State whether each draft CR was

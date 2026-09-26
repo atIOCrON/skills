@@ -53,12 +53,12 @@ Include:
 - release-progression status and each pending release-candidate check with its
   prerequisite;
 - `## Skill Feedback For User Review` with entries or `- None`;
-- final branch state: branch-level blocker, `Review cap reached`, or `Verified
-  and pushed, ready for human review`. `Review cap reached` keeps the feature in
-  `in_progress/` and prevents it from parenting dependent work, but the build
-  continues with eligible independent plans. A legitimately pending
-  release-candidate check is reported separately and does not change that
-  branch state.
+- final branch state: branch-level blocker, `Review cap reached`, or `In
+  review`. After accepted fixes, closure, proportionate trim, and exact-tip
+  verification, both completed states enter `review/`. A capped slice awaits
+  human disposition for release readiness. Its verified pinned tip may parent
+  dependent work while review or disposition remains pending. Report pending
+  release-candidate checks separately; they do not change the slice stage.
 
 Keep the handoff concise and cite artifact paths rather than copying large
 review outputs.

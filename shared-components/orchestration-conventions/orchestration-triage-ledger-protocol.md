@@ -114,10 +114,12 @@ After the fifth completed discovery pass, add a durable marker to the ledger:
 - remaining_review_requirement: <why completion still needs another discovery pass>
 ```
 
-The cap marker is a plan-level workflow outcome, not a finding status and not a
-whole-run blocker. Keep non-terminal concern rows unchanged, keep the feature in
-`in_progress/`, and do not start pass 6. The caller leaves dependent descendants
-queued and continues the next eligible independent plan.
+The cap marker is a plan-level workflow outcome, not a finding status or a
+whole-run blocker. Keep non-terminal concern rows unchanged and do not start
+pass 6. The caller finishes accepted fixes and closure, verifies and pushes the
+tip, then moves the slice to `review/` if trim is proportionate and branch
+checks pass. Record unresolved findings for a separate human disposition.
+Dependent work may continue on the verified pinned tip.
 
 ## Consolidation
 

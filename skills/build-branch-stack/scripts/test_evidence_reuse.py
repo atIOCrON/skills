@@ -251,6 +251,14 @@ class ReleaseManifestReuseTest(unittest.TestCase):
             "integration": None,
         }
 
+    @staticmethod
+    def set_review_handoff(branch: dict, outcome: str = "clean") -> None:
+        branch["review_handoff"] = {
+            "sha": branch["tip_sha"],
+            "outcome": outcome,
+            "evidence": "reviews/review-handoff.md",
+        }
+
     def test_release_check_accepts_identity_reuse(self) -> None:
         manifest = self.manifest()
         manifest["state"] = "frozen"
@@ -272,6 +280,11 @@ class ReleaseManifestReuseTest(unittest.TestCase):
                 "evidence": "reviews/code-review-triage-ledger.md",
             }
         )
+        manifest["branches"][0]["trim_review"] = {
+            "status": "proportionate",
+            "sha": tip_sha,
+            "evidence": "reviews/trim-review-ledger.md",
+        }
         manifest["freeze"] = {
             "frozen_at": "2026-09-22T00:00:00Z",
             "authorized_by": "test",
@@ -338,14 +351,24 @@ class ReleaseManifestReuseTest(unittest.TestCase):
 
     def test_release_review_accepts_cap_reached(self) -> None:
         manifest = self.manifest()
-        manifest["branches"][0]["review_progress"].update(
+        branch = manifest["branches"][0]
+        branch["review_progress"].update(
             {
                 "status": "review_cap_reached",
                 "completed_passes": 5,
                 "evidence": "reviews/code-review-triage-ledger.md",
             }
         )
+        branch["trim_review"] = {
+            "status": "proportionate", "sha": branch["tip_sha"],
+            "evidence": "reviews/trim-review-ledger.md",
+        }
+        branch["plan"] = "plans/review/test/test.md"
+        self.set_review_handoff(branch, "review_cap_reached")
         self.assertEqual(release_validator.validate(manifest), [])
+        branch["change_request"]["state"] = "ready"
+        self.assertTrue(any("requires branch handoff" in error
+                            for error in release_validator.validate(manifest)))
 
     def test_release_review_rejects_early_cap(self) -> None:
         manifest = self.manifest()
@@ -416,6 +439,10 @@ class ReleaseManifestReuseTest(unittest.TestCase):
             tip_sha="e" * 40,
         )
         child["review_progress"]["status"] = "clean"
+        child["trim_review"] = {
+            "status": "proportionate", "sha": child["tip_sha"],
+            "evidence": "reviews/trim-review-ledger.md",
+        }
         for check in child["checks"]:
             check.update(sha=child["tip_sha"], method="direct", origin_sha=child["tip_sha"])
         for review in child["reviews"]:
@@ -427,11 +454,17 @@ class ReleaseManifestReuseTest(unittest.TestCase):
                 evidence="evidence/review.md",
             )
         manifest["branches"].append(child)
+        child["plan"] = "plans/review/child/child.md"
+        self.set_review_handoff(child)
         self.assertEqual(release_validator.validate(manifest), [])
         child["change_request"]["state"] = "ready"
         errors = release_validator.validate(manifest)
-        self.assertTrue(any("requires clean ancestors" in error for error in errors))
+        self.assertTrue(any("requires accepted or clean ancestors" in error for error in errors))
         parent["review_progress"]["status"] = "clean"
+        parent["trim_review"] = {
+            "status": "proportionate", "sha": parent["tip_sha"],
+            "evidence": "reviews/trim-review-ledger.md",
+        }
         for review in parent["reviews"]:
             review.update(
                 status="clean",
@@ -441,6 +474,218 @@ class ReleaseManifestReuseTest(unittest.TestCase):
                 evidence="evidence/review.md",
             )
         self.assertEqual(release_validator.validate(manifest), [])
+
+    def test_review_stage_survives_restack_with_pending_current_tip_evidence(self) -> None:
+        manifest = self.manifest()
+        branch = manifest["branches"][0]
+        branch["review_progress"].update(status="clean", completed_passes=1)
+        branch["trim_review"] = {
+            "status": "proportionate", "sha": branch["tip_sha"],
+            "evidence": "reviews/trim-review-ledger.md",
+        }
+        for review in branch["reviews"]:
+            review.update(status="clean", sha=branch["tip_sha"],
+                          method="direct", origin_sha=branch["tip_sha"],
+                          evidence="reviews/clean.md")
+        branch["plan"] = "plans/review/test/test.md"
+        self.set_review_handoff(branch)
+        self.assertEqual(release_validator.validate(manifest), [])
+
+        old_sha = branch["tip_sha"]
+        branch["tip_sha"] = "e" * 40
+        branch["review_progress"]["status"] = "pending"
+        branch["trim_review"] = {"status": "pending", "sha": None, "evidence": None}
+        branch["checks"][0].update(status="pending", sha=None, method=None,
+                                    origin_sha=None, evidence=None)
+        for review in branch["reviews"]:
+            review.update(status="pending", sha=None, method=None,
+                          origin_sha=None, evidence=None)
+        self.assertEqual(branch["review_handoff"]["sha"], old_sha)
+        self.assertEqual(release_validator.validate(manifest), [])
+        branch["change_request"]["state"] = "ready"
+        self.assertTrue(any("requires branch handoff" in error
+                            for error in release_validator.validate(manifest)))
+        branch["change_request"]["state"] = "draft"
+        self.assertEqual(release_validator.validate(manifest), [])
+        branch["review_handoff"]["evidence"] = None
+        self.assertTrue(any("review_handoff.evidence is required" in error
+                            for error in release_validator.validate(manifest)))
+
+    def test_capped_human_disposition_preserves_review_state_and_unblocks_lineage(self) -> None:
+        manifest = self.manifest()
+        parent = manifest["branches"][0]
+        parent["review_progress"].update(
+            status="review_cap_reached", completed_passes=5,
+            evidence="reviews/code-review-triage-ledger.md",
+        )
+        parent["trim_review"] = {
+            "status": "proportionate", "sha": parent["tip_sha"],
+            "evidence": "reviews/trim-review-ledger.md",
+        }
+        parent["human_disposition"] = {
+            "status": "accepted", "sha": parent["tip_sha"],
+            "decided_by": "release owner", "decided_at": "2026-09-25T12:00:00Z",
+            "reason": "Finding risk accepted for this exact tip",
+            "evidence": "reviews/human-disposition.md",
+            "unresolved_findings": ["code-p5-codex-01"],
+        }
+        child = json.loads(json.dumps(parent))
+        child.update(
+            source="feature/child", target=parent["source"],
+            parent={"branch": parent["source"], "sha": parent["tip_sha"]},
+            dependency_reason="needs parent", tip_sha="e" * 40,
+        )
+        child.pop("human_disposition")
+        child["review_progress"].update(status="clean", completed_passes=1)
+        child["trim_review"]["sha"] = child["tip_sha"]
+        for check in child["checks"]:
+            check.update(sha=child["tip_sha"], method="direct", origin_sha=child["tip_sha"])
+        for review in child["reviews"]:
+            review.update(status="clean", sha=child["tip_sha"],
+                          method="direct", origin_sha=child["tip_sha"],
+                          evidence="reviews/child-review.md")
+        child["change_request"]["state"] = "ready"
+        manifest["branches"].append(child)
+        self.assertEqual(release_validator.validate(manifest), [])
+        self.assertTrue(all(review["status"] == "pending" for review in parent["reviews"]))
+        parent["plan"] = "plans/review/test/test.md"
+        child["plan"] = "plans/review/child/child.md"
+        self.set_review_handoff(parent, "review_cap_reached")
+        self.set_review_handoff(child)
+        self.assertEqual(release_validator.validate(manifest), [])
+
+        manifest["state"] = "frozen"
+        manifest["freeze"] = {
+            "frozen_at": "2026-09-25T13:00:00Z",
+            "authorized_by": "release owner",
+            "scope_digest": release_validator.scope_digest(manifest),
+        }
+        self.assertEqual(release_validator.validate(manifest), [])
+
+        parent["human_disposition"]["sha"] = "f" * 40
+        errors = release_validator.validate(manifest)
+        self.assertTrue(any("requires accepted or clean ancestors" in error for error in errors))
+        parent["human_disposition"]["sha"] = parent["tip_sha"]
+        child["parent"]["sha"] = "f" * 40
+        self.assertTrue(any("requires accepted or clean ancestors" in error
+                            for error in release_validator.validate(manifest)))
+
+    def test_capped_acceptance_carries_across_proven_restacks(self) -> None:
+        manifest = self.manifest()
+        branch = manifest["branches"][0]
+        decision_sha = branch["tip_sha"]
+        branch["review_progress"].update(
+            status="review_cap_reached", completed_passes=5,
+            evidence="reviews/code-review-triage-ledger.md",
+        )
+        branch["human_disposition"] = {
+            "status": "accepted", "sha": decision_sha,
+            "decided_by": "release owner", "decided_at": "2026-09-25T12:00:00Z",
+            "reason": "Accepted finding risk", "evidence": "reviews/human-disposition.md",
+            "unresolved_findings": ["code-p5-codex-01"], "mappings": [],
+        }
+        branch["plan"] = "plans/review/test/test.md"
+        self.set_review_handoff(branch, "review_cap_reached")
+        branch["change_request"]["state"] = "ready"
+        for new_sha in ("e" * 40, "f" * 40):
+            old_sha = branch["tip_sha"]
+            branch["tip_sha"] = new_sha
+            branch["checks"][0].update(sha=new_sha, method="direct", origin_sha=new_sha)
+            branch["trim_review"] = {
+                "status": "proportionate", "sha": new_sha,
+                "evidence": "reviews/trim-review-ledger.md",
+            }
+            errors = release_validator.validate(manifest)
+            self.assertTrue(any("requires branch handoff" in error for error in errors))
+            branch["change_request"]["state"] = "draft"
+            self.assertEqual(release_validator.validate(manifest), [])
+            branch["human_disposition"]["mappings"].append({
+                "from_sha": old_sha, "to_sha": new_sha,
+                "method": "equal_range_diff", "evidence": "reviews/restack-proof.md",
+            })
+            branch["change_request"]["state"] = "ready"
+            self.assertEqual(release_validator.validate(manifest), [])
+        self.assertEqual(branch["human_disposition"]["sha"], decision_sha)
+        self.assertTrue(all(review["status"] == "pending" for review in branch["reviews"]))
+        branch["human_disposition"]["mappings"][1]["evidence"] = None
+        self.assertTrue(any("mappings[1].evidence is required" in error
+                            for error in release_validator.validate(manifest)))
+
+    def test_capped_disposition_requires_decision_evidence_and_tip_checks(self) -> None:
+        manifest = self.manifest()
+        branch = manifest["branches"][0]
+        branch["review_progress"].update(
+            status="review_cap_reached", completed_passes=5,
+            evidence="reviews/code-review-triage-ledger.md",
+        )
+        branch["trim_review"] = {
+            "status": "proportionate", "sha": branch["tip_sha"],
+            "evidence": "reviews/trim-review-ledger.md",
+        }
+        branch["human_disposition"] = {
+            "status": "accepted", "sha": branch["tip_sha"],
+            "decided_by": "", "decided_at": "yesterday", "reason": "",
+            "evidence": None, "unresolved_findings": [""],
+        }
+        branch["change_request"]["state"] = "ready"
+        errors = release_validator.validate(manifest)
+        for required in ("decided_by", "decided_at", "reason", "evidence", "unresolved_findings"):
+            self.assertTrue(any(required in error for error in errors), required)
+
+        branch["human_disposition"].update(
+            decided_by="release owner", decided_at="2026-09-25T12:00:00Z",
+            reason="Risk accepted", evidence="reviews/human-disposition.md",
+            unresolved_findings=["code-p5-codex-01"],
+        )
+        branch["human_disposition"]["decided_at"] = "2026-99-25T12:00:00Z"
+        self.assertTrue(any("decided_at must be a UTC timestamp" in error
+                            for error in release_validator.validate(manifest)))
+        branch["human_disposition"]["decided_at"] = "2026-09-25T12:00:00Z"
+        branch["checks"][0]["status"] = "failed"
+        errors = release_validator.validate(manifest)
+        self.assertTrue(any("requires branch handoff" in error for error in errors))
+        branch["checks"][0]["status"] = "passed"
+        self.assertEqual(release_validator.validate(manifest), [])
+        branch["plan"] = "plans/review/test/test.md"
+        self.set_review_handoff(branch, "review_cap_reached")
+        self.assertEqual(release_validator.validate(manifest), [])
+        branch["human_disposition"]["status"] = "rejected"
+        self.assertTrue(any("change_request requires branch handoff" in error
+                            for error in release_validator.validate(manifest)))
+        branch["change_request"]["state"] = "draft"
+        self.assertEqual(release_validator.validate(manifest), [])
+
+    def test_unfinished_descendant_does_not_hold_completed_parent(self) -> None:
+        manifest = self.manifest()
+        parent = manifest["branches"][0]
+        parent["review_progress"].update(status="clean", completed_passes=1)
+        parent["trim_review"] = {
+            "status": "proportionate", "sha": parent["tip_sha"],
+            "evidence": "reviews/trim-review-ledger.md",
+        }
+        for review in parent["reviews"]:
+            review.update(status="clean", sha=parent["tip_sha"],
+                          method="direct", origin_sha=parent["tip_sha"],
+                          evidence="reviews/parent-review.md")
+        parent["change_request"]["state"] = "ready"
+        child = json.loads(json.dumps(parent))
+        child.update(source="feature/child", target=parent["source"],
+                     parent={"branch": parent["source"], "sha": parent["tip_sha"]},
+                     dependency_reason="needs parent", tip_sha="e" * 40)
+        child["change_request"]["state"] = "none"
+        child["review_progress"]["status"] = "pending"
+        child["trim_review"] = {"status": "pending", "sha": None, "evidence": None}
+        for review in child["reviews"]:
+            review.update(status="pending", sha=None, method=None,
+                          origin_sha=None, evidence=None)
+        manifest["branches"].append(child)
+        self.assertEqual(release_validator.validate(manifest), [])
+        parent["plan"] = "plans/review/test/test.md"
+        self.set_review_handoff(parent)
+        self.assertEqual(release_validator.validate(manifest), [])
+        parent["plan"] = "plans/done/test/test.md"
+        self.assertTrue(any("plan in done requires a merged change_request" in error
+                            for error in release_validator.validate(manifest)))
 
 
 if __name__ == "__main__":

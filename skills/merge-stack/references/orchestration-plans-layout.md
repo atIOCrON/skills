@@ -65,35 +65,33 @@ views, not competing authorities.
 - `to_do`: a reviewed plan selected for the current implementation batch.
   Move only selected plans from `backlog`.
 - `in_progress`: implementation, fixes, CLI code review loops, commits,
-  restacks, or required branch-level agent checks are underway, or a check found
-  a defect. Keep provisional wave descendants here until all ancestors are
-  clean at their pinned SHAs. A feature
-  that reaches the five-pass review cap also remains here with a durable
-  `review_cap_reached` marker. That state ends work on this plan for the current
-  build run without blocking other plans' reviews; hold existing wave
-  descendants provisional and start no new wave from the capped branch.
-- `review`: the exact branch tip and pinned parent are verified, the local,
-  upstream, and remote tips agree, every ancestor is clean at its pinned SHA,
-  code review findings are resolved, all three
-  automated reviews are clean or have valid restack or
-  test-only-closure mappings, required branch-level agent checks pass, and
-  artefacts are preserved. Record pending
-  human or external acceptance checks with their procedures and owners. Record
-  release-candidate checks that intrinsically require unbuilt descendant
-  branches or a complete candidate with their prerequisites. Those deferred
-  release checks do not delay this move. Keep the feature here while those
-  checks are pending or its change request is open. Return it to `in_progress`
-  if a later check finds a defect or a fix or non-mechanical restack is needed.
-  An unavailable sandbox wallet can leave Google Pay acceptance pending here;
-  a failed wallet test sends the feature back for a fix and fresh verification
-  and review.
-- `done`: every human or external acceptance check passed or its limitation
-  was explicitly accepted by an authorized decision maker. The change request
+  and required branch checks are underway, or a defect needs an implementation
+  fix. Keep a slice here through proportionate trim and clean correctness
+  reviews or the five-pass cap. Finish accepted cap remediation and closure;
+  record unresolved findings. Do not wait for ancestor reviews or descendants
+  to finish this slice's review passes.
+- `review`: the slice's implementation and trim are complete, and correctness
+  passes are clean or capped. At entry, its committed, pushed tip passes exact-tip
+  verification; trim is proportionate; correctness reviews are clean or the
+  five-pass cap is reached. Record `review_handoff` on that SHA and preserve
+  artefacts. A capped slice may await human disposition here. Ancestors may
+  still be `in_progress/`, and unfinished descendants do not hold this move.
+  Keep the slice here through routine restacks, pending current-tip checks,
+  review mappings, human acceptance, and external or release-candidate checks.
+  A changed ancestor requires restack and re-verification before release
+  progression, but does not undo completed implementation. Return to
+  `in_progress/` when a defect, failed check, or behavioral change requires
+  implementation work. Record pending external checks with owners and
+  procedures, and deferred candidate checks with prerequisites.
+- `done`: every final human or external acceptance check passed or its limitation
+  was explicitly accepted by an authorized decision maker. A review-cap human
+  disposition alone does not satisfy this final acceptance gate. The change request
   must also be merged and its landed commit confirmed. Move the feature here
   after those conditions are met and update recorded paths.
 
-For repair runs, move only affected features and descendants back to
-`in_progress` when changes are needed. Leave unaffected features in place.
+For repair runs, return only slices needing implementation work to
+`in_progress/`. Restack and re-verify affected descendants in their current
+stage unless they also need implementation work.
 For features already in `done/` under the earlier stage convention, verify the
 change request and acceptance evidence. Move features with pending acceptance
 or unmerged change requests to `review/`; a failed acceptance check needing a
