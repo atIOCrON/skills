@@ -8,7 +8,7 @@ pass. A verified descendant may push provisionally on its recorded parent SHA
 even if the ancestor ref advanced, provided the pinned SHA remains the tip's
 ancestor, integrity checks pass, and the push uses an explicit lease against
 the expected remote branch state, including absence for a new branch. Restack
-at the wave boundary.
+once upstream fixes settle.
 
 ## Standards and scope
 
@@ -88,7 +88,7 @@ integrity check, or reviewer capacity. Use `null` when no next pass is needed.
 Ancestor movement alone is not a blocker. Record each branch's trim status,
 reviewed or mapped tip, and ledger path in the manifest.
 
-At the wave boundary, after upstream fixes settle, restack affected descendants
+Once upstream fixes settle, restack only affected descendants
 in dependency order and verify each changed tip. Retain an already proportionate
 trim result through a valid restack mapping under `code-review-loop.md`. For a
 manual resolution, inspect every resolved hunk and the complete new

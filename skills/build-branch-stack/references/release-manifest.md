@@ -188,8 +188,8 @@ For ready change requests and release states, each branch and required
 ancestor must have proportionate trim, passed agent checks, and automation-clean
 reviews or an accepted capped disposition on its current pinned SHA. Each
 parent head must equal its child's pin. These lineage gates do not control
-`review/` stage moves. A verified ancestor may support a provisional dependent
-wave while its reviews or human disposition remain pending. A failed check or
+`review/` stage moves. A verified ancestor may support provisional descendants
+while its reviews or human disposition remain pending. A failed check or
 change needing implementation returns the affected slice to `in_progress/`;
 archive its old `review_handoff` as evidence and clear the active field until
 reviews finish again.

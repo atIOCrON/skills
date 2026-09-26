@@ -22,12 +22,14 @@ Each numbered pass is a fresh three-reviewer discovery review of
 One completed fresh pass plus terminal closure is sufficient when the reviewed
 commit has not changed. After a material fix, close the originating findings,
 then run a fresh pass on the new commit.
-In a bounded wave, run every eligible numbered pass concurrently across
-branches. Eligibility requires that branch's prior findings handled and its
-current tip verified and pushed; ancestor reviews need not be clean. A
+Run every eligible numbered pass concurrently across branches up to actual
+reviewer capacity, alongside eligible implementation and trim work. Do not
+wait for other branches to finish trim. Eligibility requires handled prior
+findings and a verified, pushed tip; ancestor reviews need not be clean. A
 descendant may continue passes against its immutable pinned parent after that
-parent moves. Record the movement and keep the descendant provisional until
-the wave-boundary restack, verification, and review mapping or fresh pass.
+parent moves. Record the movement; keep the descendant provisional until
+upstream fixes settle and restack, verification, and review mapping or a fresh
+pass finish.
 
 Run at most five completed discovery passes for one plan. A pass counts when
 all three reviewers have produced validated outputs and triage is recorded.
@@ -145,7 +147,7 @@ For each pass:
 
 1. Confirm the review commit equals the local branch tip, upstream, fetched
    remote tip, and latest verified SHA. Require the pinned base to remain an
-   ancestor. Record any dependency-parent head movement; it makes a wave
+   ancestor. Record any dependency-parent head movement; it makes a
    descendant provisional but does not block a pass on the pinned diff.
 2. Refresh `code-review-pack` for the base and review SHAs.
 3. Create `<feature_dir>/<plan_slug>.reviews/code-review-pass<N>/`.
@@ -217,7 +219,7 @@ Return `Reviewed and pushed` only when:
 - the pinned base remains an ancestor.
 
 If the parent head has moved, return `Reviewed provisionally` rather than
-`Reviewed and pushed`. Restack at the wave boundary and verify the new tip;
+`Reviewed and pushed`. Restack once upstream fixes settle and verify the new tip;
 keep an already completed slice in `review/`. Map prior reviews or run a fresh pass
 when below the cap. For a capped branch, carry an accepted human disposition
 through a recorded valid restack mapping only when effective behavior and the
