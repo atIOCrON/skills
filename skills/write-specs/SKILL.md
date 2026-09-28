@@ -1,6 +1,6 @@
 ---
 name: write-specs
-description: Write feature specifications with stable acceptance IDs, explicit architecture boundaries, verification requirements, and a lightweight approval lifecycle. Use write-slices before implementation.
+description: Write proportionate specifications with stable acceptance IDs, justified verification, trim loops, and approval states. Use write-slices before implementation.
 disable-model-invocation: true
 metadata:
   layer: capability
@@ -50,12 +50,22 @@ or update one. Change `draft` to `approved` only on explicit user approval.
 Change a specification to `superseded` only when the user identifies its
 replacement.
 
-An edit to acceptance IDs, scope, binding decisions, authorized complexity, or
-external acceptance returns an `approved` or `fulfilled` specification to
-`draft`. If a slice map exists, mark its status `stale`; affected slice plans
-cannot start until the specification and a revised decomposition are approved.
+Changes to acceptance IDs, scope, binding decisions, authorized complexity,
+required verification, or external acceptance return an `approved` or
+`fulfilled` specification to `draft`. Mark an existing slice map `stale`;
+affected slices cannot start until the specification and revised map are approved.
 Clarifications that preserve those contracts retain the current status. Report
 every status transition and why it occurred.
+
+## Scale The Initial Plan
+
+Start with the smallest sufficient change. Inspect its owned behaviour, failure
+impact, and effects on persistence, public contracts, and runtime coordination.
+Scale design and verification to those risks. Small fixes may need only a short
+specification and one slice.
+
+Use existing platform behaviour, tests, and release procedures. Add machinery
+or gates only for demonstrated gaps; inspect uncertainty before adding scope.
 
 ## Required Content
 
@@ -65,12 +75,13 @@ every status transition and why it occurred.
 - Explicit non-goals and binding constraints.
 - Stable acceptance IDs (`AC-01`, `AC-02`, ...), each expressing one observable
   behaviour or verifiable system property.
-- Genuine product, policy, compatibility, schema, and architecture decisions.
-- Dependencies and external acceptance environments.
-- Authorized complexity and its removal boundary.
-- Agent-run behavioural verification and separate human or external acceptance.
-- Every required new or modified table and view, including name, grain,
-  columns, types, nullability, keys, relationships, and important semantics.
+- Agent-run verification sufficient to prove the changed behaviour and relevant
+  preserved contracts.
+
+Include applicable decisions, dependencies, external acceptance, and authorized
+complexity. For required new or modified tables and views, specify name, grain,
+columns, types, nullability, keys, relationships, and important semantics.
+Omit inapplicable topics or write `none`; do not invent work to fill a template.
 
 ## Acceptance Cohesion
 
@@ -84,13 +95,13 @@ Source-text, snapshot, or patch-shape assertions may protect structure. They do
 not prove browser activation, DOM replacement, concurrency, retry, cancellation,
 provider callbacks, current totals, or other runtime lifecycle behaviour.
 State the highest practical local behavioural seam for those requirements and
-record real-provider or real-environment acceptance separately.
+record real-provider or real-environment acceptance separately when needed.
 
 ## Authorized Complexity
 
-For every proposed architectural layer, dependency, configuration option,
-persistent object, public interface, compatibility behaviour, or supported
-scenario, state:
+For every added or materially expanded architectural layer, dependency,
+configuration option, persistent object, public interface, compatibility
+behaviour, or supported scenario, state:
 
 - the demonstrated problem and acceptance ID that require it;
 - why the platform's native owner or extension point cannot satisfy it;
@@ -98,11 +109,54 @@ scenario, state:
   insufficient; and
 - how it can be removed or rolled back.
 
-If none is required, say so. General lifecycle coordination, shared mutable
-browser state, cross-provider state machines, retry or recovery frameworks,
+Justify only changed responsibilities; write `none` if no complexity is added.
+General lifecycle coordination, shared mutable browser state, cross-provider
+state machines, retry or recovery frameworks,
 whole-template vendor replacements, and local ownership of upstream package
 behaviour are architectural layers. Broad acceptance criteria do not authorize
 them implicitly.
+
+## Proportionate Verification
+
+Use the smallest sufficient checks for each acceptance condition and plausibly
+affected contract. Reuse existing checks; broader checks require broader impact
+or binding repository policy.
+
+For any added fixture, harness, service dependency, full API or end-to-end run,
+manual acceptance step, or observation window, state the failure it detects and
+why cheaper checks cannot. Prove changed runtime behaviour at a sufficient
+executable seam; source assertions may supplement it. Do not reconstruct
+unchanged upstream lifecycles with fakes.
+
+Require human or external acceptance only when behaviour needs that environment
+or authority; otherwise use `none`. Routine deployment monitoring becomes a
+gate only for a demonstrated delayed failure or binding policy. Preserve user
+requirements and mandatory repository gates; do not invent staging sign-off
+or waiting periods.
+
+Example: declaring existing properties ordinarily needs checks that warnings
+disappear and delegation and returned data remain correct. Database fixtures,
+full API flows, or a 24-hour gate require evidence of additional affected risks.
+
+## Trim Loop Before Handoff
+
+Trim before presenting the draft for approval and after revisions add scope,
+machinery, or verification.
+
+1. Tie responsibilities, added checks, and gates to user requirements, binding
+   contracts, or demonstrated risks. Remove speculative and template-driven work.
+2. Compare with the smallest viable design using native ownership and existing
+   checks. Remove unnecessary layers, mechanisms, duplicate criteria, fixtures,
+   and gates.
+3. Confirm requirements and behavioural proof remain sufficient. Preserve
+   acceptance IDs; never silently renumber them or waive user requirements or
+   adopted gates.
+4. Repeat only after a material reduction. Stop when no justified reduction
+   remains; do not manufacture findings or require repeated clean passes.
+
+Briefly report reductions or why the draft is proportionate. Apply existing
+lifecycle rules to approved contract changes; add no approval stage, ledger,
+or mandatory reviewer fleet.
 
 ## Planning Rules
 
@@ -125,5 +179,5 @@ them implicitly.
 - Preserve every actual user requirement. Keep the specification concise,
   high-level, and internally consistent.
 
-After writing, state that the specification must be approved and decomposed by
-`write-slices` before `build-branch-stack` can implement it.
+After writing and trimming, state that the specification must be approved and
+decomposed by `write-slices` before `build-branch-stack` can implement it.

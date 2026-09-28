@@ -1,6 +1,6 @@
 ---
 name: write-slices
-description: Decompose an approved feature specification into independently verifiable vertical-slice plans and a stable acceptance/dependency map for branch implementation.
+description: Decompose approved specifications into proportionate vertical slices, trim unnecessary splits and checks, and maintain acceptance ownership and dependencies.
 disable-model-invocation: true
 metadata:
   layer: capability
@@ -20,8 +20,12 @@ Status` to be `approved`; stop on `draft`, `fulfilled`, or `superseded`.
 
 ## Draft Before Writing
 
-Present the proposed slices and ask the user to approve their granularity and
-dependency graph before creating files. For each slice show:
+Use one slice when the outcome fits the slice test. Split only for concrete
+implementation, release, or verification boundaries, not per file, layer,
+acceptance ID, or planning phase.
+
+Trim the decomposition, then seek approval of its granularity and dependencies
+before creating files. For each slice show:
 
 - slug and actor-visible or integration-visible outcome;
 - owned acceptance IDs;
@@ -45,14 +49,37 @@ Each slice must:
 - have at most one required unmerged predecessor. Use a merged prerequisite or
   a different split when several unmerged branches would be required.
 
-Split when subsets have different providers or SDKs, lifecycle owners,
-acceptance environments, rollback paths, or can fail while the rest remains
-valid. Also split when grouping is the only reason to introduce a shared
-coordinator. Sharing a page, package, release, or subsystem does not make
-separate outcomes one slice.
+Split independently useful outcomes with materially different implementation,
+acceptance, or rollback boundaries. Providers, SDKs, lifecycle owners, and
+acceptance environments inform this decision; they need not split a common
+mechanical fix. Split if grouping alone requires a shared coordinator. A shared
+page, package, release, or subsystem does not establish cohesion.
 
 Combine slices when neither can be deployed safely or demonstrated without the
-other. Prefer independent safety and observability over a target ticket count.
+other. Keep cohesive fixes together when splitting only adds plans, branches,
+approvals, or repeated checks. Prioritize independent safety and observability
+over ticket count.
+
+## Planning Trim Loop
+
+Trim before decomposition approval, before child-plan handoff, and after
+revisions add splits, dependencies, or checks.
+
+1. Justify each extra slice and blocker. Remove administrative splits and
+   dependencies based on list order or hypothetical reuse.
+2. Inherit parent requirements and reuse checks. Justify added machinery,
+   fixtures, checks, and gates by demonstrated slice risks. Choose the cheapest
+   sufficient behavioural seam and ordinary reversion when it suffices.
+3. Remove duplicated parent prose and sibling coverage. Confirm each acceptance
+   ID has one owner and every slice passes the slice test.
+4. Repeat only after a material reduction; stop when no justified reduction
+   remains. Briefly report reductions or retained boundaries without adding an
+   approval stage or ledger.
+
+Preserve approved outcomes, constraints, and evidence requirements. Propose
+disproportionate parent requirements as amendments via `write-specs`; do not
+waive them in children. Seek reapproval when granularity or dependencies change;
+detail changes within approved boundaries need no further approval.
 
 ## Acceptance Ownership
 
@@ -99,13 +126,15 @@ overwrite or move an existing plan. Each child plan must contain:
 - demonstrated dependency and intended branch target;
 - release, disable, removal, or rollback boundary;
 - inherited binding decisions and explicitly authorized complexity;
-- agent-run behavioural checks and separate human or external acceptance; and
-- required database objects at the same precision as the parent spec.
+- sufficient agent-run behavioural checks, with human or external acceptance
+  only when required; and
+- required new or modified database objects, when applicable, at the same
+  precision as the parent spec.
 
-Do not copy the entire parent specification. Include only the context,
-decisions, criteria, and verification needed to implement and review this
-slice. Theme cleanup, migration, or other supporting work travels with the
-slice whose behaviour requires it; do not create horizontal cleanup plans.
+Include only parent context, decisions, criteria, and verification needed for
+this slice. Omit inapplicable topics or write `none`; do not invent work to fill
+a template. Theme cleanup, migration, and other supporting work belong to the
+slice requiring them, not separate horizontal plans.
 
 ## Wide Changes And Prefactoring
 
@@ -122,8 +151,9 @@ coordination, or speculative shared frameworks.
 
 ## Verification
 
-Check that the parent specification and slice map are approved, every parent
-acceptance ID has exactly one owner, every blocker is necessary, every child
-excludes sibling outcomes, and each slice passes the slice test. Report the
-absolute paths of the specification, slice map, and child plans. These plans
-still require review before `build-branch-stack`.
+Complete the planning trim loop, then check that the parent specification and
+slice map are approved, every parent acceptance ID has exactly one owner,
+every blocker is necessary, every child excludes sibling outcomes, and each
+slice passes the slice test. Report the absolute paths of the specification,
+slice map, and child plans. These plans still require review before
+`build-branch-stack`.
