@@ -1,0 +1,6 @@
+interface:
+  display_name: "Write Branch Tracker"
+  short_description: "Track branches, status, and operator tests"
+  default_prompt: "Use $write-branch-tracker to create or update a branch tracker for these branches."
+policy:
+  allow_implicit_invocation: false
