@@ -1,5 +1,10 @@
 # Change Request Lifecycle
 
+This reference governs build `draft`/`ready` modes. Release publication uses
+`open-stack-requests/references/release-publication.md` and
+`release-preparation.md` instead of its review, freeze, draft, and squash
+requirements. Both paths share the selected provider and description guidance.
+
 Publish one locally verified and clean-reviewed branch as a draft change
 request (CR) as soon as it is stable, then mark it ready after frozen-release
 and forge checks pass. Update only the canonical manifest; do not edit product

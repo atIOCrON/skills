@@ -11,7 +11,10 @@ case "$1 $2" in
       mergeable:"MERGEABLE",mergeStateStatus:"CLEAN",
       statusCheckRollup:[{conclusion:"SUCCESS"}],mergeCommit:null,isCrossRepository:false}'
     ;;
-  "repo view") echo '{"squashMergeAllowed":true,"deleteBranchOnMerge":false}' ;;
+  "repo view")
+    jq -n --argjson allowed "${TEST_MERGE_COMMIT_ALLOWED:-true}" \
+      '{squashMergeAllowed:true,mergeCommitAllowed:$allowed,deleteBranchOnMerge:false}'
+    ;;
   "api --hostname"|"api -X")
     args="$*"
     case "$args" in
@@ -22,7 +25,10 @@ case "$1 $2" in
         jq -n --argjson strict "${TEST_STRICT_STATUS:-true}" '{strict:$strict}'
         ;;
       *branches/develop*) echo '{"protected":true}' ;;
-      *pulls/1/merge*) jq -n --arg head "${TEST_HEAD:?}" '{merged:true,sha:$head}' ;;
+      *pulls/1/merge*)
+        [[ "$args" == *"merge_method=${TEST_EXPECT_METHOD:-merge}"* ]] || exit 3
+        jq -n --arg head "${TEST_HEAD:?}" '{merged:true,sha:$head}'
+        ;;
       *) exit 2 ;;
     esac
     ;;

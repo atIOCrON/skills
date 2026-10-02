@@ -14,6 +14,8 @@ case "$operation" in
     fi
     jq -n \
       --arg id "$1" \
+      --arg provider "${FAKE_PROVIDER:-test}" \
+      --arg source "${FAKE_SOURCE:-first}" \
       --arg head "${FAKE_HEAD:?}" \
       --arg state "${FAKE_STATE:-open}" \
       --arg review "${FAKE_REVIEW:-approved}" \
@@ -25,15 +27,16 @@ case "$operation" in
       --argjson protected "${FAKE_PROTECTED:-true}" \
       --argjson policy "${FAKE_TARGET_POLICY:-true}" \
       --arg landed "${FAKE_LANDED:-}" \
-      '{provider:"test", id:$id, url:"https://example.test/change/1", state:$state,
-        source_branch:"first", target_branch:$target, head_sha:$head, base_sha:$base,
+      '{provider:$provider, id:$id, url:"https://example.test/change/1", state:$state,
+        source_branch:$source, target_branch:$target, head_sha:$head, base_sha:$base,
         target_protected:$protected, target_policy_enforced:$policy,
         review_status:$review,
         approval_head_sha:(if $review == "approved" then $approval_head else null end),
         checks_status:$checks,
         checks_head_sha:(if $checks == "passed" then $checks_head else null end),
         mergeability:"mergeable",
-        squash_allowed:true, cross_repository:false,
+        squash_allowed:true, merge_commit_allowed:true, source_branch_auto_delete:false,
+        policy_status:"passed", cross_repository:false,
         landed_sha:(if $landed == "" then null else $landed end)}'
     ;;
   list-by-target) printf '%s\n' "${FAKE_LIST:-[]}" ;;
@@ -42,11 +45,11 @@ case "$operation" in
     jq -n --arg id "$1" --arg target "$2" '{id:$id,target_branch:$target}'
     ;;
   merge)
-    [ "$#" -eq 4 ]
+    [ "$#" -eq 4 ] || [ "$#" -eq 5 ]
     [ "$3" = "${FAKE_TARGET:-develop}" ]
     [ "$4" = "${FAKE_BASE:-$FAKE_HEAD}" ]
-    jq -n --arg landed "${FAKE_LANDED:-$FAKE_HEAD}" \
-      '{status:"merged",merge_method:"squash",landed_sha:$landed}'
+    jq -n --arg landed "${FAKE_LANDED:-$FAKE_HEAD}" --arg method "${5:-merge-commit}" \
+      '{status:"merged",merge_method:$method,landed_sha:$landed}'
     ;;
   *) exit 2 ;;
 esac

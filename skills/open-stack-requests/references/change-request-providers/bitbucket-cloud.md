@@ -7,9 +7,10 @@ not operate this lifecycle.
 
 ## Provider Preflight
 
-Require `curl`, `jq`, and an authenticated Bitbucket Cloud user token. An API
-token or OAuth access token may be supplied as `BITBUCKET_TOKEN` for Bearer
-authentication. Never print the token, put it in a URL, or enable shell tracing
+Require `curl`, `jq`, and an authenticated Bitbucket Cloud user token. Set
+`BITBUCKET_TOKEN`; API tokens also need `BITBUCKET_EMAIL` and use Basic
+authentication with that email and token. OAuth access tokens use Bearer
+authentication without `BITBUCKET_EMAIL`. Never print the token, put it in a URL, or enable shell tracing
 while making requests. For an API token, require `read:user:bitbucket`,
 `read:repository:bitbucket`, `read:pullrequest:bitbucket`, and
 `write:pullrequest:bitbucket` scopes. Confirm `GET /2.0/user` succeeds and retain
@@ -20,7 +21,7 @@ Derive `<workspace>/<repo_slug>` only from an unambiguous `bitbucket.org`
 supports PRs whose source and destination are branches in that same repository.
 Set `api` to
 `https://api.bitbucket.org/2.0/repositories/<workspace>/<repo_slug>` and use
-the header `Authorization: Bearer $BITBUCKET_TOKEN` for every request.
+the selected authentication header for every request.
 
 Apply the lifecycle's local branch, upstream, fetched target, diff, dirty-file,
 verified-SHA, and pinned-parent checks, including its return-to-draft exception
@@ -132,3 +133,40 @@ API references: [pull requests](https://developer.atlassian.com/cloud/bitbucket/
 [branches](https://developer.atlassian.com/cloud/bitbucket/rest/api-group-refs/),
 [current user](https://developer.atlassian.com/cloud/bitbucket/rest/api-group-users/),
 and [token authentication](https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/).
+
+## Release Publication And Assembly
+
+For release modes, use the shared executable `scripts/bitbucket_cloud.py`
+bundled into both publication and merge skills. Do not apply this reference's
+draft, squash, or automated-review gates. Require Python 3.9+ and the same
+authenticated user/repository identity. Bitbucket Data Center is unsupported.
+
+Publication calls `create <source> <target> <head> <base> <metadata.json>`.
+It creates a fresh non-draft PR, preserves its source, checks input SHAs,
+enumerates every page for duplicates, and verifies the resulting PR. Explicit
+reviewers are optional metadata; do not add notifications beyond the authorized
+PR workflow. Record intent/results as defined by `release-preparation.md`.
+
+Assembly uses the `merge-stack` provider interface: `auth-check`, `get-change`,
+`list-by-target`, `retarget`, and `merge`. Default to destination branch strategy
+`merge_commit`; use `squash` only with an explicit override. Require the selected
+strategy to be available. Immediately before merging, read the PR, source and target
+branches, and `/pullrequests/<id>/mergeability/checks`. Require complete state,
+permission and Git checks, no blockers, and every required check passed. Stop
+when a merge queue is required; this runner performs direct sequential merges.
+Optional advisory checks are reported without inventing an approval requirement.
+Repository-required approvals remain enforced by the provider.
+
+Use required named CI statuses from `BITBUCKET_REQUIRED_STATUS_KEYS` when the
+repository or release specifies them; these must pass on the exact source SHA.
+Otherwise report whether configured build checks apply. Never infer passing CI
+or approval freshness from an empty list. Bitbucket approval participants do
+not prove which SHA was reviewed, so `approval_head_sha` remains null.
+
+Send the selected `merge_strategy` and `close_source_branch: false` to the
+merge endpoint. Handle immediate and asynchronous results; confirm Git parents
+and tree using `confirm_merge.sh` before proceeding. The endpoint has no
+caller-supplied expected source/base fields: fresh reads are preflight evidence,
+not an atomic lease. Stop and report any landed-input mismatch, HTTP failure,
+or unknown mutation outcome; reconcile before retrying. Never fall back to
+manual pushes or change repository protection to bypass a blocked merge.

@@ -2,18 +2,24 @@
 set -euo pipefail
 
 case "$1 $2" in
+  "mr merge") [[ "$*" == *"--squash"* ]] ;;
   "auth status") exit 0 ;;
   "mr view") echo '{"iid":1}' ;;
   "api --hostname")
     args="$*"
     case "$args" in
       *merge_requests/1/approvals*) echo '{"approved":true}' ;;
+      *merge_requests/1/merge*)
+        [[ "$args" == *"squash=false"* ]] || exit 3
+        jq -n --arg head "${TEST_HEAD:?}" '{merge_commit_sha:$head}'
+        ;;
       *merge_requests/1*)
         jq -n --arg head "${TEST_HEAD:?}" '{iid:1,web_url:"https://gitlab.com/example/repo/-/merge_requests/1",
           state:"opened",source_branch:"feature",target_branch:"develop",sha:$head,
           source_project_id:1,target_project_id:1,squash_on_merge:true,
           detailed_merge_status:"mergeable",head_pipeline:{status:"success",sha:$head},
-          squash_commit_sha:null}'
+          should_remove_source_branch:false,force_remove_source_branch:false,
+          merge_commit_sha:null,squash_commit_sha:null}'
         ;;
       *repository/branches/develop*) jq -n --arg base "${TEST_BASE:?}" '{protected:true,commit:{id:$base}}' ;;
       */approvals*)
@@ -21,8 +27,9 @@ case "$1 $2" in
           '{reset_approvals_on_push:$reset,merge_requests_disable_committers_approval:true}'
         ;;
       *projects/example%2Frepo)
-        jq -n --argjson merged_results "${TEST_MERGED_RESULTS:-true}" \
-          '{only_allow_merge_if_pipeline_succeeds:true,merge_pipelines_enabled:$merged_results}'
+        jq -n --argjson merged_results "${TEST_MERGED_RESULTS:-true}" --arg squash "${TEST_SQUASH_OPTION:-allow}" \
+          '{only_allow_merge_if_pipeline_succeeds:true,merge_pipelines_enabled:$merged_results,
+            merge_method:"merge",squash_option:$squash}'
         ;;
       *) exit 2 ;;
     esac

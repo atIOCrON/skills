@@ -22,7 +22,7 @@ get_change() {
   local selector="$1" pr settings reviews target_id target status_policy
   pr="$(gh pr view "$selector" -R "$repo" --json number,url,state,headRefName,headRefOid,baseRefName,baseRefOid,reviewDecision,latestReviews,mergeable,mergeStateStatus,statusCheckRollup,mergeCommit,isCrossRepository)" ||
     die "cannot resolve GitHub pull request: $selector"
-  settings="$(gh repo view "$repo" --json squashMergeAllowed,deleteBranchOnMerge)" || die "cannot read GitHub repository settings"
+  settings="$(gh repo view "$repo" --json squashMergeAllowed,mergeCommitAllowed,deleteBranchOnMerge)" || die "cannot read GitHub repository settings"
   reviews="$(gh api --hostname "$PROVIDER_HOST" --paginate --slurp \
     "repos/$PROVIDER_PATH/pulls/$(printf '%s' "$pr" | jq -r '.number')/reviews?per_page=100" | jq 'add // []')" ||
     die "cannot read GitHub pull request reviews"
@@ -87,6 +87,7 @@ get_change() {
       checks_head_sha: $pr.headRefOid,
       mergeability: ($pr | mergeability),
       squash_allowed: ($settings.squashMergeAllowed == true),
+      merge_commit_allowed: ($settings.mergeCommitAllowed == true),
       cross_repository: ($pr.isCrossRepository == true),
       source_branch_auto_delete: ($settings.deleteBranchOnMerge == true),
       landed_sha: ($pr.mergeCommit.oid // null)
@@ -119,31 +120,34 @@ case "$operation" in
     jq -n --arg id "$1" --arg target "$2" '{id: $id, target_branch: $target}'
     ;;
   merge)
-    [ "$#" -eq 4 ] || die "usage: merge <id> <head-sha> <target> <base-sha>"
+    [ "$#" -eq 4 ] || [ "$#" -eq 5 ] || die "usage: merge <id> <head-sha> <target> <base-sha> [merge-commit|squash]"
     id="$1"
     head_sha="$2"
     target="$3"
     base_sha="$4"
+    method="${5:-merge-commit}"
+    case "$method" in merge-commit) api_method=merge ;; squash) api_method=squash ;; *) die "unsupported merge method" ;; esac
     require_sha "$head_sha" "expected head"
     require_sha "$base_sha" "expected base"
     change="$(get_change "$id")"
-    printf '%s' "$change" | jq -e --arg head "$head_sha" --arg target "$target" --arg base "$base_sha" \
+    printf '%s' "$change" | jq -e --arg head "$head_sha" --arg target "$target" --arg base "$base_sha" --arg method "$method" \
       '
         .state == "open" and .head_sha == $head and .target_branch == $target and
         .base_sha == $base and .review_status == "approved" and
         .approval_head_sha == $head and .target_protected == true and
         .target_policy_enforced == true and
         .mergeability == "mergeable" and
-        .squash_allowed == true and .cross_repository == false and
+        (if $method == "squash" then .squash_allowed else .merge_commit_allowed end) == true and
+        .cross_repository == false and
         .checks_status == "passed" and .checks_head_sha == $head' >/dev/null ||
       die "GitHub pull request $id failed the exact-head, target, approval, checks, or mergeability gate"
     [ "$(printf '%s' "$change" | jq -r '.source_branch_auto_delete')" = false ] ||
       die "GitHub auto-deletes merged branches; disable it before this workflow"
     result="$(GH_REPO="$repo" gh api -X PUT "repos/{owner}/{repo}/pulls/$id/merge" \
-      -f sha="$head_sha" -f merge_method=squash)" || die "GitHub failed to merge pull request $id"
+      -f sha="$head_sha" -f merge_method="$api_method")" || die "GitHub failed to merge pull request $id"
     printf '%s' "$result" | jq -e '.merged == true and (.sha | type == "string")' >/dev/null ||
-      die "GitHub did not confirm an immediate squash merge for pull request $id"
-    printf '%s' "$result" | jq '{status: "merged", merge_method: "squash", landed_sha: .sha}'
+      die "GitHub did not confirm an immediate $method merge for pull request $id"
+    printf '%s' "$result" | jq --arg method "$method" '{status: "merged", merge_method: $method, landed_sha: .sha}'
     ;;
   *) die "unsupported GitHub operation: $operation" ;;
 esac

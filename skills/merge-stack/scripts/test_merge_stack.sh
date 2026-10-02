@@ -113,7 +113,26 @@ export TEST_MERGED_RESULTS=false
 unprotected_gitlab_view="$(PATH="$script_dir/testdata:$PATH" "$script_dir/provider.sh" gitlab gitlab get-change 1)"
 printf '%s' "$unprotected_gitlab_view" | jq -e '.target_policy_enforced == false' >/dev/null
 unset TEST_MERGED_RESULTS
-unset TEST_HEAD TEST_BASE
+github_merge="$(PATH="$script_dir/testdata:$PATH" "$script_dir/provider.sh" github github merge 1 "$first_sha" develop "$base_sha")"
+printf '%s' "$github_merge" | jq -e '.merge_method == "merge-commit"' >/dev/null
+export TEST_EXPECT_METHOD=squash
+github_squash="$(PATH="$script_dir/testdata:$PATH" "$script_dir/provider.sh" github github merge 1 "$first_sha" develop "$base_sha" squash)"
+printf '%s' "$github_squash" | jq -e '.merge_method == "squash"' >/dev/null
+unset TEST_EXPECT_METHOD
+export TEST_MERGE_COMMIT_ALLOWED=false
+if PATH="$script_dir/testdata:$PATH" "$script_dir/provider.sh" github github merge 1 "$first_sha" develop "$base_sha" >/dev/null 2>&1; then
+  echo 'GitHub default fell back when merge commits were unavailable' >&2; exit 1
+fi
+unset TEST_MERGE_COMMIT_ALLOWED
+gitlab_merge="$(PATH="$script_dir/testdata:$PATH" "$script_dir/provider.sh" gitlab gitlab merge 1 "$first_sha" develop "$base_sha")"
+printf '%s' "$gitlab_merge" | jq -e '.merge_method == "merge-commit"' >/dev/null
+gitlab_squash="$(PATH="$script_dir/testdata:$PATH" "$script_dir/provider.sh" gitlab gitlab merge 1 "$first_sha" develop "$base_sha" squash)"
+printf '%s' "$gitlab_squash" | jq -e '.merge_method == "squash"' >/dev/null
+export TEST_SQUASH_OPTION=always
+if PATH="$script_dir/testdata:$PATH" "$script_dir/provider.sh" gitlab gitlab merge 1 "$first_sha" develop "$base_sha" >/dev/null 2>&1; then
+  echo 'GitLab default bypassed mandatory squash' >&2; exit 1
+fi
+unset TEST_SQUASH_OPTION TEST_HEAD TEST_BASE
 
 export MERGE_STACK_PROVIDER_DIR="$adapter_dir"
 export FAKE_HEAD="$first_sha"
@@ -122,57 +141,57 @@ export FAKE_LIST='[{"id":"2","url":"https://example.test/change/2","source_branc
 
 "$script_dir/provider.sh" test upstream auth-check >/dev/null
 "$script_dir/validate_successor_change.sh" test upstream first 2 >/dev/null
-"$script_dir/wait_for_change_checks.sh" test upstream 1 "$first_sha" >/dev/null
+"$script_dir/wait_for_change_checks.sh" test upstream 1 "$first_sha" squash >/dev/null
 target_file="$tmp_dir/fake-target"
 printf 'first' > "$target_file"
 export FAKE_TARGET_FILE="$target_file"
 "$script_dir/retarget_change.sh" test upstream 2 develop "$journal" >/dev/null
 [ "$(<"$target_file")" = develop ]
 unset FAKE_TARGET_FILE
-"$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" develop "$base_sha" 2 "$journal" >/dev/null
+"$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" develop "$base_sha" 2 "$journal" squash >/dev/null
 
 export FAKE_REVIEW=unknown
-if "$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" develop "$base_sha" 2 "$journal" >/dev/null 2>&1; then
+if "$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" develop "$base_sha" 2 "$journal" squash >/dev/null 2>&1; then
   echo "merge accepted an unknown review state" >&2
   exit 1
 fi
 unset FAKE_REVIEW
 
 export FAKE_APPROVAL_HEAD="$base_sha"
-if "$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" develop "$base_sha" 2 "$journal" >/dev/null 2>&1; then
+if "$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" develop "$base_sha" 2 "$journal" squash >/dev/null 2>&1; then
   echo "merge accepted a stale approval" >&2
   exit 1
 fi
 unset FAKE_APPROVAL_HEAD
 
 export FAKE_CHECKS_HEAD="$base_sha"
-if "$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" develop "$base_sha" 2 "$journal" >/dev/null 2>&1; then
+if "$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" develop "$base_sha" 2 "$journal" squash >/dev/null 2>&1; then
   echo "merge accepted checks for another SHA" >&2
   exit 1
 fi
 unset FAKE_CHECKS_HEAD
 
 export FAKE_PROTECTED=false
-if "$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" develop "$base_sha" 2 "$journal" >/dev/null 2>&1; then
+if "$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" develop "$base_sha" 2 "$journal" squash >/dev/null 2>&1; then
   echo "merge accepted an unprotected target" >&2
   exit 1
 fi
 unset FAKE_PROTECTED
 
 export FAKE_TARGET_POLICY=false
-if "$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" develop "$base_sha" 2 "$journal" >/dev/null 2>&1; then
+if "$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" develop "$base_sha" 2 "$journal" squash >/dev/null 2>&1; then
   echo "merge accepted a target without stale-base protection" >&2
   exit 1
 fi
 unset FAKE_TARGET_POLICY
 
-if "$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" wrong-target "$base_sha" 2 "$journal" >/dev/null 2>&1; then
+if "$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" wrong-target "$base_sha" 2 "$journal" squash >/dev/null 2>&1; then
   echo "merge accepted the wrong target" >&2
   exit 1
 fi
 
 export FAKE_CHECKS=failed
-if "$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" develop "$base_sha" 2 "$journal" >/dev/null 2>&1; then
+if "$script_dir/merge_stack_change.sh" test upstream 1 "$first_sha" develop "$base_sha" 2 "$journal" squash >/dev/null 2>&1; then
   echo "merge accepted failed remote checks" >&2
   exit 1
 fi
