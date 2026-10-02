@@ -10,6 +10,7 @@ branch_bundle="$repo_root/skills/build-branch-stack"
 publish_bundle="$repo_root/skills/open-stack-requests"
 merge_bundle="$repo_root/skills/merge-stack"
 integration_bundle="$repo_root/skills/integrate-and-test-staging"
+release_bundle="$repo_root/skills/prepare-release-integration"
 failed=0
 
 sync_one() {
@@ -76,6 +77,7 @@ shared-components/change-request-lifecycle/change-request-lifecycle.md|reference
 shared-components/change-request-lifecycle/gitlab.md|references/change-request-providers/gitlab.md
 shared-components/change-request-lifecycle/github.md|references/change-request-providers/github.md
 shared-components/change-request-lifecycle/bitbucket-cloud.md|references/change-request-providers/bitbucket-cloud.md
+shared-components/change-request-lifecycle/scripts/bitbucket_cloud.py|scripts/bitbucket_cloud.py
 shared-components/orchestration-conventions/orchestration-change-requests.md|references/orchestration-change-requests.md
 shared-components/orchestration-conventions/orchestration-plans-layout.md|references/orchestration-plans-layout.md
 shared-components/forge-cli/scripts/ensure_forge_cli.sh|scripts/ensure_forge_cli.sh
@@ -89,6 +91,13 @@ sync_one shared-components/release-manifest/release-manifest.md \
   "$merge_bundle" references/release-manifest.md
 sync_one shared-components/release-manifest/scripts/validate_release_manifest.py \
   "$merge_bundle" scripts/validate_release_manifest.py
+sync_one shared-components/change-request-lifecycle/scripts/bitbucket_cloud.py \
+  "$merge_bundle" scripts/bitbucket_cloud.py
+
+for bundle in "$publish_bundle" "$merge_bundle" "$release_bundle"; do
+  sync_one shared-components/release-integration/release-preparation.md \
+    "$bundle" references/release-preparation.md
+done
 
 sync_one shared-components/release-manifest/release-manifest.md \
   "$integration_bundle" references/release-manifest.md

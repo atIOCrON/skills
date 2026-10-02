@@ -1,12 +1,23 @@
 ---
 name: merge-stack
-description: Safely squash-merge an approved dependency chain or ordered independent batch on GitLab or GitHub.
+description: Merge approved stacks with ordinary merge commits by default; use an explicit squash override. Supports GitHub, GitLab, and Bitbucket release assembly.
 disable-model-invocation: true
 metadata:
   layer: runner
 ---
 
 # Merge Stack
+
+Default to `strategy: merge-commit`: preserve commits and create a merge commit
+for each change. Squash only when the user explicitly selects
+`strategy: squash`; never fall back to squash when merge commits are disabled.
+Treat an explicit legacy `mode: squash` as that override.
+
+For Bitbucket, or explicit `mode: release`, read
+`references/release-assembly.md` instead of the standard workflow below.
+It accepts mixed stacks, requires user merge authorization, and launches no
+code review loops. The standard workflow supports GitHub and GitLab with
+either strategy.
 
 Merge an already-reviewed linear dependency chain or ordered independent batch.
 Discover the base from the remote unless the user supplies it. The remote
@@ -29,8 +40,8 @@ only after every change merges.
 ## Inputs and Preflight
 
 Accept branch names, change-request URLs, or provider IDs. Also accept provider,
-remote, base, layout, cleanup, and journal overrides. Chained inputs may be in
-any order. Independent base-targeted inputs require an explicit order.
+remote, base, layout, strategy, cleanup, and journal overrides. Chained inputs
+may be in any order. Independent base-targeted inputs require an explicit order.
 
 For a stack built by `build-branch-stack`, load its manifest and map each source
 branch to one feature before merging. Require unmerged features under
@@ -43,15 +54,16 @@ merge and the move to `done/`.
 
 ```bash
 provider=<gitlab|github|auto>
+strategy=${strategy:-merge-commit}
 remote=${remote:-origin}
 base="$(scripts/resolve_base_branch.sh "$remote" "${base:-}")"
 scripts/provider.sh "$provider" "$remote" auth-check
 git fetch --prune "$remote"
 ```
 
-`auto` recognizes GitLab.com and GitHub.com. Require an explicit provider for
-self-hosted or custom forges. Stop if authentication, squash merging, or
-provider metadata is unavailable.
+`auto` recognizes GitLab.com, GitHub.com, and Bitbucket Cloud. Bitbucket uses
+release mode. Require an explicit provider for self-hosted or custom forges.
+Stop if authentication, the selected strategy, or provider metadata is unavailable.
 
 Use `chained` only when each later change requires its predecessor. Use
 `base-targeted` for independent changes. Do not treat input order as dependency
@@ -79,10 +91,11 @@ scripts/provider.sh "$provider" "$remote" get-change <input>
 ```
 
 Record its ID, URL, branches, state, head and base SHAs, approval SHA, checks
-SHA, mergeability, squash support, and landed SHA. Stop unless approval covers
-the head, checks cover the head, the repository prevents stale approval, and
+SHA, mergeability, selected-strategy support, and landed SHA. Stop unless
+approval covers the head, checks cover the head, the repository prevents stale approval, and
 the final target is protected. Also require a concise revert plan for each
-change. Stop unless the request is open, same-repository, and squash-capable.
+change. Stop unless the request is open, same-repository, and supports the
+selected strategy.
 Unknown fails closed.
 
 Determine order from Git:
@@ -116,9 +129,14 @@ that platform workflow. Never replace required remote CI with a local result.
 
 For each ordered branch:
 
-1. Journal intent and fetch `$remote`. Rebase a stale first branch. Rebase each
-   later independent branch onto the current base. For a chained layout, remove
-   the integrated prefix while rebasing later branches:
+1. Journal intent and fetch `$remote`. With merge commits, retain source heads;
+   rebase only for a demonstrated conflict, changed ancestor, or repository
+   policy requiring an updated source. A landed predecessor alone is not a
+   reason to rebase.
+
+   With an explicit squash override, rebase stale sources onto the current
+   base. For a chained layout, remove the squashed prefix when rebasing later
+   branches:
 
    ```bash
    scripts/rebase_stack_branch.sh "$remote" "$base" <branch> <journal>
@@ -131,19 +149,17 @@ For each ordered branch:
    reviews with effective-identity proof. The focused `reviewed_restack` paths
    in `build-branch-stack/references/code-review-loop.md` also apply with their
    required evidence and confirmations. Record old-to-new SHA mappings.
-   Unmapped manual resolutions or inequalities, changed effective output, or
-   behavior changes require a fresh Claude, Codex, and Cursor pass when below
-   the cap. For a capped slice, carry its accepted human disposition through a
-   proven unchanged-behavior mapping only while each accepted finding's risk
-   remains unchanged. Otherwise return it to the build workflow for remediation
-   or a new decision before merging. Keep automated review results truthful.
+   If a rewrite changes behavior, effective output, or invalidates a review
+   mapping, stop for a separately authorized build/review task. Carry a capped
+   human disposition only through a proven unchanged-behavior mapping with
+   unchanged finding risk. This skill launches no code review loops.
    Exact-head forge approval and checks still apply when repository policy
    requires them.
 
 2. Wait for checks on the exact head:
 
    ```bash
-   scripts/wait_for_change_checks.sh "$provider" "$remote" <id> <head-sha>
+   scripts/wait_for_change_checks.sh "$provider" "$remote" <id> <head-sha> "$strategy"
    ```
 
 3. Validate the expected successor. Use its ID for a non-final chained item;
@@ -154,8 +170,8 @@ For each ordered branch:
      "$provider" "$remote" <source-branch> <expected-id-or-null>
    ```
 
-4. Refresh state and squash-merge the exact approved and checked head against
-   the recorded target and base:
+4. Refresh state and merge the exact approved and checked head using the
+   selected strategy against the recorded target and base:
 
    For a mapped feature, require the acceptance evidence or authorized
    limitation decision to apply to this exact head. After a rebase, refresh
@@ -165,23 +181,24 @@ For each ordered branch:
    ```bash
      scripts/merge_stack_change.sh \
      "$provider" "$remote" <id> <head-sha> <target> <base-sha> \
-     <successor-id-or-null> <journal>
+     <successor-id-or-null> <journal> "$strategy"
    ```
 
    The script rechecks source and base SHAs, target, exact-head approval and
-   checks, mergeability, squash, and branch preservation immediately before
-   merging. Journal intent first and the confirmed landed SHA afterward.
+   checks, mergeability, selected strategy, and branch preservation immediately
+   before merging. Journal intent first and the confirmed landed SHA afterward.
 
-5. Confirm the landed squash commit:
+5. Confirm the landed commit using the same strategy:
 
    ```bash
-   scripts/confirm_squash_merge.sh \
+   scripts/confirm_merge.sh \
      "$provider" "$remote" <id> <head-sha> "$base" <expected-base-sha> \
-     <journal>
+     <journal> "$strategy"
    ```
 
-   Record `landed_sha` and `target_head_sha`. Do not test the pre-squash head for
-   ancestry; squash creates a different commit.
+   Record `landed_sha` and `target_head_sha`. For merge commits, verify both
+   pinned parents and the combined tree. For squash, verify the replacement
+   tree; the original source head is not an ancestor of the squash commit.
 
 6. For a chained stack, retarget the validated successor:
 
@@ -250,8 +267,8 @@ plans. Report every specification status change or reason it remained open.
 
 - Preserve unrelated work; never stash, revert, or stage it during merging.
 - Use explicit `--force-with-lease` SHAs, never plain `--force`.
-- Require squash, approval, exact-head checks, and passing CI; unknown is not
-  success.
+- Require the selected strategy, approval, exact-head checks, and passing CI;
+  unknown is not success.
 - Require an unchanged target and base SHA until a direct merge completes.
 - Journal every irreversible action before and after it; resume by reconciliation.
 - On partial failure, stop and report the landed commits and safe reverse-order
@@ -262,7 +279,7 @@ plans. Report every specification status change or reason it remained open.
 
 ## Report
 
-Return provider, remote, base, layout and dependency evidence, ordered changes,
-targets, approval/check SHAs, rebases, landed SHAs, journal path, resulting base
+Return provider, remote, base, strategy, layout and dependency evidence, ordered
+changes, targets, approval/check SHAs, rebases, landed SHAs, journal path, resulting base
 SHA, feature stages, specification statuses, remote-deletion and local-cleanup
 status, and unattempted branches.

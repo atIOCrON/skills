@@ -31,6 +31,7 @@ implicit_invocation_exceptions = {
     "branch-stack-status",
     "magento-composer-patches",
     "write-concisely",
+    "prepare-release-integration",
 }
 
 if not skill_files:
@@ -85,7 +86,7 @@ for path in skill_files:
     elif len(description) > 1024:
         errors.append(f"{rel}: description must be 1024 characters or fewer")
 
-    disable_model_invocation = fields.get("disable-model-invocation")
+    disable_model_invocation = fields.get("disable-model-invocation", False)
     if disable_model_invocation is not None and not isinstance(
         disable_model_invocation, bool
     ):
@@ -138,6 +139,8 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [[ "$(cd "$target_dir" && pwd)" == "$repo_root/skills" ]]; then
   "$repo_root/scripts/sync_bundled_skill.sh" --check
   "$target_dir/merge-stack/scripts/test_merge_stack.sh"
+  "$target_dir/merge-stack/scripts/test_release_assembly.sh"
+  python3 "$repo_root/shared-components/change-request-lifecycle/scripts/test_bitbucket_cloud.py"
   python3 "$target_dir/build-branch-stack/scripts/test_evidence_reuse.py"
   "$target_dir/build-branch-stack/scripts/test_launch_reviewers.sh"
   "$target_dir/build-branch-stack/scripts/test_runtime_launchers.sh"

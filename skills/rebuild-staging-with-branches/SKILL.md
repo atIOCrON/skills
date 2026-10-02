@@ -27,6 +27,12 @@ The user supplies:
   branch; and
 - authorization to move `staging`.
 
+Release preparation may also supply `expected_candidate_sha`: one full commit
+SHA that staging must deploy unchanged. In this mode require exactly one input
+branch at that SHA and the pinned base to be its ancestor. Reject a divergent
+base rather than merging it into an accepted release. Ordinary rebuilds keep
+their existing behavior.
+
 For example:
 
 ```text
@@ -61,6 +67,9 @@ assume that the base is `main`, `master`, or `develop`.
    fine. Never substitute a local tip for the origin tip. Do not apply this
    comparison to a local `staging` branch; the remote staging pointer is
    authoritative.
+   When `expected_candidate_sha` is supplied, call
+   `scripts/verify_candidate.sh <pinned-base-sha> <expected-sha> <sole-input-sha>`
+   now, before receipt creation or any remote mutation. Stop on failure.
 5. Get one timestamp with `date -u +%Y%m%dT%H%M%SZ`. After pinning, write a
    small receipt in the original target workspace, not the disposable
    integration checkout:
@@ -87,6 +96,8 @@ Start the receipt with `state: "building"`. Keep it small and record at least:
 - `staging_before`: the old `origin/staging` SHA or `null`;
 - `backup`: the backup branch name or `null`; and
 - `staging_after`: the new staging SHA, once verified.
+
+When supplied, also record `expected_candidate_sha`.
 
 Use `null` for candidate, tree, backup, and staging-after values that are not
 known yet, then update them as the rebuild advances.
@@ -123,6 +134,9 @@ release-orchestration gates.
    check pass, and report the failure and the source branch that must be
    corrected. Only after all checks pass, pin the final candidate commit and
    tree SHAs, then update the still-ignored receipt.
+   With `expected_candidate_sha`, repeat `scripts/verify_candidate.sh` against
+   the final candidate. Do not regenerate locks, resolve conflicts, or add
+   commits in this mode: such work changes the release candidate.
 
 ## Replace and verify staging
 
@@ -131,6 +145,9 @@ release-orchestration gates.
    lock. Record the running release and retained rollback release.
 2. Recheck remote staging immediately before mutation. If it differs from
    `staging_before`, stop; do not silently repin or retry.
+   With `expected_candidate_sha`, also recheck the sole input and remote base
+   against their pins, then repeat the exact-candidate guard before any backup
+   or staging mutation. Stop on drift.
 3. If staging exists, create and verify this remote backup with an explicit
    absence lease, never overwriting an existing ref:
 

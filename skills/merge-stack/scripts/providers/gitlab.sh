@@ -78,8 +78,14 @@ get_change() {
       checks_head_sha: ($mr.head_pipeline.sha // null),
       mergeability: (($mr.detailed_merge_status // $mr.merge_status // null) | mergeability),
       squash_allowed: ($mr.squash_on_merge == true),
+      merge_commit_allowed: (
+        ($project.merge_method == "merge" or $project.merge_method == "rebase_merge") and
+        ($project.squash_option == "never" or $project.squash_option == "allow" or $project.squash_option == "encourage")
+      ),
       cross_repository: (($mr.source_project_id // $mr.target_project_id) != ($mr.target_project_id // $mr.source_project_id)),
-      landed_sha: ($mr.squash_commit_sha // null)
+      landed_sha: ($mr.merge_commit_sha // $mr.squash_commit_sha // null),
+      merge_commit_sha: ($mr.merge_commit_sha // null),
+      squash_commit_sha: ($mr.squash_commit_sha // null)
     }'
 }
 
@@ -108,23 +114,26 @@ case "$operation" in
     jq -n --arg id "$1" --arg target "$2" '{id: $id, target_branch: $target}'
     ;;
   merge)
-    [ "$#" -eq 4 ] || die "usage: merge <id> <head-sha> <target> <base-sha>"
+    [ "$#" -eq 4 ] || [ "$#" -eq 5 ] || die "usage: merge <id> <head-sha> <target> <base-sha> [merge-commit|squash]"
     id="$1"
     head_sha="$2"
     target="$3"
     base_sha="$4"
+    method="${5:-merge-commit}"
+    case "$method" in merge-commit|squash) ;; *) die "unsupported merge method" ;; esac
     require_sha "$head_sha" "expected head"
     require_sha "$base_sha" "expected base"
     validate_change() {
       local change="$1"
-      printf '%s' "$change" | jq -e --arg head "$head_sha" --arg target "$target" --arg base "$base_sha" \
+      printf '%s' "$change" | jq -e --arg head "$head_sha" --arg target "$target" --arg base "$base_sha" --arg method "$method" \
         '
           .state == "open" and .head_sha == $head and .target_branch == $target and
           .base_sha == $base and .review_status == "approved" and
           .approval_head_sha == $head and .target_protected == true and
           .target_policy_enforced == true and
           .mergeability == "mergeable" and
-          .squash_allowed == true and .cross_repository == false and
+          (if $method == "squash" then .squash_allowed else .merge_commit_allowed end) == true and
+          .cross_repository == false and
           .checks_status == "passed" and .checks_head_sha == $head' >/dev/null ||
         die "GitLab merge request $id failed the exact-head, target, approval, checks, or mergeability gate"
     }
@@ -136,9 +145,15 @@ case "$operation" in
     printf '%s' "$mr" | jq -e '(.should_remove_source_branch != true) and (.force_remove_source_branch != true)' >/dev/null ||
       die "GitLab may remove the source branch; disable removal before this workflow"
     validate_change "$(get_change "$id")"
-    glab mr merge "$id" -R "$PROVIDER_URL" --sha "$head_sha" --squash --auto-merge=false --yes >/dev/null ||
-      die "GitLab failed to merge change $id"
-    jq -n '{status: "submitted", merge_method: "squash", landed_sha: null}'
+    if [ "$method" = squash ]; then
+      glab mr merge "$id" -R "$PROVIDER_URL" --sha "$head_sha" --squash --auto-merge=false --yes >/dev/null ||
+        die "GitLab failed to squash change $id"
+    else
+      api "merge_requests/$id/merge" -X PUT -f sha="$head_sha" \
+        -F squash=false -F should_remove_source_branch=false -F auto_merge=false >/dev/null ||
+        die "GitLab failed to merge change $id"
+    fi
+    jq -n --arg method "$method" '{status: "submitted", merge_method: $method, landed_sha: null}'
     ;;
   *) die "unsupported GitLab operation: $operation" ;;
 esac

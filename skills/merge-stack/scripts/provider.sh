@@ -20,6 +20,7 @@ if [ "$provider" = auto ]; then
   case "$remote_url" in
     *github.com[:/]*) provider=github ;;
     *gitlab.com[:/]*) provider=gitlab ;;
+    *bitbucket.org[:/]*) provider=bitbucket-cloud ;;
     *)
       echo "error: cannot infer provider from $remote_url; specify it explicitly" >&2
       exit 3

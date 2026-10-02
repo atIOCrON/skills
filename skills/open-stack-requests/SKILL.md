@@ -1,6 +1,6 @@
 ---
 name: open-stack-requests
-description: Create or refresh draft change requests as verified branches stabilize, then mark them ready after frozen-release checks pass.
+description: Publish draft build requests or fresh Bitbucket release PRs, then refresh readiness and release destinations without merging.
 disable-model-invocation: true
 metadata:
   layer: runner
@@ -11,6 +11,11 @@ metadata:
 Create or refresh change requests (CRs) from the canonical release manifest.
 Use draft mode as each branch stabilizes; use ready mode after release gates
 pass. Do not implement plans or push branches.
+
+For `release` or `release-final`, read `references/release-publication.md` and
+follow that mode instead of the build-only inputs and workflow below. Release
+modes use ordinary merge commits, create non-draft PRs, and launch no review
+loops. Existing `draft` and `ready` behavior remains unchanged.
 
 ## Inputs
 
