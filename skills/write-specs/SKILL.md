@@ -94,8 +94,9 @@ slice.
 Source-text, snapshot, or patch-shape assertions may protect structure. They do
 not prove browser activation, DOM replacement, concurrency, retry, cancellation,
 provider callbacks, current totals, or other runtime lifecycle behaviour.
-State the highest practical local behavioural seam for those requirements and
-record real-provider or real-environment acceptance separately when needed.
+Use the least costly verification sufficient to establish those behaviours.
+Add executable coverage only where existing checks or inspection cannot establish
+them; record real-provider or real-environment acceptance separately when needed.
 
 ## Authorized Complexity
 
@@ -121,6 +122,17 @@ them implicitly.
 Use the smallest sufficient checks for each acceptance condition and plausibly
 affected contract. Reuse existing checks; broader checks require broader impact
 or binding repository policy.
+
+Distinguish one-time verification from ongoing regression coverage. Existing
+checks, diff review, or direct inspection may satisfy acceptance; each acceptance
+ID does not require a new test. Add tests only for credible failures in behaviour
+or integration the project continues to own. Do not duplicate upstream coverage
+solely because native behaviour is being restored.
+
+Do not add tests asserting that removed project-owned customizations remain
+absent. Confirm removal through one-time inspection. Absence assertions are
+appropriate when retained project-owned behaviour must continue suppressing
+upstream behaviour.
 
 For any added fixture, harness, service dependency, full API or end-to-end run,
 manual acceptance step, or observation window, state the failure it detects and
@@ -148,10 +160,15 @@ machinery, or verification.
 2. Compare with the smallest viable design using native ownership and existing
    checks. Remove unnecessary layers, mechanisms, duplicate criteria, fixtures,
    and gates.
-3. Confirm requirements and behavioural proof remain sufficient. Preserve
+3. Review verification separately. For each proposed new test, fixture, harness,
+   or gate, identify the credible failure it catches that remaining checks would
+   miss. Remove checks that only confirm deletion, duplicate coverage, or guard
+   against hypothetical future changes. Agent-proposed gates remain eligible
+   for removal.
+4. Confirm requirements and behavioural proof remain sufficient. Preserve
    acceptance IDs; never silently renumber them or waive user requirements or
-   adopted gates.
-4. Repeat only after a material reduction. Stop when no justified reduction
+   gates required by the user or binding repository policy.
+5. Repeat only after a material reduction. Stop when no justified reduction
    remains; do not manufacture findings or require repeated clean passes.
 
 Briefly report reductions or why the draft is proportionate. Apply existing
