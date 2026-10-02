@@ -69,8 +69,9 @@ Copy the supplied branch name exactly into `Source Branch`.
 
 ### Status and Plan
 
-Use the current executable slice plan's stage, not the parent specification's
-approval state, build progress labels, CI success, or the Sheet's old value:
+Use the current executable slice plan's stage under `plans/slices/`, not the
+parent specification's approval state, build progress labels, CI success, or
+the Sheet's old value:
 
 | Current stage | Status |
 | --- | --- |
@@ -92,8 +93,9 @@ limitation explicitly accepted. Report a stale `done` stage when these gates
 are demonstrably unmet; do not edit plans or claim completion from code alone.
 
 `Plan` is the current path relative to the plans repository, for example
-`plans/review/rival_configdebug_setup/rival_configdebug_setup.md`. Resolve moved
-plans by slice slug and explicit branch declaration. Leave blank and report the
+`plans/slices/review/rival_configdebug_setup/rival_configdebug_setup.md`.
+Resolve moved plans by slice slug and explicit branch declaration, including
+legacy locations without moving files. Leave blank and report the
 limitation if no matching plan exists but other evidence supports status.
 
 ### To Do and Note

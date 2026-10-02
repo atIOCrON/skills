@@ -1,7 +1,7 @@
 # Artefact Audit at Branch Handoff
 
 Audit each selected feature after its required branch-level agent checks pass,
-its artefacts are preserved under `plans/review/<slug>/`, and the canonical
+its artefacts are preserved under `plans/slices/review/<slug>/`, and the canonical
 release manifest records the reviewed and tested SHA. A complete tested stack
 snapshot is not required: use the exact feature tip and mark questions that
 intrinsically require unbuilt descendant branches or a complete candidate as
@@ -29,8 +29,8 @@ or the tested temporary integration commit for an ordered independent batch.
 Use an exact verified feature tip when no combined snapshot exists. Record the
 SHA actually checked and mark a cross-branch question pending if no tested
 snapshot can resolve it. Do not describe unmerged branch code as merged code.
-Check existing specifications, slice maps, plans across all stages, and legacy
-`plans/<slug>.md` files in the tested snapshot and primary checkout for an
+Check specifications across all status folders, slice maps, plans across all
+slice stages, and legacy `plans/<slug>.md` files in the tested snapshot and primary checkout for an
 equivalent outcome.
 
 Create a new plan only when the work is still needed, specific enough to
@@ -70,9 +70,11 @@ Refer to source artefacts by feature-relative path so later stage moves preserve
 references. Refer to a follow-up plan by its slug.
 
 Route each `planned` candidate through the same two planning stages as new work.
-Create or reuse a parent specification under `plans/specs/` with stable
-acceptance IDs. After the user approves the slice breakdown, create the slice
-map and child plans under `plans/backlog/`. A candidate that already represents
+Create a parent under `plans/specs/draft/` or reuse an existing specification
+by slug. Apply `write-specs` status and move rules; never infer approval from
+the audit. After the user approves the specification and slice breakdown,
+write the slice map beside the parent under `plans/specs/approved/` and child
+plans under `plans/slices/backlog/`. A candidate that already represents
 one cohesive vertical slice still needs a one-entry slice map. If several
 outcomes can ship, fail, or roll back independently, do not create one aggregate
 backlog plan; leave the decomposition pending user approval. Include the source

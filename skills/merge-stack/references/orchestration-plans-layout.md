@@ -4,32 +4,43 @@ Broad feature specifications and executable vertical-slice plans have separate
 lifecycles:
 
 ```text
-plans/specs/<spec_slug>/<spec_slug>.md
-plans/specs/<spec_slug>/<spec_slug>.slices.md
-plans/<stage>/<slug>/<slug>.md
-plans/<stage>/<slug>/<slug>.reviews/
-plans/<stage>/<slug>/<slug>.execution/
-plans/<stage>/<slug>/<slug>.evidence/
+plans/specs/<status>/<spec_slug>/<spec_slug>.md
+plans/specs/<status>/<spec_slug>/<spec_slug>.slices.md
+plans/slices/<stage>/<slug>/<slug>.md
+plans/slices/<stage>/<slug>/<slug>.reviews/
+plans/slices/<stage>/<slug>/<slug>.execution/
+plans/slices/<stage>/<slug>/<slug>.evidence/
 plans/releases/<release-id>/manifest.json
 ```
 
-A specification defines the complete outcome and stable acceptance IDs. Keep it
-at this path; record its lifecycle inside the document as `draft`, `approved`,
-`fulfilled`, or `superseded`. Only an `approved` specification may be sliced or
-built. Delivery progress is derived from its child plans, not from an
-`in_progress` specification state.
+A specification defines the complete outcome and stable acceptance IDs. Its
+`Specification Status` is `draft`, `approved`, `fulfilled`, or `superseded`;
+the directory's `<status>` must match. Create specifications in `draft/`.
+Explicit user approval moves them to `approved/`. Only an `approved`
+specification may be sliced or built. Delivery progress comes from its child
+plans; child stage changes do not move the parent specification.
+
+After confirmed merges and final acceptance, `merge-stack` marks an approved
+specification `fulfilled` and moves its folder to `fulfilled/` only when its
+approved slice map resolves every mapped slice exactly once in
+`plans/slices/done/`, with consistent acceptance ownership. Leave it `approved`
+while any mapped slice remains elsewhere. A stale map, missing or duplicate
+slice, or inconsistent ownership blocks completion. Move a specification to
+`superseded/` only when the user identifies its replacement.
 
 The `.slices.md` file is the approved decomposition manifest. It gives every
 acceptance ID one owning slice and records each slice's outcome, blockers,
 verification boundary, rollback boundary, and exclusions. It uses slice slugs,
 not stage-dependent paths, and does not duplicate branch, plan-stage, release,
 or deployment state. Its `Slice Map Status` is `approved` or `stale`.
-Specifications and slice maps never move through stage directories and are not
-branch implementation inputs.
+The slice map stays beside its specification and moves with it through spec
+status directories. Neither file enters slice stage directories or serves as
+a branch implementation input.
 
 A material change to an approved or fulfilled specification returns it to
-`draft` and makes its slice map `stale`. Clarifications that preserve acceptance
-IDs, scope, binding decisions, authorized complexity, and external acceptance
+`draft`, moves its folder to `draft/`, and makes its slice map `stale`.
+Clarifications that preserve acceptance IDs, scope, binding decisions,
+authorized complexity, and external acceptance
 retain status. After reapproval, revise the decomposition and obtain user
 approval before restoring the slice map to `approved`.
 
@@ -46,14 +57,34 @@ boundary.
 An explicitly classified legacy plan may stand alone only after it passes the
 same cohesion check.
 
-Stages are `backlog`, `to_do`, `in_progress`, `review`, and `done`. Use the
-feature's current directory as `<feature_dir>` in other references. Move the
-whole directory at a stage transition; never move the plan without its
-artefacts, merge it into an existing destination, or move it while a worker or
-reviewer is using its old path. Resolve the new plan and artefact paths before
-the next step, and refresh any handoff or manifest references. Create stage
-directories as needed. Keep links within a feature relative to its directory
-so stage moves preserve them.
+Slice stages under `plans/slices/` are `backlog`, `to_do`, `in_progress`,
+`review`, and `done`. Use the slice's current directory as `<feature_dir>` in
+other references. Apply the move rules below at each stage transition. Keep
+links within a slice relative to its directory so stage moves preserve them.
+
+## Moves and Legacy Layout
+
+At a spec status or slice stage transition, move the whole folder, including
+its map or artefacts. Create destination parents as needed; stop on a collision.
+Never merge folders or move one while a worker or reviewer uses its old path.
+Update the spec's internal status with its move. Refresh incoming and outgoing
+references, including child links to the parent spec and map, handoffs, and
+manifest plan and artefact paths. Verify the new paths before continuing;
+report any incomplete move or reference repair without undoing confirmed merges.
+
+Use unique spec slugs across status directories and unique slice slugs across
+stages. Resolve each referenced slug exactly once, checking legacy locations
+for duplicates. In an authorized writing or delivery workflow,
+migrate encountered legacy `plans/specs/<spec_slug>/` folders to the recorded
+spec status and `plans/<stage>/<slug>/` slice folders to the same stage under
+`plans/slices/`. Move a legacy broad specification found elsewhere under
+`plans/` through `write-specs`; do not treat it as a slice. Preserve approval,
+acceptance IDs, evidence, and stage. A spec without a recorded status is
+`draft`; never infer approval or fulfillment from its old location. Apply the
+same move rules and leave no duplicate. Read-only workflows resolve legacy
+locations without moving files; multiple matches are ambiguous.
+
+## Slice Stages
 
 Release manifests live outside feature stage directories so plan moves do not
 move the release source of truth. Keep branch order, targets, SHAs, checks,

@@ -1,7 +1,7 @@
 # Plan Implement
 
-Implement one approved vertical-slice plan from `plans/in_progress/` within the
-assigned file or module ownership scope. The plan defines intent and scope.
+Implement one approved vertical-slice plan from `plans/slices/in_progress/`
+within the assigned file or module ownership scope. The plan defines intent and scope.
 Binding policies, applicable repository standards, and affected contracts
 govern correctness. General best practice informs in-scope work but does not
 expand it. If no plan path or

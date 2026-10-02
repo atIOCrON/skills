@@ -12,11 +12,13 @@ Turn one approved parent specification into branch-sized implementation plans.
 Each plan must deliver a narrow, complete path through every affected layer and
 leave the repository in a valid state.
 
-Resolve paths against the user's primary checkout. Require the parent at
-`plans/specs/<spec_slug>/<spec_slug>.md`. Migrate a legacy broad specification
-through `write-specs` first. Read it, its evidence, relevant code and contracts,
-and every acceptance ID before proposing slices. Require its `Specification
-Status` to be `approved`; stop on `draft`, `fulfilled`, or `superseded`.
+Resolve paths against the user's primary checkout. Read
+`references/orchestration-plans-layout.md` for moves and legacy migration.
+Require the parent at `plans/specs/approved/<spec_slug>/<spec_slug>.md`.
+Migrate a legacy broad specification through `write-specs` first. Read it,
+its evidence, relevant code and contracts, and every acceptance ID before
+proposing slices. Require its `Specification Status` to be `approved`; stop on
+`draft`, `fulfilled`, or `superseded`.
 
 ## Draft Before Writing
 
@@ -91,12 +93,13 @@ may own several criteria only when they prove one cohesive outcome.
 Write the approved decomposition manifest to:
 
 ```text
-plans/specs/<spec_slug>/<spec_slug>.slices.md
+plans/specs/approved/<spec_slug>/<spec_slug>.slices.md
 ```
 
-This file is the stable slice map, not a release manifest or a second status
-tracker. Require a `Slice Map Status` section with value `approved`; only write
-it after the user approves the decomposition. Include:
+This map stays beside its parent and moves with the spec's status folder. It is
+not a release manifest or a second delivery tracker. Require a
+`Slice Map Status` section with value `approved`; write it only after the user
+approves the decomposition. Include:
 
 ```text
 | Acceptance ID | Owning slice |
@@ -104,20 +107,23 @@ it after the user approves the decomposition. Include:
 ```
 
 Use slice slugs, not stage-dependent plan paths. Locate a slice's current state
-by finding its slug under `backlog`, `to_do`, `in_progress`, `review`, or
-`done`. Mark the slice map `stale` when the parent specification materially
-changes; no mapped plan may start until the user approves a revised map.
+by finding its slug under `plans/slices/<stage>/`, where stages are `backlog`,
+`to_do`, `in_progress`, `review`, and `done`. Mark the map `stale` when the
+parent specification materially changes; no mapped plan may start until the
+user approves a revised map.
 
 ## Child Plans
 
 Create each child at:
 
 ```text
-plans/backlog/<slice_slug>/<slice_slug>.md
+plans/slices/backlog/<slice_slug>/<slice_slug>.md
 ```
 
-Use a unique lowercase `snake_case` slug of at most 40 characters. Never
-overwrite or move an existing plan. Each child plan must contain:
+Use a unique lowercase `snake_case` slug of at most 40 characters across all
+slice stages, including legacy locations. Reuse an existing mapped plan;
+never overwrite it or reset its stage. Move it only for required layout
+migration. Each child plan must contain:
 
 - parent specification path, slice-map path, and slice slug;
 - the single outcome and relevant problem evidence;
