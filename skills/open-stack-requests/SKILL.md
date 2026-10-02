@@ -33,13 +33,13 @@ Choose one mode:
 
 - `draft`: require a verified, pushed branch, passed branch-level agent checks,
   and a pinned parent that is an ancestor. Its plan may be in
-  `plans/in_progress/` or `plans/review/`; ancestor reviews and the full
-  candidate may still be pending.
-- `ready`: require the plan under `plans/review/`, a frozen manifest, final
+  `plans/slices/in_progress/` or `plans/slices/review/`; ancestor reviews and
+  the full candidate may still be pending.
+- `ready`: require the plan under `plans/slices/review/`, a frozen manifest, final
   stack checks, current-tip trim and reviews or accepted capped disposition,
   qualified pinned ancestors, and forge checks on the exact source SHA.
 
-Exclude confirmed merged branches under `plans/done/`. After a repair run,
+Exclude confirmed merged branches under `plans/slices/done/`. After a repair run,
 reload the canonical manifest; plan paths may have moved during repair.
 
 ## Workflow

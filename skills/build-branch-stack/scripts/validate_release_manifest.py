@@ -460,7 +460,11 @@ def validate(data: Any) -> list[str]:
             and parent.get("sha") == parent_tips.get(parent_branch)
         )
         plan = branch.get("plan")
-        if is_text(plan) and plan.startswith("plans/review/") and not isinstance(review_handoff, dict):
+        if (
+            is_text(plan)
+            and plan.startswith(("plans/slices/review/", "plans/review/"))
+            and not isinstance(review_handoff, dict)
+        ):
             errors.append(f"{prefix}.plan in review requires review_handoff")
 
         change_request = branch.get("change_request")
@@ -481,7 +485,11 @@ def validate(data: Any) -> list[str]:
                 and trim_review.get("status") != "proportionate"
             ):
                 errors.append(f"{prefix}.change_request requires a proportionate trim result")
-            if is_text(plan) and plan.startswith("plans/done/") and change_request.get("state") != "merged":
+            if (
+                is_text(plan)
+                and plan.startswith(("plans/slices/done/", "plans/done/"))
+                and change_request.get("state") != "merged"
+            ):
                 errors.append(f"{prefix}.plan in done requires a merged change_request")
 
         if state in {"frozen", "staged", "accepted", "released"}:

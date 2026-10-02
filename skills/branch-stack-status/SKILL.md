@@ -14,7 +14,9 @@ manifest path.
 Work read-only. Do not edit files, refs, plans, or the manifest.
 
 1. Read the current release manifest. For each requested branch, resolve its
-   plan file from the manifest. If absent, search plans/ and branch evidence.
+   plan file from the manifest. If absent or moved, search `plans/slices/` by
+   slice slug and branch evidence, then legacy plan locations. Derive the stage
+   from the slice directory; a spec status folder is not a slice stage.
    Never present a predecessor's plan as the branch's own plan; say "No
    dedicated plan" when appropriate.
 2. Inspect the plan stage, exact branch tip, trim ledger, correctness triage

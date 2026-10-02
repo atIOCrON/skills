@@ -76,9 +76,10 @@ Squash requires an explicit override and authorization recorded with
 ## Completion
 
 Merging into integration means assembled, not released. Do not move plans to
-`done/`, fulfil specifications, delete sources, or mark the build manifest
-released. Freeze the assembled candidate's commit and tree, deploy that exact
-commit, and record acceptance separately from deployment success.
+`plans/slices/done/` or specs to `plans/specs/fulfilled/`, delete sources, or
+mark the build manifest released. Freeze the assembled candidate's commit and
+tree, deploy that exact commit, and record acceptance separately from
+deployment success.
 
 The final PR contains the scope, individual PR links and merge order,
 integration resolutions, candidate identity, test and staging evidence,

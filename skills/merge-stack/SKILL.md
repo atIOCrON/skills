@@ -33,8 +33,9 @@ Read `references/stacked-change-requests.md` before classifying the layout.
 Read `references/provider-contract.md` when adding or debugging a provider and
 `references/run-journal.md` before mutation. Read
 `references/orchestration-plans-layout.md` for a stack built by
-`build-branch-stack`. Read `references/release-manifest.md` and validate the
-canonical manifest before using it. Read `references/post-merge-cleanup.md`
+`build-branch-stack`, including moves and legacy migration. Read
+`references/release-manifest.md` and validate the canonical manifest before
+using it. Read `references/post-merge-cleanup.md`
 only after every change merges.
 
 ## Inputs and Preflight
@@ -44,9 +45,11 @@ remote, base, layout, strategy, cleanup, and journal overrides. Chained inputs
 may be in any order. Independent base-targeted inputs require an explicit order.
 
 For a stack built by `build-branch-stack`, load its manifest and map each source
-branch to one feature before merging. Require unmerged features under
-`plans/review/`; allow confirmed merged features already under `plans/done/`
-when resuming. Stop on a missing or ambiguous mapping or a destination collision.
+branch to one feature before merging. Migrate encountered legacy plan folders
+using the layout rules and refresh manifest paths. Require unmerged features
+under `plans/slices/review/`; allow confirmed merged features already under
+`plans/slices/done/` when resuming. Stop on a missing or ambiguous mapping or a
+destination collision.
 For each mapped feature, confirm that its human or external acceptance checks
 passed or an authorized decision explicitly accepted each limitation. Record
 `none applicable` if there are no such checks. Pending acceptance blocks the
@@ -247,21 +250,26 @@ scripts/cleanup_merged_branches.sh "$remote" "$base" <record-file>
 
 After merge attempts and any applicable cleanup, move each confirmed merged
 feature with completed or explicitly accepted acceptance checks from
-`plans/review/` to `plans/done/`, including after a partial run.
+`plans/slices/review/` to `plans/slices/done/`, including after a partial run.
 Leave unmerged features in `review/`. Refresh the manifest's plan and artefact
 paths, including its own path if moved, and verify them. If a move or manifest
 update fails, report the confirmed merges and remaining stage work; do not undo
 a merge.
 
 After those moves, reconcile each affected parent specification. Require an
-`approved` specification and `approved` slice map, then locate every mapped
-slice slug exactly once across the stage directories. Change the specification
-status to `fulfilled` only when every mapped slice is in `done/`; that stage
-already proves merge and completed or explicitly accepted acceptance. Leave it
-`approved` when any slice remains elsewhere. Stop the status update on a stale
-map, missing or duplicate slug, or inconsistent acceptance ownership, but do
-not undo confirmed merges. Do not infer a parent specification for legacy
-plans. Report every specification status change or reason it remained open.
+`approved` specification under `plans/specs/approved/` and an `approved` slice
+map, then locate every mapped slice slug exactly once across
+`plans/slices/<stage>/`. Change the specification status to `fulfilled` and
+move its whole folder, including the map, to `plans/specs/fulfilled/<spec_slug>/`
+only when every mapped slice is in `plans/slices/done/`; that stage proves
+merge and completed or explicitly accepted acceptance. Refresh all parent and
+map links in child plans and other references, then verify paths. Leave it
+`approved` while any slice remains elsewhere. Stop the update on a stale map,
+missing or duplicate slug, inconsistent acceptance ownership, or destination
+collision; do not undo confirmed merges. On resume, verify an already
+`fulfilled` parent still meets these gates without moving it again. Do not infer
+a parent specification for legacy plans. Report status changes and moves,
+incomplete reference repairs, and reasons specifications remained open.
 
 ## Invariants
 

@@ -24,7 +24,7 @@ from the manifest, never use them to override it silently.
   "branches": [
     {
       "source": "feature/example",
-      "plan": "plans/in_progress/example/example.md",
+      "plan": "plans/slices/in_progress/example/example.md",
       "target": "master",
       "parent": {"branch": "master", "sha": "<full-sha>"},
       "dependency_reason": "none",

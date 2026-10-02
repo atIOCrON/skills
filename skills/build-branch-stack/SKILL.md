@@ -37,7 +37,7 @@ Read `references/trim-review.md` before launching the first trim pass.
 ## Inputs
 
 - Ordered reviewed vertical-slice plans at
-  `plans/<stage>/<slug>/<slug>.md`, each linked to its approved parent
+  `plans/slices/<stage>/<slug>/<slug>.md`, each linked to its approved parent
   specification and slice map, or selected legacy plans explicitly classified
   as cohesive slices.
 - Base branch: the remote default unless the user names another.
@@ -186,13 +186,12 @@ disposition for release readiness; preserve automated review state and follow
 
 ## Readiness
 
-Before moving plans or editing code, inspect repository instructions, selected
-plans, parent specifications, slice maps, branch refs, and available CI. Reject
-a parent specification as an implementation input. Require each parent
-specification and slice map to have status `approved`; stop on a `draft`,
-`fulfilled`, `superseded`, or `stale` input. Resolve each plan by its mapped
-slice slug rather than a stage-dependent path. For each selected plan, answer
-before creating or adopting a branch:
+Before moving plans or editing code, inspect repository instructions, plans,
+parent specs, slice maps, branch refs, and CI. Specs are not implementation
+inputs. Require approved specs under `plans/specs/approved/`, approved maps,
+and slices under `plans/slices/`; stop on draft, fulfilled, superseded, or stale
+inputs. Migrate legacy folders using the layout rules before dispatch. Resolve
+plans by mapped slice slug. Before creating or adopting a branch, answer:
 
 - What single actor-visible or integration-visible outcome does it deliver?
 - Can any acceptance group ship, fail, or roll back independently?
@@ -261,7 +260,7 @@ Move only the selected reviewed feature directories from
 their new plan paths before starting; leave unrelated backlog features alone.
 For a selected legacy `plans/<slug>.md`, move it and any sibling
 `<slug>.reviews/`, `<slug>.execution/`, and `<slug>.evidence/` into
-`plans/to_do/<slug>/` first. Stop on a destination collision.
+`plans/slices/to_do/<slug>/` first. Stop on a destination collision.
 
 Use the scheduling contract to dispatch work as each branch becomes eligible.
 Pin each parent's exact SHA. Failed verification or integrity blocks new

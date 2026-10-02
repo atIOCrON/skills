@@ -15,19 +15,19 @@ increments. It is not an executable branch plan.
 Resolve `plans/...` against the user's primary local checkout of the target
 repository, or another local directory they explicitly designate. Do not use
 an agent worktree as the plan root merely because it is the current directory.
+Read `references/orchestration-plans-layout.md` for moves and legacy migration.
 
 Create a new specification at:
 
 ```text
-plans/specs/<spec_slug>/<spec_slug>.md
+plans/specs/draft/<spec_slug>/<spec_slug>.md
 ```
 
-For an update, edit the existing specification in place. Never move a
-specification through `backlog`, `to_do`, `in_progress`, `review`, or `done`;
-those stages are for vertical-slice implementation plans. If an older broad
-specification exists elsewhere under `plans/`, migrate it to `plans/specs/`
-when safe, update its references, and do not leave a duplicate. Do not migrate
-a genuine vertical-slice plan.
+For an update, locate the existing specification by slug across spec status
+directories and edit it there. Move its whole folder only for a status change
+or legacy migration; refresh links to the specification and its slice map.
+Keep slice implementation stages under `plans/slices/` separate from spec
+statuses. Classify legacy files before migrating; never treat a slice as a spec.
 
 Use a lowercase `snake_case` slug of at most 40 characters. Inspect relevant
 code, contracts, documentation, and established extension points before
@@ -35,25 +35,27 @@ writing. Report the absolute specification path.
 
 ## Specification Lifecycle
 
-Keep the specification at its stable path. Require a `Specification Status`
-section with exactly one value:
+Require a `Specification Status` section with exactly one value, matching the
+folder under `plans/specs/`:
 
 - `draft`: still being defined; `write-slices` must not decompose it.
 - `approved`: explicitly approved by the user; slices may be created and built.
-- `fulfilled`: every slice is in `done/` and required acceptance passed or was
-  explicitly accepted.
+- `fulfilled`: every mapped slice is in `plans/slices/done/`, its merge is
+  confirmed, and required acceptance passed or was explicitly accepted.
 - `superseded`: replaced by a named specification and no longer actionable.
 
 Create specifications as `draft`. Never infer approval from a request to write
 or update one. Change `draft` to `approved` only on explicit user approval.
-`merge-stack` may change `approved` to `fulfilled` after proving completion.
-Change a specification to `superseded` only when the user identifies its
-replacement.
+Move its folder from `draft/` to `approved/` with that status update.
+`merge-stack` changes `approved` to `fulfilled` and moves the folder after
+proving completion. Change a specification to `superseded` and move it to
+`superseded/` only when the user identifies its replacement.
 
 Changes to acceptance IDs, scope, binding decisions, authorized complexity,
 required verification, or external acceptance return an `approved` or
-`fulfilled` specification to `draft`. Mark an existing slice map `stale`;
-affected slices cannot start until the specification and revised map are approved.
+`fulfilled` specification to `draft` and move its folder to `draft/`.
+Mark an existing slice map `stale`; affected slices cannot start until the
+specification and revised map are approved.
 Clarifications that preserve those contracts retain the current status. Report
 every status transition and why it occurred.
 

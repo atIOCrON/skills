@@ -207,7 +207,7 @@ class ReleaseManifestReuseTest(unittest.TestCase):
             "branches": [
                 {
                     "source": "feature/test",
-                    "plan": "plans/test.md",
+                    "plan": "plans/slices/in_progress/test/test.md",
                     "target": "main",
                     "parent": {"branch": "main", "sha": base_sha},
                     "dependency_reason": "none",
@@ -258,6 +258,30 @@ class ReleaseManifestReuseTest(unittest.TestCase):
             "outcome": outcome,
             "evidence": "reviews/review-handoff.md",
         }
+
+    def test_review_stage_requires_handoff_in_current_and_legacy_layouts(self) -> None:
+        for root in ("plans/slices", "plans"):
+            with self.subTest(root=root):
+                manifest = self.manifest()
+                branch = manifest["branches"][0]
+                branch["plan"] = f"{root}/review/test/test.md"
+                self.assertEqual(release_validator.validate(manifest), [
+                    "branches[0].plan in review requires review_handoff",
+                ])
+                self.set_review_handoff(branch)
+                self.assertEqual(release_validator.validate(manifest), [])
+
+    def test_done_stage_requires_merge_in_current_and_legacy_layouts(self) -> None:
+        for root in ("plans/slices", "plans"):
+            with self.subTest(root=root):
+                manifest = self.manifest()
+                branch = manifest["branches"][0]
+                branch["plan"] = f"{root}/done/test/test.md"
+                self.assertEqual(release_validator.validate(manifest), [
+                    "branches[0].plan in done requires a merged change_request",
+                ])
+                branch["change_request"]["state"] = "merged"
+                self.assertEqual(release_validator.validate(manifest), [])
 
     def test_release_check_accepts_identity_reuse(self) -> None:
         manifest = self.manifest()
@@ -363,7 +387,7 @@ class ReleaseManifestReuseTest(unittest.TestCase):
             "status": "proportionate", "sha": branch["tip_sha"],
             "evidence": "reviews/trim-review-ledger.md",
         }
-        branch["plan"] = "plans/review/test/test.md"
+        branch["plan"] = "plans/slices/review/test/test.md"
         self.set_review_handoff(branch, "review_cap_reached")
         self.assertEqual(release_validator.validate(manifest), [])
         branch["change_request"]["state"] = "ready"
@@ -454,7 +478,7 @@ class ReleaseManifestReuseTest(unittest.TestCase):
                 evidence="evidence/review.md",
             )
         manifest["branches"].append(child)
-        child["plan"] = "plans/review/child/child.md"
+        child["plan"] = "plans/slices/review/child/child.md"
         self.set_review_handoff(child)
         self.assertEqual(release_validator.validate(manifest), [])
         child["change_request"]["state"] = "ready"
@@ -487,7 +511,7 @@ class ReleaseManifestReuseTest(unittest.TestCase):
             review.update(status="clean", sha=branch["tip_sha"],
                           method="direct", origin_sha=branch["tip_sha"],
                           evidence="reviews/clean.md")
-        branch["plan"] = "plans/review/test/test.md"
+        branch["plan"] = "plans/slices/review/test/test.md"
         self.set_review_handoff(branch)
         self.assertEqual(release_validator.validate(manifest), [])
 
@@ -548,8 +572,8 @@ class ReleaseManifestReuseTest(unittest.TestCase):
         manifest["branches"].append(child)
         self.assertEqual(release_validator.validate(manifest), [])
         self.assertTrue(all(review["status"] == "pending" for review in parent["reviews"]))
-        parent["plan"] = "plans/review/test/test.md"
-        child["plan"] = "plans/review/child/child.md"
+        parent["plan"] = "plans/slices/review/test/test.md"
+        child["plan"] = "plans/slices/review/child/child.md"
         self.set_review_handoff(parent, "review_cap_reached")
         self.set_review_handoff(child)
         self.assertEqual(release_validator.validate(manifest), [])
@@ -584,7 +608,7 @@ class ReleaseManifestReuseTest(unittest.TestCase):
             "reason": "Accepted finding risk", "evidence": "reviews/human-disposition.md",
             "unresolved_findings": ["code-p5-codex-01"], "mappings": [],
         }
-        branch["plan"] = "plans/review/test/test.md"
+        branch["plan"] = "plans/slices/review/test/test.md"
         self.set_review_handoff(branch, "review_cap_reached")
         branch["change_request"]["state"] = "ready"
         for new_sha in ("e" * 40, "f" * 40):
@@ -646,7 +670,7 @@ class ReleaseManifestReuseTest(unittest.TestCase):
         self.assertTrue(any("requires branch handoff" in error for error in errors))
         branch["checks"][0]["status"] = "passed"
         self.assertEqual(release_validator.validate(manifest), [])
-        branch["plan"] = "plans/review/test/test.md"
+        branch["plan"] = "plans/slices/review/test/test.md"
         self.set_review_handoff(branch, "review_cap_reached")
         self.assertEqual(release_validator.validate(manifest), [])
         branch["human_disposition"]["status"] = "rejected"
@@ -680,10 +704,10 @@ class ReleaseManifestReuseTest(unittest.TestCase):
                           origin_sha=None, evidence=None)
         manifest["branches"].append(child)
         self.assertEqual(release_validator.validate(manifest), [])
-        parent["plan"] = "plans/review/test/test.md"
+        parent["plan"] = "plans/slices/review/test/test.md"
         self.set_review_handoff(parent)
         self.assertEqual(release_validator.validate(manifest), [])
-        parent["plan"] = "plans/done/test/test.md"
+        parent["plan"] = "plans/slices/done/test/test.md"
         self.assertTrue(any("plan in done requires a merged change_request" in error
                             for error in release_validator.validate(manifest)))
 

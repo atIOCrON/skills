@@ -87,6 +87,10 @@ EOF
 
 sync_one shared-components/orchestration-conventions/orchestration-plans-layout.md \
   "$merge_bundle" references/orchestration-plans-layout.md
+for skill in write-specs write-slices; do
+  sync_one shared-components/orchestration-conventions/orchestration-plans-layout.md \
+    "$repo_root/skills/$skill" references/orchestration-plans-layout.md
+done
 sync_one shared-components/release-manifest/release-manifest.md \
   "$merge_bundle" references/release-manifest.md
 sync_one shared-components/release-manifest/scripts/validate_release_manifest.py \
