@@ -58,9 +58,11 @@ reload the canonical manifest; plan paths may have moved during repair.
    from an earlier attempt after verifying its source, target, and author.
    Stop for a missing or changed remote branch, duplicate CR, or wrong target.
 3. Create or refresh one draft CR per selected branch with the manifest target.
-   Regenerate its title, description, and target from the manifest rather than
-   stale spreadsheet or CR text. Verify source and target SHAs, draft state,
-   effective squash support, and source retention through the provider adapter.
+   Derive its title and target from the manifest. Compose its description with
+   `references/change-request-description.md`, preserving applicable current
+   stack-sheet text verbatim and adding branch evidence. Verify source and
+   target SHAs, draft state, effective squash support, and source retention
+   through the provider adapter.
    Independent branches target the base. Write the CR URL and state back to the
    manifest and validate it. End here in draft mode.
 4. In ready mode, query the provider for applicable branch-push and CR checks

@@ -57,7 +57,8 @@ mismatch being invalidated; fetch and record the actual refs and preserve CR
 identity before changing readiness. Do not accept the new source SHA as verified.
 
 Create exactly one draft CR with the manifest source and target. Generate its
-title and description from current manifest and branch evidence; refresh them
+title and description from the current manifest, branch evidence, and applicable
+stack-sheet fields per `change-request-description.md`; refresh them
 after every accepted source or target change. Record its URL and state in the
 manifest. Return it and all ready descendants to draft before a changed source
 or target is reviewed. A proven valid restack mapping or eligible
