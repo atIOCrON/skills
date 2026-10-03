@@ -29,8 +29,8 @@ rejects legitimate multi-value cells.
    formulas/validation before writing. Refresh reads if the file changes.
 2. Match by exact `Source Branch`, never row number or display order. Ask about
    duplicate identities or ambiguous header migrations. Map legacy `Branch`
-   to `Source Branch` when unambiguous. Migrate `Complete` to `Done` only when
-   current plan evidence supports it.
+   to `Source Branch` when unambiguous. Migrate legacy `Complete` or `Done`
+   to `Fulfilled` only when current plan evidence supports it.
 3. Update generated fields only for requested branches; append missing branches.
    Preserve unrequested rows, unrelated tabs/columns, and existing `To Do` and
    `Note` cells, including formulas, links, and formatting. New operator cells

@@ -16,7 +16,9 @@ Work read-only. Do not edit files, refs, plans, or the manifest.
 1. Read the current release manifest. For each requested branch, resolve its
    plan file from the manifest. If absent or moved, search `plans/slices/` by
    slice slug and branch evidence, then legacy plan locations. Derive the stage
-   from the slice directory; a spec status folder is not a slice stage.
+   from the slice directory using the shared stages, resolving legacy `done`
+   as `fulfilled` only with confirmed merge and acceptance evidence. Parent
+   stage is a rollup and cannot substitute for this branch's child stage.
    Never present a predecessor's plan as the branch's own plan; say "No
    dedicated plan" when appropriate.
 2. Inspect the plan stage, exact branch tip, trim ledger, correctness triage
@@ -52,4 +54,7 @@ Work read-only. Do not edit files, refs, plans, or the manifest.
 
 Use clickable absolute links for plan files. Briefly explain missing plans,
 zero-diff branches, exhausted caps, and any provisional Complete branches.
-Do not equate individual branch completion with release readiness.
+Do not equate individual branch completion with release readiness or plan
+fulfillment. `Complete` in this table means correctness review is complete;
+`fulfilled` requires confirmed final merge and acceptance. Report any parent
+rollup discrepancy read-only, without moving plans.

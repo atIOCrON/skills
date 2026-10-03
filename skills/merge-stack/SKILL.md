@@ -48,12 +48,16 @@ For a stack built by `build-branch-stack`, load its manifest and map each source
 branch to one feature before merging. Migrate encountered legacy plan folders
 using the layout rules and refresh manifest paths. Require unmerged features
 under `plans/slices/review/`; allow confirmed merged features already under
-`plans/slices/done/` when resuming. Stop on a missing or ambiguous mapping or a
-destination collision.
+`plans/slices/fulfilled/` when resuming. Stop on a missing or ambiguous mapping or a
+destination collision. For parented slices, require approved parent and child
+metadata and an approved map; accept active parents in `backlog`, `to_do`,
+`in_progress`, or `review`, and verified `fulfilled` parents on resume. Reject
+draft or superseded inputs. Reconcile affected parent progress before merging
+using the complete approved maps, not just this release batch.
 For each mapped feature, confirm that its human or external acceptance checks
 passed or an authorized decision explicitly accepted each limitation. Record
 `none applicable` if there are no such checks. Pending acceptance blocks the
-merge and the move to `done/`.
+merge and the move to `fulfilled/`.
 
 ```bash
 provider=<gitlab|github|auto>
@@ -250,26 +254,22 @@ scripts/cleanup_merged_branches.sh "$remote" "$base" <record-file>
 
 After merge attempts and any applicable cleanup, move each confirmed merged
 feature with completed or explicitly accepted acceptance checks from
-`plans/slices/review/` to `plans/slices/done/`, including after a partial run.
+`plans/slices/review/` to `plans/slices/fulfilled/`, including after a partial run.
 Leave unmerged features in `review/`. Refresh the manifest's plan and artefact
 paths, including its own path if moved, and verify them. If a move or manifest
 update fails, report the confirmed merges and remaining stage work; do not undo
 a merge.
 
-After those moves, reconcile each affected parent specification. Require an
-`approved` specification under `plans/specs/approved/` and an `approved` slice
-map, then locate every mapped slice slug exactly once across
-`plans/slices/<stage>/`. Change the specification status to `fulfilled` and
-move its whole folder, including the map, to `plans/specs/fulfilled/<spec_slug>/`
-only when every mapped slice is in `plans/slices/done/`; that stage proves
-merge and completed or explicitly accepted acceptance. Refresh all parent and
-map links in child plans and other references, then verify paths. Leave it
-`approved` while any slice remains elsewhere. Stop the update on a stale map,
-missing or duplicate slug, inconsistent acceptance ownership, or destination
-collision; do not undo confirmed merges. On resume, verify an already
-`fulfilled` parent still meets these gates without moving it again. Do not infer
-a parent specification for legacy plans. Report status changes and moves,
-incomplete reference repairs, and reasons specifications remained open.
+Set moved children's `Slice Status: fulfilled`; preserve approval. Reconcile
+parents under the shared complete-map and acceptance rules. Fulfilled parents
+move with their maps to `plans/specs/fulfilled/<spec_slug>/`; otherwise derive
+`review`, `in_progress`, `to_do`, or `backlog`. Preserve parent approval,
+repair references, and verify paths.
+
+Report child/parent transitions, reconciliation blockers, incomplete repairs,
+and reasons parents remain open without undoing merges. Verify fulfilled
+parents on resume; do not infer standalone legacy parents. Release assembly
+retains its separate final-merge boundary.
 
 ## Invariants
 

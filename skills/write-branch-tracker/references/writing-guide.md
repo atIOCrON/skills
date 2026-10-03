@@ -75,28 +75,33 @@ the Sheet's old value:
 
 | Current stage | Status |
 | --- | --- |
+| `draft` | Draft |
 | `backlog` | Backlog |
 | `to_do` | To Do |
 | `in_progress` | In Progress |
 | `review` | Review |
-| `done` | Done |
+| `fulfilled` | Fulfilled |
+| `superseded` | Superseded |
 
-`Deprecated` requires explicit retirement or supersession evidence; it is not
-a standard build stage. Branch age, absence, or inactivity does not establish it.
+`Deprecated` requires explicit branch retirement evidence; it is not a plan
+stage. Use `Superseded` for a plan replaced by identified plans. Branch age,
+absence, or inactivity does not establish retirement or supersession.
 Ask when status evidence is missing or contradictory; do not invent another value.
 
 Follow the repository's plans-layout contract used by `build-branch-stack`.
 `Review` allows pending human/external acceptance, release-candidate checks,
-review-cap disposition, restacks, or current-tip evidence. `Done` requires
+review-cap disposition, restacks, or current-tip evidence. `Fulfilled` requires
 confirmed merge and every required final acceptance check passed or its
-limitation explicitly accepted. Report a stale `done` stage when these gates
+limitation explicitly accepted. Report a stale `fulfilled` stage when these gates
 are demonstrably unmet; do not edit plans or claim completion from code alone.
 
 `Plan` is the current path relative to the plans repository, for example
 `plans/slices/review/rival_configdebug_setup/rival_configdebug_setup.md`.
 Resolve moved plans by slice slug and explicit branch declaration, including
-legacy locations without moving files. Leave blank and report the
-limitation if no matching plan exists but other evidence supports status.
+legacy locations without moving files. Reconcile legacy `done` to `Fulfilled`
+only with confirmed merge and acceptance evidence; report discrepancies.
+Leave blank and report the limitation if no matching plan exists but other
+evidence supports status.
 
 ### To Do and Note
 

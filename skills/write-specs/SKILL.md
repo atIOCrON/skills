@@ -1,6 +1,6 @@
 ---
 name: write-specs
-description: Write proportionate specifications with stable acceptance IDs, justified verification, trim loops, and approval states. Use write-slices before implementation.
+description: Draft saved specifications with stable acceptance IDs, proportionate verification, explicit approval, and shared delivery stages. Use write-slices before implementation.
 disable-model-invocation: true
 metadata:
   layer: capability
@@ -26,8 +26,9 @@ plans/specs/draft/<spec_slug>/<spec_slug>.md
 For an update, locate the existing specification by slug across spec status
 directories and edit it there. Move its whole folder only for a status change
 or legacy migration; refresh links to the specification and its slice map.
-Keep slice implementation stages under `plans/slices/` separate from spec
-statuses. Classify legacy files before migrating; never treat a slice as a spec.
+Specs and slices share stage names but have separate folders and explicit
+approval metadata. Classify legacy files before migrating; never treat a slice
+as a spec.
 
 Use a lowercase `snake_case` slug of at most 40 characters. Inspect relevant
 code, contracts, documentation, and established extension points before
@@ -35,29 +36,25 @@ writing. Report the absolute specification path.
 
 ## Specification Lifecycle
 
-Require a `Specification Status` section with exactly one value, matching the
-folder under `plans/specs/`:
+`Specification Status` must match its folder: `draft`, `backlog`, `to_do`,
+`in_progress`, `review`, `fulfilled`, or `superseded`. Record separate
+`Approval Status: draft` or `approved`. Use the shared parent-progress rules
+to derive delivery stage from the complete approved slice map.
 
-- `draft`: still being defined; `write-slices` must not decompose it.
-- `approved`: explicitly approved by the user; slices may be created and built.
-- `fulfilled`: every mapped slice is in `plans/slices/done/`, its merge is
-  confirmed, and required acceptance passed or was explicitly accepted.
-- `superseded`: replaced by a named specification and no longer actionable.
+Save, revise, and trim the file with both statuses `draft`, then present its
+absolute path for explicit user approval. Writing requests do not imply
+approval. Approval sets `Approval Status: approved` and moves the folder to
+`backlog/`. `write-slices` saves map and child drafts before their approval;
+build and merge workflows reconcile subsequent parent stages. Fulfillment
+requires confirmed final merges and required acceptance.
 
-Create specifications as `draft`. Never infer approval from a request to write
-or update one. Change `draft` to `approved` only on explicit user approval.
-Move its folder from `draft/` to `approved/` with that status update.
-`merge-stack` changes `approved` to `fulfilled` and moves the folder after
-proving completion. Change a specification to `superseded` and move it to
-`superseded/` only when the user identifies its replacement.
-
-Changes to acceptance IDs, scope, binding decisions, authorized complexity,
-required verification, or external acceptance return an `approved` or
-`fulfilled` specification to `draft` and move its folder to `draft/`.
-Mark an existing slice map `stale`; affected slices cannot start until the
-specification and revised map are approved.
-Clarifications that preserve those contracts retain the current status. Report
-every status transition and why it occurred.
+Material changes to acceptance IDs, scope, binding decisions, authorized
+complexity, required verification, or external acceptance reset stage and
+approval to `draft` and the existing map to `stale`. Preserve child stages and
+evidence; block affected delivery until spec and map are reapproved.
+Clarifications preserve approval and stage. Supersession requires an identified,
+authorized replacement and the shared child-disposition rules. Preserve history
+and report transitions, moves, and reasons.
 
 ## Scale The Initial Plan
 
@@ -72,7 +69,7 @@ or gates only for demonstrated gaps; inspect uncertainty before adding scope.
 ## Required Content
 
 - Observed problem and evidence.
-- Specification status.
+- Specification lifecycle status and approval status.
 - Complete outcome and affected capability.
 - Explicit non-goals and binding constraints.
 - Stable acceptance IDs (`AC-01`, `AC-02`, ...), each expressing one observable

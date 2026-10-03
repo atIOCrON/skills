@@ -78,4 +78,8 @@ success. Skip only proven completions; never repeat an unknown merge.
 
 Return the candidate commit/tree, all PR and landed SHAs, preserved sources,
 journal, checks, and any unmerged prefix or blocker. Leave feature plans in
-their existing stage. The coordinator handles staging and the final PR.
+their existing stage. The coordinator handles staging and the final PR. Read
+`orchestration-plans-layout.md` for subsequent lifecycle reconciliation: only
+an independently authorized and confirmed final integration-to-base merge,
+with required acceptance satisfied, permits slice and parent fulfillment.
+Intermediate assembly does not move either into `fulfilled`.

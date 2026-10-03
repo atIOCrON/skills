@@ -167,7 +167,7 @@ decision. Keep `review_progress.status` as
 `review_cap_reached`; acceptance does not waive trim,
 branch checks, exact-tip verification, or later merge and acceptance gates.
 It is a review handoff decision, separate from final human or external
-acceptance before `done/`.
+acceptance before `fulfilled/`.
 
 Move a slice to `review/` after its own implementation is committed, pushed,
 and verified; trim is proportionate; and correctness reviews are clean or the
@@ -262,8 +262,9 @@ python <skill-root>/scripts/validate_release_manifest.py <manifest>
 
 The validator checks required fields, full SHAs, unique ordered branches,
 parent order, branch review and check identity, SHA-pinned human dispositions,
-durable `review/` handoff records, ready CR ancestry, merged CRs for `done/`,
-exclusions, and freeze digest. Final acceptance before `done/` remains an
-evidence gate owned by the merge workflow.
+durable `review/` handoff records, ready CR ancestry, merged CRs for
+`fulfilled/` (and legacy `done/`), exclusions, and freeze digest. Active releases
+reject draft and superseded plans. The merge workflow verifies final acceptance
+before fulfillment.
 Validation proves manifest consistency, not that referenced evidence is true;
 the owning skill must verify those files and Git objects.

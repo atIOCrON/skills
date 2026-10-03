@@ -39,8 +39,9 @@ already covered. Do not turn a rejected or deferred review finding into a plan
 solely because it appears in an artefact. If evidence is insufficient, record
 what remains unknown rather than inventing a plan. A demonstrated acceptance
 failure, an unimplemented acceptance condition, or a confirmed defect needing
-code is a current-plan fix: return its owner to `in_progress/`, then restack
-affected descendants in their current stage. At the review cap, record
+code is a current-plan fix: return its owner to `in_progress/`, reconcile its
+parent under the shared layout, then restack affected descendants in their
+current stage. At the review cap, record
 unresolved findings as pending human disposition; do not demote a completed
 slice solely because that decision is pending. Repeat affected checks and audit
 after a fix.
@@ -69,25 +70,25 @@ ledger and reconcile existing plans; do not append duplicate rows or plans.
 Refer to source artefacts by feature-relative path so later stage moves preserve the
 references. Refer to a follow-up plan by its slug.
 
-Route each `planned` candidate through the same two planning stages as new work.
-Create a parent under `plans/specs/draft/` or reuse an existing specification
-by slug. Apply `write-specs` status and move rules; never infer approval from
-the audit. After the user approves the specification and slice breakdown,
-write the slice map beside the parent under `plans/specs/approved/` and child
-plans under `plans/slices/backlog/`. A candidate that already represents
-one cohesive vertical slice still needs a one-entry slice map. If several
-outcomes can ship, fail, or roll back independently, do not create one aggregate
-backlog plan; leave the decomposition pending user approval. Include the source
-feature, candidate, verified tip SHA, and audit snapshot SHA for traceability.
-Translate review suggestions into outcomes unless a mechanism is binding. Do
-not implement child plans or move them out of `backlog/` here.
+Route each `planned` candidate through the same saved drafting workflow as
+new work. Create a parent file under `plans/specs/draft/` or reuse an existing
+specification by slug. Apply `write-specs` lifecycle and approval rules; never
+infer approval from the audit. Once the parent is approved, use `write-slices`
+to save the map beside it at its current stage and save child files under
+`plans/slices/draft/` before seeking decomposition approval. Approval moves
+those children to `backlog/` and reconciles the parent's stage. A cohesive
+single-slice outcome still needs a one-entry map; independently releasable
+outcomes need separate saved drafts. Include source feature, candidate,
+verified tip SHA, and audit snapshot SHA for traceability. Translate review
+suggestions into outcomes unless a mechanism is binding. Do not implement
+children or move them beyond `backlog/` here; leave unapproved files as drafts.
 
 Write the ledgers and plans in the user's primary checkout, not a temporary
 verification worktree. Preserve unrelated work and keep these new files out
 of the already verified branch tips. If a destination collides or cannot be
 written safely, record the candidate as pending and report the blocker. If a
 repair makes a previously generated plan obsolete, reconcile only a plan
-still in `backlog/` and untouched since the audit; otherwise report that the
-plan needs a scope decision. Branch readiness survives an audit write failure,
-but report the audit as incomplete until every selected feature has a ledger
+still in `draft/` or `backlog/` and untouched since the audit; otherwise report
+that the plan needs a scope decision. Branch readiness survives an audit write
+failure, but report the audit as incomplete until every selected feature has a ledger
 and warranted plans exist.
