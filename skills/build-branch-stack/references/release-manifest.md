@@ -8,6 +8,10 @@ acceptance, exclusions, change requests, candidate state, and deployment.
 Spreadsheets and prose summaries are projections: generate or reconcile them
 from the manifest, never use them to override it silently.
 
+Build runs also maintain a `sessions` array under the build runner's runtime
+guidance. Preserve every contributing context and its handoff evidence across
+resumption; session provenance does not replace SHA-pinned checks or reviews.
+
 ## Shape
 
 ```json
