@@ -20,9 +20,30 @@ reviewers.
 Resolve `orchestration_skill_root` to the directory containing the active
 `SKILL.md`. Invoke bundled scripts with absolute paths under that directory.
 
-For each run, record:
+Record the host provider and provider-to-transport mapping for each run.
 
-- host provider;
-- provider-to-transport mapping;
-- implementation session reference;
-- all three reviewer session references.
+## Session History
+
+Maintain `sessions` in the build manifest for every contributing context:
+orchestrator, implementation, fixes, verification, trim, and correctness review.
+Register a session when it starts; update its handoff when it finishes or stops.
+For each entry, record:
+
+- `provider`, `role`, and `transport` (`native` or `cli`);
+- `session_id`: the provider's persistent chat/thread/session ID;
+- `parent_session_id`: the parent context's ID, when available;
+- `worker_ref`: the native worker name or runtime reference;
+- `plans`, `worktree`, and `commits`: assigned scope and resulting Git SHAs;
+- `status`, `started_at`, `ended_at`, and `evidence`: UTC times and saved
+  outputs or handoff paths.
+
+Use IDs returned by the provider or verified local metadata. A worker name such
+as `/root/implement` is not a persistent session ID. If an ID is unavailable,
+record `null` and an `identity_note`; preserve the worker reference and evidence.
+Do not infer IDs or resumability from names.
+
+Keep all prior entries. Resuming the same context updates its entry; a fresh or
+forked context adds one and links its predecessor with `replaces_session_id`
+when applicable. On build resumption, retain legacy session fields and add only
+history supported by evidence. Session history records contributions; the
+SHA-pinned checks and reviews remain authoritative for readiness.

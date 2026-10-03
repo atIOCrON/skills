@@ -69,9 +69,9 @@ verification changes:
 | Plan | Status | Reviews | Branch | Commit | Next action | Waiting on |
 ```
 
-Record active work and eligible queued work. For every waiting task, name the
-concrete prerequisite, conflicting owner, constrained resource, or capacity
-limit; use `none` when it can start.
+Record active and eligible queued work and contributor history in `sessions`.
+For each waiting task, name its prerequisite, conflicting owner, constrained
+resource, or capacity limit; use `none` when it can start.
 
 Use `Queued`, `In progress`, `Review cap reached`, `In review`, `Release ready`,
 or `Blocked`. `In review` means this slice's implementation, trim, and

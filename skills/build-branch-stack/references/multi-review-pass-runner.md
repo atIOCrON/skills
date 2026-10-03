@@ -76,7 +76,10 @@ the raw response or a repair attempt.
 
 Session metadata records provider, transport, session reference, phase, pass,
 redacted command or native operation, artifact paths, output bytes, and failure
-path when applicable.
+path when applicable. The build orchestrator registers every reviewer context,
+including replacement and repair contexts, in the manifest's `sessions` history
+under `references/orchestration-runtime.md`; retain persistent and parent IDs
+when available and link the saved session metadata.
 
 ## Commands
 

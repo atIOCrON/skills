@@ -34,14 +34,15 @@ For initial implementation:
    implementation analysis defined in `references/plan-implement.md` before
    editing. Pass its artifact path to later fix requests.
 5. Send the prompt to a fresh native implementation sub-agent of the host.
-6. Record its session reference.
+6. Register its session in the build manifest's `sessions` history under
+   `references/orchestration-runtime.md`; preserve the parent ID and worker ref.
 
 ## Fix Dispatch
 
 For verification or code-review fixes:
 
 1. Resume the original implementation sub-agent.
-2. If it cannot be resumed, record the lost session and dispatch a fresh worker
+2. If it cannot be resumed, preserve its history and register a replacement worker
    with the plan, design checkpoint, current SHA, accepted findings, ownership,
    and evidence. Do not rely on missing conversation state.
 3. Read `references/plan-implement.md`, include its operational instructions in
@@ -79,7 +80,7 @@ Report:
 
 - dispatch type;
 - host provider and native transport;
-- worker/session reference;
+- worker reference, persistent session ID, and parent ID when available;
 - owned files or modules;
 - requested changes;
 - artifact paths supplied;
