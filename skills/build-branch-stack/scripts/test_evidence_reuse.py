@@ -271,17 +271,28 @@ class ReleaseManifestReuseTest(unittest.TestCase):
                 self.set_review_handoff(branch)
                 self.assertEqual(release_validator.validate(manifest), [])
 
-    def test_done_stage_requires_merge_in_current_and_legacy_layouts(self) -> None:
+    def test_fulfilled_and_legacy_done_require_merge(self) -> None:
         for root in ("plans/slices", "plans"):
-            with self.subTest(root=root):
-                manifest = self.manifest()
-                branch = manifest["branches"][0]
-                branch["plan"] = f"{root}/done/test/test.md"
-                self.assertEqual(release_validator.validate(manifest), [
-                    "branches[0].plan in done requires a merged change_request",
-                ])
-                branch["change_request"]["state"] = "merged"
-                self.assertEqual(release_validator.validate(manifest), [])
+            for stage in ("fulfilled", "done"):
+                with self.subTest(root=root, stage=stage):
+                    manifest = self.manifest()
+                    branch = manifest["branches"][0]
+                    branch["plan"] = f"{root}/{stage}/test/test.md"
+                    self.assertEqual(release_validator.validate(manifest), [
+                        f"branches[0].plan in {stage} requires a merged change_request",
+                    ])
+                    branch["change_request"]["state"] = "merged"
+                    self.assertEqual(release_validator.validate(manifest), [])
+
+    def test_draft_and_superseded_plans_cannot_enter_active_release(self) -> None:
+        for root in ("plans/slices", "plans"):
+            for stage in ("draft", "superseded"):
+                with self.subTest(root=root, stage=stage):
+                    manifest = self.manifest()
+                    manifest["branches"][0]["plan"] = f"{root}/{stage}/test/test.md"
+                    self.assertEqual(release_validator.validate(manifest), [
+                        "branches[0].plan cannot be draft or superseded in an active release",
+                    ])
 
     def test_release_check_accepts_identity_reuse(self) -> None:
         manifest = self.manifest()
@@ -707,8 +718,8 @@ class ReleaseManifestReuseTest(unittest.TestCase):
         parent["plan"] = "plans/slices/review/test/test.md"
         self.set_review_handoff(parent)
         self.assertEqual(release_validator.validate(manifest), [])
-        parent["plan"] = "plans/slices/done/test/test.md"
-        self.assertTrue(any("plan in done requires a merged change_request" in error
+        parent["plan"] = "plans/slices/fulfilled/test/test.md"
+        self.assertTrue(any("plan in fulfilled requires a merged change_request" in error
                             for error in release_validator.validate(manifest)))
 
 

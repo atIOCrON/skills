@@ -107,11 +107,11 @@ boundary, dependency graph, and manifest as needed; then continue. Record the
 failure class, alternatives, decision, added production surface, rollback
 effect, and required evidence before editing.
 
-The runner may create a prerequisite implementation slice when it decomposes
-the same approved acceptance outcome without changing release scope,
-acceptance ownership, or exclusions. Update the slice map, dependency graph,
-and manifest. A new independently releasable outcome remains a product-scope
-decision.
+The runner may create a prerequisite slice within the same approved outcome,
+release scope, ownership, and exclusions. Save it as a draft, record approval
+under existing build authority, and update the map, dependency graph, and
+manifest using the shared layout. Independently releasable new outcomes require
+a product-scope decision.
 
 Require a human decision only to change product or release scope, acceptance
 conditions or exclusions, a binding contract or policy, a required evidence
@@ -188,10 +188,11 @@ disposition for release readiness; preserve automated review state and follow
 
 Before moving plans or editing code, inspect repository instructions, plans,
 parent specs, slice maps, branch refs, and CI. Specs are not implementation
-inputs. Require approved specs under `plans/specs/approved/`, approved maps,
-and slices under `plans/slices/`; stop on draft, fulfilled, superseded, or stale
-inputs. Migrate legacy folders using the layout rules before dispatch. Resolve
-plans by mapped slice slug. Before creating or adopting a branch, answer:
+inputs. Resolve specs and slices by slug in their stage folders. Require
+`Approval Status: approved` on both, an approved map, and parent stage `backlog`,
+`to_do`, `in_progress`, or `review`. Reject draft, fulfilled, superseded, or
+stale inputs. Require plan review before selection; migrate legacy folders
+under the shared layout. Before creating or adopting a branch, answer:
 
 - What single actor-visible or integration-visible outcome does it deliver?
 - Can any acceptance group ship, fail, or roll back independently?
@@ -252,12 +253,15 @@ behaviour owned elsewhere.
 For a fresh run, initialize the canonical JSON manifest from the pinned base,
 selected plans, explicit exclusions, demonstrated dependencies, declared
 surfaces, and planned checks. Validate it with
-`scripts/validate_release_manifest.py`. Do not copy branch state from a Sheet;
-reconcile any Sheet or prose tracker from the manifest.
+`scripts/validate_release_manifest.py`. Reconcile Sheet and prose trackers
+from the manifest.
 
 Move only the selected reviewed feature directories from
 `backlog/` to `to_do/`. Accept selected features already in `to_do/`. Resolve
 their new plan paths before starting; leave unrelated backlog features alone.
+At every child transition, including repairs, update `Slice Status` and
+reconcile the parent from its complete approved map. Preserve approval, repair
+links, and report blockers using the shared layout.
 For a selected legacy `plans/<slug>.md`, move it and any sibling
 `<slug>.reviews/`, `<slug>.execution/`, and `<slug>.evidence/` into
 `plans/slices/to_do/<slug>/` first. Stop on a destination collision.
@@ -474,9 +478,9 @@ separately from branch readiness.
   immutable candidate. Integrity failures block the affected chain until safely
   reconciled; continue independent work. When the full-pipeline export test
   exists, do not skip it for a complete candidate unless the user cancels it.
-- Do not mark a feature `done/` while external acceptance is pending or a
+- Do not mark a feature `fulfilled/` while external acceptance is pending or a
   failure remains unresolved. Record passed checks or an authorized decision
-  explicitly accepting each limitation before `done/`; retain the confirmed
+  explicitly accepting each limitation before `fulfilled/`; retain the confirmed
   merge requirement in `references/orchestration-plans-layout.md`.
 - Pending external acceptance also blocks a production decision unless an
   authorized decision explicitly accepts the limitation.
@@ -488,11 +492,8 @@ Save and validate the canonical manifest at
 path. It records the base, ordered branches, dependencies, targets, tips,
 surfaces, checks, all three review mappings, CRs, exclusions, freeze, integration,
 acceptance, and deployment state; link detailed evidence instead of duplicating
-it. Report each slice's stage, `review_handoff`, current-tip review and check
-state, and release readiness separately. State pending human dispositions,
-restacks, and release-candidate checks with prerequisites. Separately report whether release progression is ready or blocked,
-including each pending check and prerequisite. Also report each feature's audit
-ledger path and decisions, any specifications, slice maps, or backlog plans
-created or reused, and incomplete audit work. State whether each draft CR was
-created by the publication skill or remains a next action. This skill creates
-no CR.
+it. Report child and parent stages, `review_handoff`, current-tip evidence,
+release readiness, and pending dispositions, restacks, and checks with prerequisites.
+Report audit decisions, specifications, maps, draft/backlog plans, and incomplete
+work. State whether draft CRs were published or remain a next action; this skill
+creates no CR.

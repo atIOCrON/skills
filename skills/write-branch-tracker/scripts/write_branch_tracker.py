@@ -30,7 +30,10 @@ FIELDS = (
     "Change surface(s)",
     "Package(s)",
 )
-STATUSES = ("Deprecated", "Backlog", "To Do", "In Progress", "Review", "Done")
+STATUSES = (
+    "Draft", "Backlog", "To Do", "In Progress", "Review", "Fulfilled",
+    "Superseded", "Deprecated",
+)
 TYPES = ("Feature", "Fix", "Operations", "Tests", "Documentation", "Housekeeping")
 SURFACES = (
     "First-party code", "Composer patch", "Theme", "Configuration",

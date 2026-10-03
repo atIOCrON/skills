@@ -10,9 +10,10 @@ ownership scope is provided, ask.
 ## Before Editing
 
 1. Read the plan end to end, including out-of-scope notes.
-2. Read its parent specification and slice map. Require both to be `approved`
-   and require this plan's slice slug, acceptance ownership, blocker, and
-   exclusions to match the map.
+2. Read the parent and map. Require `Approval Status: approved` on slice and
+   parent, `Slice Map Status: approved`, and parent stage `backlog`, `to_do`,
+   `in_progress`, or `review`. Match the slice slug, acceptance ownership,
+   blocker, and exclusions to the map.
 3. Open every cited `file:line`. If a line number is stale, search the current
    file for the referenced symbol, behavior, or nearby text and use the current
    location. Return unverifiable or contradictory claims to the runner for an

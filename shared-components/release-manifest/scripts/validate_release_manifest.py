@@ -460,6 +460,11 @@ def validate(data: Any) -> list[str]:
             and parent.get("sha") == parent_tips.get(parent_branch)
         )
         plan = branch.get("plan")
+        if is_text(plan) and plan.startswith((
+            "plans/slices/draft/", "plans/draft/",
+            "plans/slices/superseded/", "plans/superseded/",
+        )):
+            errors.append(f"{prefix}.plan cannot be draft or superseded in an active release")
         if (
             is_text(plan)
             and plan.startswith(("plans/slices/review/", "plans/review/"))
@@ -487,10 +492,16 @@ def validate(data: Any) -> list[str]:
                 errors.append(f"{prefix}.change_request requires a proportionate trim result")
             if (
                 is_text(plan)
-                and plan.startswith(("plans/slices/done/", "plans/done/"))
+                and plan.startswith((
+                    "plans/slices/fulfilled/", "plans/fulfilled/",
+                    "plans/slices/done/", "plans/done/",
+                ))
                 and change_request.get("state") != "merged"
             ):
-                errors.append(f"{prefix}.plan in done requires a merged change_request")
+                stage = "fulfilled" if plan.startswith((
+                    "plans/slices/fulfilled/", "plans/fulfilled/",
+                )) else "done"
+                errors.append(f"{prefix}.plan in {stage} requires a merged change_request")
 
         if state in {"frozen", "staged", "accepted", "released"}:
             tip_sha = branch.get("tip_sha")

@@ -65,7 +65,7 @@ Link it from that manifest's integration state when present.
    integration-to-base PR with individual PR links and acceptance evidence.
 5. Leave that PR open for the final reviewer. Authorization for individual
    assembly merges does not authorize merging it. Keep feature plans out of
-   `plans/slices/done/` and specs out of `plans/specs/fulfilled/` until the
+   `plans/slices/fulfilled/` and specs out of `plans/specs/fulfilled/` until the
    final merge and required acceptance are confirmed.
 
 ## Report
