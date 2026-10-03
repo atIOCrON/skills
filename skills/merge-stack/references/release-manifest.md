@@ -1,8 +1,13 @@
 # Release Manifest
 
-Use one canonical JSON manifest for release state. Store it at
-`plans/releases/<release-id>/manifest.json` unless the repository defines
-another stable path. Evidence files may remain elsewhere, but the manifest is
+Use one canonical JSON manifest for each implementation build. Store it at
+`plans/builds/<build-id>/manifest.json` unless the repository defines
+another stable path; retain legacy `release_id` fields for schema compatibility.
+Release preparation lives at `plans/releases/active/<release-id>/preparation.json`
+and links its contributing builds. Deployment receipts live separately at
+`plans/deployments/<deployment-id>/manifest.json`. Resolve an existing record
+on resume rather than duplicating it at the new default. Evidence may remain
+elsewhere, but the corresponding canonical record is
 the source of truth for branch order, dependencies, targets, SHAs, checks,
 acceptance, exclusions, change requests, candidate state, and deployment.
 Spreadsheets and prose summaries are projections: generate or reconcile them

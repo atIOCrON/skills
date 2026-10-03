@@ -1,6 +1,6 @@
 ---
 name: build-branch-stack
-description: Build approved vertical-slice plans as proportionate, verified, reviewed remote branches and maintain the canonical release manifest before integration.
+description: Build approved vertical-slice plans as proportionate, verified, reviewed remote branches and maintain their canonical build manifest before integration.
 disable-model-invocation: true
 metadata:
   layer: runner
@@ -10,7 +10,7 @@ metadata:
 
 Build and push release branches from reviewed vertical-slice plans. Parent
 feature specifications are context, not executable branch inputs. Record each
-stable branch in the canonical release manifest. Use `open-stack-requests` in
+stable branch in the canonical build manifest. Use `open-stack-requests` in
 draft mode as branches stabilize when the task authorizes change-request (CR)
 publication; do not wait for release assembly.
 
@@ -45,9 +45,9 @@ Read `references/trim-review.md` before launching the first trim pass.
 - Plan branch: create one by default, or use a user-selected existing branch
   after validating its parent, existing commits, and remote state.
 - Dependency map: each plan's one required unmerged predecessor, or `none`.
-- Release ID and canonical manifest path. For a fresh run, create
-  `plans/releases/<release-id>/manifest.json`; for a repair, require the
-  existing manifest.
+- Build ID and manifest path. New runs use `stack-build-<YYYYMMDDTHHMMSSZ>`
+  under `plans/builds/`; generate once using the runtime identity rules.
+  Repairs and resumes retain their existing ID and manifest.
 - For a repair run, the canonical release manifest, affected branches, and the
   publisher's evidence that any affected ready CRs are draft.
 
@@ -488,7 +488,7 @@ separately from branch readiness.
 ## Handoff
 
 Save and validate the canonical manifest at
-`plans/releases/<release-id>/manifest.json` or the repository-defined stable
+`plans/builds/<build-id>/manifest.json` or the repository-defined stable
 path. It records the base, ordered branches, dependencies, targets, tips,
 surfaces, checks, all three review mappings, CRs, exclusions, freeze, integration,
 acceptance, and deployment state; link detailed evidence instead of duplicating

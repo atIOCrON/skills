@@ -27,6 +27,9 @@ otherwise obtain missing authorization at the relevant boundary.
 Read `references/release-preparation.md`. Create the preparation record without
 rewriting the build manifest's parent pins, targets, reviews, or freeze digest.
 Link it from that manifest's integration state when present.
+Create new records under `plans/releases/active/<release-id>/`; resolve existing
+records on resume. Follow the shared record's lifecycle moves and preserve links
+to builds and deployment receipts without copying their evidence.
 
 ## Release Identity
 

@@ -22,6 +22,17 @@ Resolve `orchestration_skill_root` to the directory containing the active
 
 Record the host provider and provider-to-transport mapping for each run.
 
+## Build Identity
+
+For a new build, generate `stack-build-<YYYYMMDDTHHMMSSZ>` from UTC time and
+create `plans/builds/<build-id>/manifest.json` in the original workspace. Require
+an unused directory; on collision, obtain a new UTC second rather than overwrite
+or reuse another build. Generate the ID once, without a scope slug. Record
+`build_id`, the same value in legacy `release_id` for schema compatibility,
+`created_at`, and a concise scope description in the manifest. Report its ID
+and path. Repairs, added workers and resumed sessions retain the existing ID;
+an independent new build gets a new ID. Preserve all existing build IDs.
+
 ## Session History
 
 Maintain `sessions` in the build manifest for every contributing context:
