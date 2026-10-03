@@ -31,7 +31,6 @@ implicit_invocation_exceptions = {
     "branch-stack-status",
     "magento-composer-patches",
     "write-concisely",
-    "prepare-release-integration",
 }
 
 if not skill_files:

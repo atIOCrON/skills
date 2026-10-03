@@ -1,6 +1,7 @@
 ---
 name: prepare-release-integration
 description: Prepare a Bitbucket release through individual PRs, pause for merge confirmation, assemble it, test the exact candidate on staging, and open the final PR to the base branch.
+disable-model-invocation: true
 metadata:
   layer: runner
 ---
@@ -26,6 +27,21 @@ otherwise obtain missing authorization at the relevant boundary.
 Read `references/release-preparation.md`. Create the preparation record without
 rewriting the build manifest's parent pins, targets, reviews, or freeze digest.
 Link it from that manifest's integration state when present.
+
+## Release Identity
+
+Use the user's release ID or generate `stack-release-<YYYYMMDDTHHMMSSZ>` once
+from UTC time. Require an unused record path and integration ref; append a short
+random suffix on generated-ID collisions. Never overwrite an existing release.
+Record the creation time and ID source. Before publishing PRs, show the ID,
+record path, and integration branch; explain that the ID identifies a candidate,
+not a completed release or Bitbucket tag.
+
+Resume unchanged scope and pinned inputs under the same ID and ref, regardless
+of elapsed time. A replacement after separately authorized fixes or scope changes
+gets a new ID. Preserve and link both records; mark the old candidate superseded
+once its replacement is established. Changed inputs require fresh merge
+authorization and applicable acceptance. No nested attempts directory is needed.
 
 ## Prepare And Publish
 
