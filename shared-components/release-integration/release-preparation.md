@@ -1,10 +1,21 @@
 # Release Preparation Record
 
-Use `plans/releases/<release-id>/preparation.json` for PR assembly state. This
+Use `plans/releases/active/<release-id>/preparation.json` for PR assembly state. This
 operational record does not replace a build manifest or change its dependency
 pins, review evidence, freeze digest, or feature stages. When a build manifest
 exists, link this record under `integration.release_preparation` and retain its
 original targets; release PR destinations belong here.
+
+Record `lifecycle: "active"` separately from assembly state. After confirmed
+final merge and required acceptance, record `released` and move the whole folder
+to `plans/releases/released/<release-id>/`. For an established replacement or
+explicit cancellation, record `superseded` or `cancelled`, the reason and evidence,
+and replacement links when applicable, then move to the matching stage folder.
+Repair maintained build, release, deployment, and handoff paths after each move;
+preserve dated evidence and retain the path map. Resume a supplied legacy record
+in place until an authorized move, never create a duplicate. A historical mixed
+release/deployment folder may move intact; add a linked summary only when no
+whole-release record exists.
 
 Record:
 

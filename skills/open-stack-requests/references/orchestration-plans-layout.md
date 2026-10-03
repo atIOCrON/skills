@@ -9,13 +9,51 @@ plans/slices/<stage>/<slug>/<slug>.md
 plans/slices/<stage>/<slug>/<slug>.reviews/
 plans/slices/<stage>/<slug>/<slug>.execution/
 plans/slices/<stage>/<slug>/<slug>.evidence/
-plans/releases/<release-id>/manifest.json
+plans/builds/<build-id>/manifest.json
+plans/releases/<stage>/<release-id>/preparation.json
+plans/deployments/<deployment-id>/manifest.json
+plans/audits/<audit-id>/
 ```
 
 Both use `draft`, `backlog`, `to_do`, `in_progress`, `review`, `fulfilled`, and
 `superseded`. `Specification Status` or `Slice Status` must match the folder;
 `Approval Status` is `draft` or `approved`. Delivery progress preserves scope
 approval. Writing requests, folders, and successful checks do not imply approval.
+
+## Operational Records
+
+Build manifests record implementation, branch dependencies, reviews, checks,
+and every contributing session. Keep them in `builds/<build-id>/` after their
+changes ship; a release links its contributing builds rather than copying or
+moving them. New build IDs use `stack-build-<YYYYMMDDTHHMMSSZ>` from UTC time,
+generated once and retained across repairs and resumes; describe scope in the
+manifest. Existing IDs and legacy `release_id` fields remain unchanged.
+
+Release records identify selected scope, pinned candidates, PR assembly, and
+acceptance. Use `releases/active/` while preparing or awaiting final disposition,
+`released/` after the final merge and required acceptance are confirmed,
+`superseded/` for an identified replacement, and `cancelled/` for an explicitly
+abandoned candidate. Record the disposition, evidence, and replacement links,
+then move the whole folder and repair maintained references. Deployment alone
+does not establish a released candidate. Resume unchanged inputs under the same
+ID; changed scope or pinned inputs create a new linked candidate, not an attempt
+subfolder. Move an existing whole-release record; create a linked summary only
+when none exists. Do not duplicate its build evidence or invent historical states.
+
+Deployment receipts record installing a candidate, with environment and outcome
+inside `deployments/<deployment-id>/`. Retain failed and superseded receipts;
+link their release when applicable. Historical release folders may retain mixed
+release/deployment evidence.
+
+Use `audits/<audit-id>/` for separate investigations, production acceptance,
+reconciliation and maintenance records that may span builds or releases. Link
+applicable plans and operational records. Implementation checks stay with their
+build or slice. Keep audit folders flat; include an index of findings, commands,
+outcomes and retained evidence. Moving an archive does not authorize deleting it.
+
+Resolve supplied legacy record paths on resume; do not create a second record
+at the new default. Defer moves used by active workers until they finish or
+adopt the new path. Preserve dated logs and archives, and retain a migration map.
 
 ## Drafting and Approval
 
@@ -38,7 +76,7 @@ maps and children before approval. `Slice Map Status` is `draft`, `approved`,
 or `stale`; only approved maps authorize builds. Give each acceptance ID one
 owner and record slice outcomes, blockers, verification and rollback boundaries,
 and exclusions. Use slugs, not stage-dependent paths. Keep branch, release,
-and deployment state in the release manifest.
+and deployment state in the corresponding operational records.
 
 Material changes to acceptance IDs, scope, binding decisions, authorized
 complexity, required verification, or external acceptance reset a spec's stage
@@ -139,9 +177,9 @@ Use the move rules above; leave no duplicate.
 
 ## Delivery Stages
 
-Release manifests live outside lifecycle folders. The canonical JSON manifest
-owns branch order, targets, SHAs, checks, acceptance, CRs, integration, and
-deployment state; spreadsheets and prose are reconciled views.
+Operational records live outside spec and slice lifecycle folders. Their
+canonical JSON owns branch order, targets, SHAs, checks, acceptance, CRs,
+integration, and deployment state; spreadsheets and prose are reconciled views.
 
 - `draft`: saved specification or slice awaiting scope/decomposition approval.
 - `backlog`: approved scope, not yet selected for implementation. Required

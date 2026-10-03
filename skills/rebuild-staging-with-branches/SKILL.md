@@ -75,7 +75,7 @@ assume that the base is `main`, `master`, or `develop`.
    integration checkout:
 
    ```text
-   plans/releases/staging-rebuild-<UTC-timestamp>/manifest.json
+   plans/deployments/staging-rebuild-<UTC-timestamp>/manifest.json
    ```
 
    Before creating it, verify that the exact prospective file is ignored with
@@ -88,6 +88,7 @@ assume that the base is `main`, `master`, or `develop`.
 Start the receipt with `state: "building"`. Keep it small and record at least:
 
 - `release_id`: `staging-rebuild-<UTC-timestamp>`;
+- `kind`: `deployment`, and `environment`: `staging`;
 - `state`: `building`, changed to `staged` only after verified deployment;
 - `created_from`: `user_branch_list`;
 - `base`: the actual remote, branch name, and pinned full SHA;
@@ -97,7 +98,9 @@ Start the receipt with `state: "building"`. Keep it small and record at least:
 - `backup`: the backup branch name or `null`; and
 - `staging_after`: the new staging SHA, once verified.
 
-When supplied, also record `expected_candidate_sha`.
+When supplied, also record `expected_candidate_sha` and the originating release
+record path. Keep receipts independent of release lifecycle moves; preserve
+failed and superseded deployments in the same directory structure.
 
 Use `null` for candidate, tree, backup, and staging-after values that are not
 known yet, then update them as the rebuild advances.
