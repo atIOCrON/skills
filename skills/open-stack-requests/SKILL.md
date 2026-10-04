@@ -40,7 +40,8 @@ Choose one mode:
   and a pinned parent that is an ancestor. Its plan may be in
   `plans/slices/in_progress/` or `plans/slices/review/`; ancestor reviews and
   the full candidate may still be pending.
-- `ready`: require the plan under `plans/slices/review/`, a frozen manifest, final
+- `ready`: require the plan under `plans/slices/review/` or
+  `plans/slices/in_release/` with verified candidate membership, a frozen manifest, final
   stack checks, current-tip trim and reviews or accepted capped disposition,
   qualified pinned ancestors, and forge checks on the exact source SHA.
 

@@ -80,6 +80,7 @@ the Sheet's old value:
 | `to_do` | To Do |
 | `in_progress` | In Progress |
 | `review` | Review |
+| `in_release` | In Release |
 | `merged` | Merged |
 | `fulfilled` | Fulfilled |
 | `superseded` | Superseded |
@@ -92,6 +93,9 @@ Ask when status evidence is missing or contradictory; do not invent another valu
 Follow the repository's plans-layout contract used by `build-branch-stack`.
 `Review` allows pending human/external acceptance, release-candidate checks,
 review-cap disposition, restacks, or current-tip evidence before final merge.
+`In Release` requires pinned inclusion in a recorded, fully assembled candidate;
+report acceptance and final PR status from that release. It proves neither
+acceptance nor final merge. Preparation start and partial assembly do not qualify.
 `Merged` requires a confirmed final destination merge with required acceptance
 still outstanding; staging or integration assembly alone does not qualify.
 `Fulfilled` requires confirmed merge and every required final acceptance check passed or its

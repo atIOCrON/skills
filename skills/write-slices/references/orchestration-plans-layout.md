@@ -15,7 +15,7 @@ plans/deployments/<deployment-id>/manifest.json
 plans/audits/<audit-id>/
 ```
 
-Both use `draft`, `backlog`, `to_do`, `in_progress`, `review`, `merged`,
+Both use `draft`, `backlog`, `to_do`, `in_progress`, `review`, `in_release`, `merged`,
 `fulfilled`, and `superseded`. `Specification Status` or `Slice Status` must
 match the folder. `Approval Status` is `draft` or `approved`. Delivery progress
 preserves scope approval. Writing requests, folders, and successful checks do not imply approval.
@@ -97,8 +97,8 @@ retain spec approval without adding a human approval gate.
 ## Parent Progress
 
 Reconcile parents after decomposition approval and every child stage change
-within `write-slices`, `build-branch-stack`, or merge completion. A spec awaiting
-approval stays in `draft`. Before delivery, an approved spec without an
+within `write-slices`, `build-branch-stack`, or release/merge completion.
+A spec awaiting approval stays in `draft`. Before delivery, an approved spec without an
 approved decomposition stays in `backlog`. Draft or stale maps do not reset
 existing delivery stages.
 
@@ -115,7 +115,8 @@ release or currently running batch:
 | --- | --- |
 | Every slice fulfilled and required parent acceptance passed or explicitly accepted | `fulfilled` |
 | Every slice merged or fulfilled, with required child or parent acceptance outstanding | `merged` |
-| Every slice in review, merged, or fulfilled, with at least one final merge pending | `review` |
+| Every slice in in_release, merged, or fulfilled, with at least one in_release and one prepared candidate covering all unmerged slices | `in_release` |
+| Every slice in review, in_release, merged, or fulfilled, with at least one final merge pending and no complete prepared candidate coverage | `review` |
 | Any slice started, and at least one slice remains in backlog, to_do, or in_progress | `in_progress` |
 | None started and at least one selected in to_do | `to_do` |
 | Every slice in backlog | `backlog` |
@@ -123,7 +124,9 @@ release or currently running batch:
 A defect returning an unmerged child to `in_progress` returns its parent there.
 Keep merged work in `merged` while acceptance remains unresolved; track required
 fixes in follow-up slices without undoing the confirmed merge. Add no acceptance
-gate absent from the approved spec. `merge-stack` reconciles `merged` and
+gate absent from the approved spec. Release preparation reconciles `in_release`
+after complete candidate assembly.
+`merge-stack` reconciles `merged` and
 `fulfilled` after confirmed final merges, including partial runs and resumes;
 intermediate integration merges establish neither stage.
 
@@ -148,7 +151,11 @@ fulfills a child.
 Move whole folders, including maps and artefacts, at lifecycle transitions.
 Create destination parents; stop on collisions or active users of the old path.
 Never merge folders. Update internal status, incoming and outgoing links,
-handoffs, and manifest plan/artefact paths. Verify paths and report incomplete
+handoffs, and manifest plan/artefact paths. For a frozen manifest whose digest
+includes moved paths, recompute the digest after path-only repairs; retain its
+freeze authorization and time, and record old/new digests and the migration.
+Changed source, dependency, or candidate scope still invalidates the freeze.
+Verify paths and report incomplete
 moves or repairs without undoing confirmed merges. Keep internal slice links
 relative so they survive moves.
 
@@ -198,17 +205,42 @@ integration, and deployment state; spreadsheets and prose are reconciled views.
   or the five-pass cap. Finish accepted cap remediation and closure; record
   unresolved findings. Do not wait for ancestor reviews or descendants to
   finish this slice's review passes.
-- `review`: final destination merge is pending; implementation and trim are
-  complete, and correctness passes are clean or capped. At entry, its pushed tip
+- `review`: implementation handoff is complete; operator review or release
+  selection remains. Final destination merge is pending; implementation and
+  trim are complete, and correctness passes are clean or capped. At entry, its pushed tip
   passes exact-tip verification; record `review_handoff` on that SHA and preserve
   artefacts. A capped slice may await human disposition here. Keep it here
   through routine restacks, pending current-tip checks, review mappings, human
-  acceptance, and external or release-candidate checks. A changed ancestor
+  acceptance, and external or release-candidate checks until included in a
+  recorded, fully assembled release candidate. Starting preparation, selecting
+  branches, creating individual PRs, or partial assembly alone does not qualify.
+  A changed ancestor
   requires restack and re-verification before release progression, but does
   not undo completed implementation. Return to `in_progress` when a defect,
   failed check, or behavioral change requires implementation work. Record
   pending checks with owners, procedures, and prerequisites. Parent `review`
-  means at least one mapped slice awaits its final merge.
+  means some mapped scope still awaits review or release selection, or complete
+  prepared-candidate coverage cannot be established.
+- `in_release`: the slice's pinned tip is included in a recorded, fully assembled
+  release candidate whose commit and tree are confirmed. Review, staging tests,
+  acceptance, and the final PR now proceed through that release. Record the
+  release ID, preparation path, candidate SHA, and included tip in the build
+  manifest's branch `release_candidate` when a build manifest exists; otherwise
+  link the preparation record's change entry from the slice. Verify inclusion
+  against Git or recorded squash mapping. Preserve historical build pins; when
+  the selected source differs, record its source and included tip separately
+  from `build_tip_sha`, with evidence linking the preparation change entry.
+  Do not imply unchanged code or review applicability without separate proof.
+  This stage proves neither staging success, acceptance, final
+  merge, nor production deployment. Keep already merged/fulfilled slices in
+  their stages. A spec enters only when one prepared candidate covers every
+  unmerged child in its complete approved map and all others are merged or
+  fulfilled; partial scope leaves the parent in `review`. If that candidate is
+  cancelled, superseded, withdrawn, or invalidated, return unmerged slices to
+  `review` unless an unchanged tip remains covered by another qualifying
+  candidate. Record replacement links. Defects requiring implementation return
+  their owning unmerged slices to `in_progress`. Reconcile parents and repair
+  maintained paths; active coordinators own shared moves and manifest writes.
 - `merged`: the final destination merge (normally master) and landed commit are
   confirmed, but required acceptance remains pending or unresolved. Record merge
   evidence and each outstanding check's owner, procedure, and result. Staging
@@ -216,7 +248,7 @@ integration, and deployment state; spreadsheets and prose are reconciled views.
   `merged` when every active mapped slice is merged or fulfilled and required
   child or parent acceptance remains outstanding. Preserve merge history when
   acceptance fails; use follow-up slices for fixes. Move directly from `review`
-  to `fulfilled` when acceptance is already satisfied at final merge.
+  or `in_release` to `fulfilled` when acceptance is satisfied at final merge.
 - `fulfilled`: every final required acceptance check passed or its limitation
   was explicitly accepted by an authorized decision maker, and the change
   request's final destination merge and landed commit are confirmed. Review-cap

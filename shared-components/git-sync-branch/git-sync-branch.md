@@ -41,7 +41,8 @@ keep current-tip review evidence pending until mapped or freshly reviewed.
 A capped slice retains its cap status. A provisional descendant stays in
 `in_progress/` until its own review passes finish or
 reach the cap. A routine restack leaves a completed slice in `review/` while
-current-tip evidence is refreshed. Ancestor review status gates ready CRs and
+current-tip evidence is refreshed. A rewritten `in_release` source invalidates
+its pinned membership; reconcile it under the plans layout. Ancestor review status gates ready CRs and
 release progression, not draft publication or the stage move.
 If a change request exists, the publication skill must return it and ready
 descendants to draft before the restack. Push only with:

@@ -93,7 +93,9 @@ first.
 Use `git-sync-branch.md` for the lease-protected push. A provisional
 descendant stays `in_progress/` until its own trim and correctness reviews
 finish or reach the cap. A routine restack of a completed slice leaves it in
-`review/` while current-tip evidence is refreshed. Stop for an unexpected
+`review/` while current-tip evidence is refreshed. A rewritten `in_release`
+source invalidates its pinned membership; reconcile it under the plans layout.
+Stop for an unexpected
 source change, an existing ready change request, or an unclassified delta.
 Report branch, parent and candidate SHAs,
 verification, restack evidence, and unrelated local files.

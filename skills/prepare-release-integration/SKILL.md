@@ -25,7 +25,8 @@ base. Accept explicit upfront authorization for merging and staging deployment;
 otherwise obtain missing authorization at the relevant boundary.
 
 Read `references/release-preparation.md`. Create the preparation record without
-rewriting the build manifest's parent pins, targets, reviews, or freeze digest.
+rewriting the build manifest's parent pins, targets, or reviews. Apply only the
+shared path-migration rules when stage moves affect its freeze digest.
 Link it from that manifest's integration state when present.
 For active builds, follow the shared Concurrent Build Snapshot rules: pin a
 qualified prefix in separate preparation state, return results to its coordinator,
@@ -72,6 +73,9 @@ authorization and applicable acceptance. No nested attempts directory is needed.
    each PR into integration, retargets successors, preserves source heads by
    default, and stops for conflicts or drift. Do not repair code or launch
    reviews automatically. Record the assembled candidate commit and tree.
+   Advance included `review` slices to `in_release`, record pinned membership,
+   reconcile parents, and repair manifest paths under the shared layout. For an
+   active build, return these results to its coordinator for shared writes.
 2. Within staging authorization, call `rebuild-staging-with-branches` with the
    integration branch as its **sole input**, the original base branch, and
    `expected_candidate_sha` equal to the assembled commit. The exact-candidate
@@ -86,7 +90,8 @@ authorization and applicable acceptance. No nested attempts directory is needed.
    retesting. Call `open-stack-requests` in `release-final` mode to create the
    integration-to-base PR with individual PR links and acceptance evidence.
 5. Leave that PR open for the final reviewer. Authorization for individual
-   assembly merges does not authorize merging it. Keep feature plans out of
+   assembly merges does not authorize merging it. Retain `in_release` through
+   staging, acceptance, and final PR review. Keep feature plans out of
    slice and spec `merged/` and `fulfilled/` folders until the final merge is
    confirmed. Then use `merged` while required acceptance remains outstanding,
    or `fulfilled` once satisfied, under the shared layout.

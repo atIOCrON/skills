@@ -64,6 +64,8 @@ Use clickable absolute links for plan files. Briefly explain missing plans,
 zero-diff branches, exhausted caps, and any provisional Complete branches.
 Do not equate individual branch completion with release readiness or plan
 fulfillment. `Complete` in this table means correctness review is complete;
+`in_release` means included in a recorded assembled candidate; report its
+release ID and outstanding release checks separately from incoming review work.
 `merged` means final merge confirmed with acceptance outstanding; `fulfilled`
 requires both. Report any merged slices separately from unmerged review work,
 without changing the review-completion statuses above. Report any parent

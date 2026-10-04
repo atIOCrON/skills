@@ -31,7 +31,7 @@ FIELDS = (
     "Package(s)",
 )
 STATUSES = (
-    "Draft", "Backlog", "To Do", "In Progress", "Review", "Merged", "Fulfilled",
+    "Draft", "Backlog", "To Do", "In Progress", "Review", "In Release", "Merged", "Fulfilled",
     "Superseded", "Deprecated",
 )
 TYPES = ("Feature", "Fix", "Operations", "Tests", "Documentation", "Housekeeping")

@@ -339,10 +339,24 @@ The validator checks scheduled selection, unique work assignments, accepted
 tail consistency, linear parent order and spec blocks when supplied, plus
 required fields, full SHAs, unique ordered branches,
 parent order, branch review and check identity, SHA-pinned human dispositions,
-durable `review/` handoff records, ready CR ancestry, merged CRs for
+durable `review/` and `in_release/` handoff records, pinned release membership
+for `in_release/`, ready CR ancestry, merged CRs for
 `merged/`, `fulfilled/` (and legacy `done/`), exclusions, and freeze digest. Confirm
 the final destination merge before using `merged/`; intermediate assembly does
 not qualify. Pending acceptance permits `merged/`, but never `fulfilled/`.
+For each `in_release` branch, record `release_candidate` with nonempty
+`release_id` and `preparation_record`, a full `candidate_sha`, and
+a full `included_tip_sha`. Normally this equals the branch's `tip_sha`. For a
+historical build whose same slice/source was later rewritten, preserve all build
+pins and review evidence: add `build_tip_sha` equal to its recorded `tip_sha`,
+matching `source`, and `evidence` linking that slice's selected preparation entry.
+This associates current slice delivery with the release; it does not claim the
+historical build tip or its reviews apply to the selected source. Verify the
+selected source's qualification from its release evidence separately. Link the
+recorded assembled candidate and verify inclusion against Git or its squash mapping before moving
+the plan; selection or partial assembly is insufficient. Keep build source and
+parent pins unchanged. Repair moved paths and path-dependent freeze digests
+under the shared layout; retain freeze authority and migration evidence.
 Active releases reject draft and superseded plans. The merge workflow verifies final acceptance
 before fulfillment.
 Validation proves manifest consistency, not that referenced evidence is true;

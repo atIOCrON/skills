@@ -608,10 +608,33 @@ def validate(data: Any) -> list[str]:
             errors.append(f"{prefix}.plan cannot be draft or superseded in an active release")
         if (
             is_text(plan)
-            and plan.startswith(("plans/slices/review/", "plans/review/"))
+            and plan.startswith((
+                "plans/slices/review/", "plans/review/",
+                "plans/slices/in_release/", "plans/in_release/",
+            ))
             and not isinstance(review_handoff, dict)
         ):
-            errors.append(f"{prefix}.plan in review requires review_handoff")
+            stage = plan.split("/")[2 if plan.startswith("plans/slices/") else 1]
+            errors.append(f"{prefix}.plan in {stage} requires review_handoff")
+
+        if is_text(plan) and plan.startswith(("plans/slices/in_release/", "plans/in_release/")):
+            membership = branch.get("release_candidate")
+            if not isinstance(membership, dict):
+                errors.append(f"{prefix}.plan in in_release requires release_candidate")
+            else:
+                for field in ("release_id", "preparation_record"):
+                    if not is_text(membership.get(field)):
+                        errors.append(f"{prefix}.release_candidate.{field} must be nonempty")
+                if not is_sha(membership.get("candidate_sha")):
+                    errors.append(f"{prefix}.release_candidate.candidate_sha must be a full SHA")
+                included_tip = membership.get("included_tip_sha")
+                if not is_sha(included_tip):
+                    errors.append(f"{prefix}.release_candidate.included_tip_sha must be a full SHA")
+                elif included_tip != branch.get("tip_sha"):
+                    if membership.get("build_tip_sha") != branch.get("tip_sha"):
+                        errors.append(f"{prefix}.release_candidate.build_tip_sha must equal tip_sha for historical build membership")
+                    if membership.get("source") != branch.get("source") or not is_text(membership.get("evidence")):
+                        errors.append(f"{prefix}.release_candidate historical membership requires matching source and evidence")
 
         change_request = branch.get("change_request")
         if not isinstance(change_request, dict):
