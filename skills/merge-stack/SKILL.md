@@ -72,9 +72,12 @@ git fetch --prune "$remote"
 release mode. Require an explicit provider for self-hosted or custom forges.
 Stop if authentication, the selected strategy, or provider metadata is unavailable.
 
-Use `chained` only when each later change requires its predecessor. Use
-`base-targeted` for independent changes. Do not treat input order as dependency
-evidence or combine independent roots into one chain.
+Use `chained` for functional chains or explicit linear placement proven by Git
+ancestry/targets; use `base-targeted` for independent roots. Input order proves
+no functional dependency; do not combine independent roots into a chain.
+For active builds, obtain a handoff before source rewrites or shared-target
+merges. Return repairs and landed/plan state to the coordinator, who owns shared
+restacks, canonical moves, and manifest writes. Otherwise this workflow owns them.
 
 Create the durable JSON Lines journal defined in `references/run-journal.md`
 outside the repository. Before resuming an interrupted run, execute:
@@ -259,6 +262,9 @@ Leave unmerged features in `review/`. Refresh the manifest's plan and artefact
 paths, including its own path if moved, and verify them. If a move or manifest
 update fails, report the confirmed merges and remaining stage work; do not undo
 a merge.
+For an active coordinator, return confirmed merge/stage results instead of
+performing shared moves or manifest writes. Preserve its worktrees/refs until
+reconciliation; cleanup of its resources requires a handoff.
 
 Set moved children's `Slice Status: fulfilled`; preserve approval. Reconcile
 parents under the shared complete-map and acceptance rules. Fulfilled parents

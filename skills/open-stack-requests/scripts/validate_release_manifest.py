@@ -60,6 +60,11 @@ def scope_payload(data: dict[str, Any]) -> dict[str, Any]:
                 "tip_sha": branch.get("tip_sha"),
                 "tree_sha": branch.get("tree_sha"),
                 "surfaces": branch.get("surfaces"),
+                **{
+                    key: branch[key]
+                    for key in ("slice_slug", "spec_slug", "stacking_reason", "code_prerequisites")
+                    if key in branch
+                },
                 "checks": [
                     {
                         "id": check.get("id"),
@@ -82,6 +87,139 @@ def scope_digest(data: dict[str, Any]) -> str:
         scope_payload(data), ensure_ascii=False, separators=(",", ":"), sort_keys=True
     ).encode("utf-8")
     return f"sha256:{hashlib.sha256(encoded).hexdigest()}"
+
+
+def validate_schedule(data: dict[str, Any], branches: list[Any]) -> list[str]:
+    """Check coordinated builds without changing legacy manifest semantics."""
+    if "schedule" not in data:
+        return []
+    schedule = data["schedule"]
+    if not isinstance(schedule, dict):
+        return ["schedule must be an object"]
+    errors: list[str] = []
+    if schedule.get("selection") not in ("queue", "explicit"):
+        errors.append("schedule.selection must be queue or explicit")
+    layout = schedule.get("layout")
+    if layout not in ("linear", "dependency"):
+        errors.append("schedule.layout must be linear or dependency")
+    coordinator = schedule.get("coordinator")
+    if not isinstance(coordinator, dict):
+        errors.append("schedule.coordinator must be an object")
+    else:
+        if coordinator.get("session_id") is not None and not is_text(coordinator["session_id"]):
+            errors.append("schedule.coordinator.session_id must be null or a non-empty string")
+        if not is_text(coordinator.get("worker_ref")):
+            errors.append("schedule.coordinator.worker_ref is required")
+        workspace = coordinator.get("workspace")
+        if not is_text(workspace) or not pathlib.Path(workspace).is_absolute():
+            errors.append("schedule.coordinator.workspace must be an absolute path")
+    spec_order = schedule.get("spec_order")
+    if not isinstance(spec_order, list) or not spec_order or not all(is_text(s) for s in spec_order):
+        errors.append("schedule.spec_order must be a non-empty array of spec slugs")
+        spec_order = []
+    elif len(set(spec_order)) != len(spec_order):
+        errors.append("schedule.spec_order must contain unique slugs")
+    if schedule.get("current_spec") is not None and schedule.get("current_spec") not in spec_order:
+        errors.append("schedule.current_spec must be null or a selected spec slug")
+    if not is_text(schedule.get("ordering_reason")):
+        errors.append("schedule.ordering_reason is required")
+    work = schedule.get("work")
+    if not isinstance(work, list) or not work:
+        errors.append("schedule.work must be a non-empty array")
+        work = []
+    by_source: dict[str, dict[str, Any]] = {}
+    slices: set[str] = set()
+    sources: list[str] = []
+    last_spec = -1
+    for index, item in enumerate(work):
+        prefix = f"schedule.work[{index}]"
+        if not isinstance(item, dict):
+            errors.append(f"{prefix} must be an object")
+            continue
+        for field in ("slice_slug", "spec_slug", "plan", "source"):
+            if not is_text(item.get(field)):
+                errors.append(f"{prefix}.{field} is required")
+        source, slug = item.get("source"), item.get("slice_slug")
+        if is_text(source):
+            if source in by_source:
+                errors.append(f"{prefix}.source duplicates {source!r}")
+            by_source[source] = item
+            sources.append(source)
+        if is_text(slug):
+            if slug in slices:
+                errors.append(f"{prefix}.slice_slug duplicates {slug!r}")
+            slices.add(slug)
+        spec = item.get("spec_slug")
+        if spec not in spec_order:
+            errors.append(f"{prefix}.spec_slug must occur in schedule.spec_order")
+        elif layout == "linear":
+            position = spec_order.index(spec)
+            if position < last_spec:
+                errors.append(f"{prefix} violates contiguous spec block order")
+            last_spec = position
+        status = item.get("status")
+        if status not in ("queued", "implementing", "prepared", "stacked", "complete", "blocked"):
+            errors.append(f"{prefix}.status is invalid")
+        waiting = item.get("waiting_on")
+        if not isinstance(waiting, list) or not all(is_text(reason) for reason in waiting):
+            errors.append(f"{prefix}.waiting_on must be an array of non-empty reasons")
+        elif status == "blocked" and not waiting:
+            errors.append(f"{prefix} blocked work requires a waiting reason")
+        authoring_base = item.get("authoring_base")
+        if authoring_base is not None and not (
+            isinstance(authoring_base, dict)
+            and is_text(authoring_base.get("branch")) and is_sha(authoring_base.get("sha"))
+        ):
+            errors.append(f"{prefix}.authoring_base must be null or a pinned branch/SHA")
+        if item.get("prepared_sha") is not None and not is_sha(item["prepared_sha"]):
+            errors.append(f"{prefix}.prepared_sha must be null or a full SHA")
+        if status == "prepared" and (not is_sha(item.get("prepared_sha")) or authoring_base is None):
+            errors.append(f"{prefix} prepared work requires prepared_sha and authoring_base")
+    accepted: set[str] = set()
+    predecessor = data.get("base")
+    predecessor = predecessor if isinstance(predecessor, dict) else {}
+    predecessor = {"branch": predecessor.get("branch"), "sha": predecessor.get("sha")}
+    for index, branch in enumerate(branches):
+        if not isinstance(branch, dict):
+            continue
+        prefix = f"branches[{index}]"
+        source = branch.get("source")
+        item = by_source.get(source) if is_text(source) else None
+        if item is None:
+            errors.append(f"{prefix}.source must have a schedule work item")
+        else:
+            accepted.add(source)
+            for field in ("slice_slug", "spec_slug", "plan"):
+                if branch.get(field) != item.get(field):
+                    errors.append(f"{prefix}.{field} must match its schedule work item")
+            if item.get("status") not in ("stacked", "complete", "blocked"):
+                errors.append(f"{prefix} cannot accept a queued, implementing, or prepared candidate")
+            if item.get("status") == "complete" and not isinstance(branch.get("review_handoff"), dict):
+                errors.append(f"{prefix} complete work requires review_handoff")
+        if not is_text(branch.get("stacking_reason")):
+            errors.append(f"{prefix}.stacking_reason is required")
+        prerequisites = branch.get("code_prerequisites")
+        if not isinstance(prerequisites, list) or not all(is_text(slug) for slug in prerequisites):
+            errors.append(f"{prefix}.code_prerequisites must be an array of slice slugs")
+        if layout == "linear":
+            parent = branch.get("parent")
+            if not isinstance(parent, dict) or parent.get("branch") != predecessor.get("branch"):
+                errors.append(f"{prefix} linear parent must be the previous accepted branch")
+            if index >= len(sources) or source != sources[index]:
+                errors.append(f"{prefix} must follow the selected work prefix in spec order")
+        predecessor = {"branch": source, "sha": branch.get("tip_sha")}
+    for source, item in by_source.items():
+        if item.get("status") in ("stacked", "complete") and source not in accepted:
+            errors.append(f"schedule work {source!r} claims stack acceptance without a branch")
+    if data.get("state") != "building" and (
+        accepted != set(by_source)
+        or any(item.get("status") not in ("stacked", "complete") for item in by_source.values())
+    ):
+        errors.append("unfinished scheduled work cannot freeze; select a separate release prefix")
+    tail = schedule.get("tail")
+    if not isinstance(tail, dict) or tail != predecessor:
+        errors.append("schedule.tail must equal the last accepted branch/tip or pinned base")
+    return errors
 
 
 def validate(data: Any) -> list[str]:
@@ -118,9 +256,12 @@ def validate(data: Any) -> list[str]:
         errors.append("base.sha must be a full lowercase hexadecimal SHA")
 
     branches = data.get("branches")
-    if not isinstance(branches, list) or not branches:
-        errors.append("branches must be a non-empty array")
+    if not isinstance(branches, list):
+        errors.append("branches must be an array")
         branches = []
+    if not branches and not (state == "building" and isinstance(data.get("schedule"), dict)):
+        errors.append("branches must be non-empty unless a scheduled build is building")
+    errors.extend(validate_schedule(data, branches))
 
     seen: set[str] = set()
     saw_waived_review = False

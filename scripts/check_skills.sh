@@ -141,6 +141,7 @@ if [[ "$(cd "$target_dir" && pwd)" == "$repo_root/skills" ]]; then
   "$target_dir/merge-stack/scripts/test_release_assembly.sh"
   python3 "$repo_root/shared-components/change-request-lifecycle/scripts/test_bitbucket_cloud.py"
   python3 "$target_dir/build-branch-stack/scripts/test_evidence_reuse.py"
+  python3 "$repo_root/shared-components/release-manifest/scripts/test_build_schedule.py"
   "$target_dir/build-branch-stack/scripts/test_launch_reviewers.sh"
   "$target_dir/build-branch-stack/scripts/test_runtime_launchers.sh"
 fi

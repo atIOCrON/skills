@@ -1,6 +1,6 @@
 ---
 name: build-branch-stack
-description: Build approved vertical-slice plans as proportionate, verified, reviewed remote branches and maintain their canonical build manifest before integration.
+description: Build explicit approved scope or automatically drain the to_do spec queue as a linear stack, prioritizing parallel implementation and maintaining one canonical build manifest.
 disable-model-invocation: true
 metadata:
   layer: runner
@@ -8,11 +8,12 @@ metadata:
 
 # Build Branch Stack
 
-Build and push release branches from reviewed vertical-slice plans. Parent
-feature specifications are context, not executable branch inputs. Record each
-stable branch in the canonical build manifest. Use `open-stack-requests` in
-draft mode as branches stabilize when the task authorizes change-request (CR)
-publication; do not wait for release assembly.
+Build and push reviewed slices from explicit scope or, when none is supplied,
+the approved `plans/specs/to_do/` queue and slice maps. Specs group work; slices
+are implementation units. One coordinator owns the linear stack and manifest.
+Prioritize parallel implementation within and across specs; accept each spec
+as a contiguous block. Use `open-stack-requests` in draft mode as branches stabilize when CR
+publication is authorized; do not wait for release assembly.
 
 Minimize elapsed time to verified release handoff without weakening any gate.
 Dispatch all eligible work up to actual worker, reviewer, and resource capacity.
@@ -23,7 +24,9 @@ Follow `references/scheduling.md` throughout execution.
 
 Resolve `orchestration_skill_root` to this directory. Read
 `references/orchestration-runtime.md` and
-`references/orchestration-plans-layout.md` first. For each plan, use
+`references/orchestration-plans-layout.md` first, then
+`references/queue-build.md` for selection, resumption, spec order, stack
+assembly, and concurrent release ownership. For each plan, use
 `references/git-branch-commit.md` for branch and commit operations,
 `references/git-sync-branch.md` for verified pushes, then
 `references/from-reviewed-plan-to-git-handoff.md`. Read other references when
@@ -31,30 +34,38 @@ their step requires them. Read `references/artefact-audit.md` after a feature
 reaches `review/`; revisit only its pending cross-branch questions after a tested
 stack snapshot exists. Read `references/release-manifest.md` before creating or
 changing the manifest.
+For concurrent prefix preparation, read sibling
+`prepare-release-integration/references/release-preparation.md` for snapshots
+and handoffs; `queue-build.md` defines build ownership.
 
 Read `references/trim-review.md` before launching the first trim pass.
 
 ## Inputs
 
-- Ordered reviewed vertical-slice plans at
-  `plans/slices/<stage>/<slug>/<slug>.md`, each linked to its approved parent
-  specification and slice map, or selected legacy plans explicitly classified
-  as cohesive slices.
+- Optional explicit specs, slices, branches, or repair/resume manifest.
+  Otherwise discover the queue under `references/queue-build.md`.
+- Executable reviewed slices at `plans/slices/<stage>/<slug>/<slug>.md`,
+  each linked to its approved parent and map, or explicitly classified legacy
+  cohesive slices. Missing readiness is recorded before dispatch.
 - Base branch: the remote default unless the user names another.
 - Starting branch: the base unless the user names an existing parent.
 - Plan branch: create one by default, or use a user-selected existing branch
   after validating its parent, existing commits, and remote state.
-- Dependency map: each plan's one required unmerged predecessor, or `none`.
+- Code prerequisite map, separate from Git stacking order. A verified
+  cumulative parent may contain several required slices.
+- Layout: `linear` for new builds unless the user specifies another layout;
+  preserve the existing layout on resume.
 - Build ID and manifest path. New runs use `stack-build-<YYYYMMDDTHHMMSSZ>`
   under `plans/builds/`; generate once using the runtime identity rules.
   Repairs and resumes retain their existing ID and manifest.
 - For a repair run, the canonical release manifest, affected branches, and the
   publisher's evidence that any affected ready CRs are draft.
 
-Input order alone does not establish a dependency. Branch independent plans
-from the base. If a plan needs multiple unmerged predecessors, split the
-implementation within the selected scope or use a merged prerequisite; do not
-invent a linear parent.
+Append linear candidates to the verified tail in spec blocks. Independent
+workers may share a verified authoring base; the coordinator restacks before
+acceptance. Record placement separately from functional prerequisites. In an
+explicit dependency/base-targeted layout, independent branches use the base.
+Honor real prerequisites; never invent dependencies to explain stack order.
 Release scope follows what must ship. Never impose a branch-count cap. When
 the graph, conflict surface, or acceptance cost is unusually high, make a
 smaller implementation split with concrete evidence. The user controls release
@@ -69,9 +80,10 @@ verification changes:
 | Plan | Status | Reviews | Branch | Commit | Next action | Waiting on |
 ```
 
-Record active and eligible queued work and contributor history in `sessions`.
-For each waiting task, name its prerequisite, conflicting owner, constrained
-resource, or capacity limit; use `none` when it can start.
+The coordinator records selection, spec order/current spec, prepared candidates,
+assignments, and accepted tail in `schedule`, with contributor history in
+`sessions`. Give each waiting task a concrete reason under `scheduling.md`;
+routine conflict risk or later spec placement cannot justify idle capacity.
 
 Use `Queued`, `In progress`, `Review cap reached`, `In review`, `Release ready`,
 or `Blocked`. `In review` means this slice's implementation, trim, and
@@ -126,73 +138,22 @@ continue independent slices.
 
 ## Review Convergence
 
-An architecture epoch is a sequence of fixes under one design. Record its
-number, mechanism, and state owner in the design checkpoint. Start a new epoch
-when the mechanism, native owner, state model, dependency strategy, or slice
-boundary materially changes; record the prior epoch's failure class and why the
-new design removes it.
-
-Within an epoch, group findings by invariant or ownership failure and fix one
-root cause instead of adding one guard per example. Do not rerun unchanged
-expensive checks or enlarge tests beyond candidate-owned behaviour.
-
-Accept a runtime review finding only when it is reproduced on the pinned SHA
-through an existing supported production-like flow or deductively proven from
-committed code and a binding contract. Give each accepted finding a failure
-family defined by its invariant, runtime owner, supported path, and observable
-failure. Match that family across all passes, files, designs, and epochs. Static
-plausibility is advisory and cannot trigger code, tests, ledger entries,
-closure, or another pass.
-
-Before adopting a broader design, record the demonstrated failure, whether
-deletion or simplification resolves it, the existing native owner, whether the
-work is one invariant or several outcomes, whether tests exceed production
-machinery, and any dependency patch's removal condition. Reject a design when
-fewer state owners, async boundaries, patches, or extensions satisfy the same
-approved outcome.
-
-Two discovery passes anywhere in the ledger that expose new failures from the
-same family, design, or verification model require an autonomous architecture
-reassessment before more edits. Changing implementation shape or epoch does
-not reset this count. Compare removal, simplification, replacement, upgrade,
-the native owner, a narrow dependency correction, and a prerequisite split by
-production surface, state ownership, rollback, verification cost, and
-maintenance. Select the smallest
-viable design, amend the recorded architecture, and continue with a fresh
-candidate.
-
-If two epochs fail for the same underlying reason, do not try a third variation
-of that mechanism. Remove it, use the native owner, upgrade or narrowly correct
-the owning dependency, split a prerequisite, or use an already-supported
-contract that still satisfies the approved outcome. Mark the affected chain
-blocked only when every viable repository-local option conflicts with a hard
-constraint or the approved outcome.
-
-After two accepted fix cycles in one failure family, prohibit another local
-variation and record an autonomous continuation decision. Continue only for a
-confirmed defect with a viable, non-repeated disposition. Require a human only
-when every viable option crosses the authority boundary above.
-
-Run at most five completed fresh three-reviewer discovery passes for one plan.
-A pass counts after all three validated outputs are triaged. Closure, output
-repair, transport retry, review mapping, and incomplete launches do not count.
-The count persists across resumptions, designs, and epochs. After pass 5,
-finish accepted remediation, verification, push, and targeted closure. If
-another discovery pass would be needed, record `review_cap_reached`; do not
-start pass 6. Move the verified pushed slice to `review/` with a capped
-`review_handoff` once accepted fixes and closure finish. Seek a separate human
-disposition for release readiness; preserve automated review state and follow
-`release-manifest.md`.
+Read `references/review-convergence.md` before the first implementation or
+review dispatch and on each architecture reassessment. Preserve its review
+pass cap, failure-family counts, authority boundaries, and capped handoffs.
 
 ## Readiness
 
 Before moving plans or editing code, inspect repository instructions, plans,
-parent specs, slice maps, branch refs, and CI. Specs are not implementation
-inputs. Resolve specs and slices by slug in their stage folders. Require
+parent specs, slice maps, branch refs, and CI. Specs are selection/grouping
+inputs; executable slices own implementation. Resolve specs and slices by slug
+in their stage folders. Require
 `Approval Status: approved` on both, an approved map, and parent stage `backlog`,
 `to_do`, `in_progress`, or `review`. Reject draft, fulfilled, superseded, or
-stale inputs. Require plan review before selection; migrate legacy folders
-under the shared layout. Before creating or adopting a branch, answer:
+stale inputs. Require plan review before implementation dispatch; record
+unreviewed selected slices as waiting and complete the required review when
+authorized. Migrate legacy folders under the shared layout. Before creating or
+adopting a branch, answer:
 
 - What single actor-visible or integration-visible outcome does it deliver?
 - Can any acceptance group ship, fail, or roll back independently?
@@ -250,9 +211,12 @@ behaviour owned elsewhere.
 
 ## Workflow
 
-For a fresh run, initialize the canonical JSON manifest from the pinned base,
-selected plans, explicit exclusions, demonstrated dependencies, declared
-surfaces, and planned checks. Validate it with
+Resolve explicit selection or resume/discover the queue under `queue-build.md`
+before moving files. For a fresh run, initialize the canonical JSON manifest
+from the pinned starting base, selected specs/slices, explicit exclusions, real
+code prerequisites, declared surfaces, and planned checks. Keep unimplemented
+work in `schedule.work`, not placeholder branch entries. In linear mode,
+`branches` contains only accepted, verified, pushed stack branches. Validate with
 `scripts/validate_release_manifest.py`. Reconcile Sheet and prose trackers
 from the manifest.
 
@@ -267,15 +231,19 @@ For a selected legacy `plans/<slug>.md`, move it and any sibling
 `plans/slices/to_do/<slug>/` first. Stop on a destination collision.
 
 Use the scheduling contract to dispatch work as each branch becomes eligible.
-Pin each parent's exact SHA. Failed verification or integrity blocks new
-descendants; unfinished ancestor reviews do not. Keep descendants in
+Pin each authoring base and eventual stack parent separately. Failed
+verification or integrity blocks dependent work, not unrelated preparation;
+unfinished ancestor reviews do not block implementation or the next spec block.
+Keep descendants in
 `in_progress/` until their own trim and correctness passes finish. Draft CRs may
 publish on verified pinned branches; ready CRs still need a qualified chain.
 
 For each eligible implementation, dispatch these branch-local steps:
 
-1. Record why it depends on its parent. Fetch and pin the parent branch and SHA.
-2. Create its local plan branch from that parent, or validate the selected
+1. Record real code prerequisites and the assigned authoring base. Fetch and
+   pin that base; in linear mode it may be a shared verified baseline rather
+   than the future stack predecessor.
+2. Create its local plan branch from the assigned authoring base, or validate the selected
    existing plan branch with `git-branch-commit.md`, then move its feature from
    `to_do/` to `in_progress/` before implementation. On a repair run, verify
    the existing branch and manifest instead of recreating it; move only
@@ -295,14 +263,21 @@ For each eligible implementation, dispatch these branch-local steps:
    ancestor ref advances: require that SHA to remain the tip's ancestor, pass
    integrity checks, and use an explicit lease for the expected remote branch
    state, including absence for a new branch. Fetch after the push and confirm
-   local, upstream, remote, and verified tips match. Record the parent movement,
-   pinned parent, and verified tip in the manifest. Keep the feature in
+   local, upstream, remote, and verified tips match. Record the authoring base
+   and verified candidate in `schedule.work` until linear-stack acceptance;
+   record accepted parent movement and final pins in `branches`. Keep the feature in
    `in_progress/`. For this provisional case, the pinned-parent check in
    `git-sync-branch.md` applies to the recorded SHA, not the ancestor ref head;
    its first-push plain refspec also needs the explicit lease.
 
-Start each branch's trim once its tip is verified and pushed and its parent SHA
-is pinned. Run eligible trim passes concurrently, subject only to reviewer capacity.
+Record parallel authoring results as `prepared` in `schedule.work`. The
+coordinator restacks onto the tail in spec order, re-verifies, pushes, and
+records accepted pins/checks in `branches` before advancing `schedule.tail`.
+Formal trim/correctness requires acceptance; reuse prepared-tip evidence only
+with valid identity/mapping proof. Follow `queue-build.md` for publication handoffs.
+
+Start each accepted branch's trim once its tip is verified and pushed and its
+parent SHA is pinned. Run eligible trim passes concurrently, subject only to reviewer capacity.
 A moving ancestor makes a descendant provisional, not ineligible. Within a
 branch, triage pass N, apply accepted reductions, verify and push, then start pass N+1.
 Start correctness pass 1 when that branch's trim is proportionate. Run eligible
@@ -361,9 +336,10 @@ by an eligible test-only remediation, follow `code-review-loop.md`: verify the
 new SHA, obtain same-session closure from each originating reviewer, and record
 `test_only_closure` mappings instead of running another discovery pass.
 
-After all plans, run full-stack checks without a blanket code review. Review
-again only where the final restack or integration fixes changed behavior or
-invalidated a review mapping:
+A qualified prefix needs its own candidate-wide checks; pending checks for the
+larger build do not block it. After all plans, run full-stack checks without a
+blanket review. Review again only where restacks or integration fixes changed
+behavior or invalidated mappings:
 
 1. When every branch in the selected release candidate exists, run deterministic
    pre-handoff checks on every chain head and independent branch. For an ordered
@@ -494,6 +470,7 @@ surfaces, checks, all three review mappings, CRs, exclusions, freeze, integratio
 acceptance, and deployment state; link detailed evidence instead of duplicating
 it. Report child and parent stages, `review_handoff`, current-tip evidence,
 release readiness, and pending dispositions, restacks, and checks with prerequisites.
-Report audit decisions, specifications, maps, draft/backlog plans, and incomplete
-work. State whether draft CRs were published or remain a next action; this skill
-creates no CR.
+Report selection, spec order/current spec, tail, prepared work, assignments,
+waiting reasons, and audit decisions, specs/maps, draft/backlog plans, and
+incomplete work. Link the manifest and pinned release preparation. State whether
+draft CRs were published or remain a next action; this skill creates no CR.
