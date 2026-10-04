@@ -35,9 +35,10 @@ ownership, blockers (or `none`), verification and rollback boundaries, and exclu
 Approval of the saved decomposition and children sets the map and child
 approval to `approved`, moves approved draft children to `backlog/`, and sets
 `Slice Status: backlog`. Repair links, verify paths, and reconcile the parent.
-Unchanged approved children retain their stage and approval. Writing files does
-not approve them; list order does not create dependencies. Add no per-file
-approval gate.
+Unchanged approved children retain their stage and approval unless the parent
+returns to draft: apply the shared child reset and reapproval rules. Writing
+files does not approve them; list order does not create dependencies. Add no
+per-file approval gate.
 
 ## Slice Test
 

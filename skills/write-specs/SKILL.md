@@ -54,8 +54,13 @@ fulfillment requires confirmed final merges and required acceptance.
 
 Material changes to acceptance IDs, scope, binding decisions, authorized
 complexity, required verification, or external acceptance reset stage and
-approval to `draft` and the existing map to `stale`. Preserve child stages and
-evidence; block affected delivery until spec and map are reapproved.
+approval to `draft` and the existing map to `stale`. Move unstarted `backlog`
+or `to_do` children to `draft` with draft approval; preserve prior approvals,
+selection history, and evidence. Preserve started and landed child stages,
+record delivery blockers, and use follow-up slices for changed landed work.
+Apply the shared child rules, including manifest/link repairs and reapproval
+of the revised spec, map, and child plans together. Reapproved unstarted children
+return to `backlog`; `to_do` requires a separate selection decision.
 Clarifications preserve approval and stage. Supersession requires an identified,
 authorized replacement and the shared child-disposition rules. Preserve history
 and report transitions, moves, and reasons.

@@ -80,8 +80,21 @@ and deployment state in the corresponding operational records.
 
 Material changes to acceptance IDs, scope, binding decisions, authorized
 complexity, required verification, or external acceptance reset a spec's stage
-and approval to `draft` and its existing map to `stale`. Preserve child stages
-and evidence; block affected delivery until spec and map are reapproved.
+and approval to `draft` and its existing map to `stale`. Apply these child rules:
+
+- Move unstarted `backlog` or `to_do` children to `draft`, setting both slice
+  and approval statuses to `draft`. Preserve prior approvals, selection history,
+  and evidence; update maintained links and manifest paths.
+- Preserve stages and evidence for `in_progress`, `review`, and `in_release`
+  children; record the reapproval blocker in their plans and build/release records.
+  Block affected delivery until the revised spec, map, and child plans are approved.
+- Preserve `merged` and `fulfilled` results; use follow-up slices for changed
+  requirements. Leave superseded history unchanged.
+
+Approve the revised spec, map, and saved children together; add no per-child
+approval ceremony. Reapproved unstarted children return to `backlog`; restoring
+`to_do` requires a separate selection decision.
+
 Changes to a slice's approved outcome, ownership, exclusions, or dependencies
 require reapproval through `write-slices`: save it as a draft, mark the map
 stale, and preserve implementation and review evidence. After final merge,
@@ -99,8 +112,8 @@ retain spec approval without adding a human approval gate.
 Reconcile parents after decomposition approval and every child stage change
 within `write-slices`, `build-branch-stack`, or release/merge completion.
 A spec awaiting approval stays in `draft`. Before delivery, an approved spec without an
-approved decomposition stays in `backlog`. Draft or stale maps do not reset
-existing delivery stages.
+approved decomposition stays in `backlog`. Draft or stale maps alone do not reset
+child stages; a parent returned to draft applies the child rules above.
 
 Require a nonempty approved map, approved children resolving exactly once
 across current and legacy locations, and consistent acceptance ownership.
@@ -195,8 +208,9 @@ canonical JSON owns branch order, targets, SHAs, checks, acceptance, CRs,
 integration, and deployment state; spreadsheets and prose are reconciled views.
 
 - `draft`: saved specification or slice awaiting scope/decomposition approval.
-- `backlog`: approved scope, not yet selected for implementation. Required
-  child-plan review may remain pending.
+- `backlog`: approved scope, not yet selected for implementation. A slice's
+  parent and map must also be approved before it is considered for `to_do`.
+  Required child-plan review and implementation prerequisites may remain pending.
 - `to_do`: a reviewed slice selected for the implementation batch; the parent
   reflects selection across its approved map. Move only selected children.
 - `in_progress`: implementation, fixes, CLI code review loops, commits, and
