@@ -214,7 +214,7 @@ fi
 grep -qF -- '-s read-only -a never' "$STUB_ARGS_LOG"
 grep -qF -- '--permission-mode plan' "$STUB_ARGS_LOG"
 grep -qF -- '--auto-review --sandbox enabled' "$STUB_ARGS_LOG"
-grep -qF -- '--model grok-4.7-high' "$STUB_ARGS_LOG"
+grep -qF -- '--model grok-4.6-high' "$STUB_ARGS_LOG"
 if grep -qF -- '--mode ask' "$STUB_ARGS_LOG"; then
   echo "cursor launchers must use default agent mode, not ask mode" >&2
   exit 1
