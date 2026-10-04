@@ -2,8 +2,10 @@
 
 Use `plans/releases/active/<release-id>/preparation.json` for PR assembly state. This
 operational record does not replace a build manifest or change its dependency
-pins, review evidence, freeze digest, or feature stages. When a build manifest
-exists, link this record under `integration.release_preparation` and retain its
+pins or review evidence. Confirmed assembly advances selected plans to
+`in_release` under the shared layout; path-only repairs may update the freeze
+digest with a recorded migration, preserving freeze authority and Git identities.
+When a build manifest exists, link this record under `integration.release_preparation` and retain its
 original targets; release PR destinations belong here. If its coordinator is
 active, return the link and publication results for coordinator import rather
 than writing the live build manifest yourself.
@@ -21,8 +23,9 @@ pinned evidence.
 Before ready publication or release mutation, obtain a coordinator handoff
 pinning source heads and a return condition. Source rewrites wait; other work
 continues. The release agent owns this record and its isolated integration
-branch, not build sources, stages, or evidence. Return source repairs to the
-coordinator. Source drift invalidates affected snapshots/approvals under existing
+branch, not build sources or review evidence. Return candidate membership and
+stage results to the active coordinator for shared moves and manifest repair.
+Return source repairs to the coordinator. Source drift invalidates affected snapshots/approvals under existing
 rules. Preserve release/deployment authorization boundaries. After a final base
 merge, return landed identities for coordinator reconciliation of plans and
 remaining descendants.
@@ -107,6 +110,16 @@ Squash requires an explicit override and authorization recorded with
 
 ## Completion
 
+After the complete selected scope is assembled, pin its candidate commit/tree
+and verify every included source tip or squash mapping. Move qualifying slices
+from `review/` to `in_release/`, record `release_candidate` on each existing
+build branch (or link preparation change entries when no build exists),
+and reconcile parents from their complete approved maps. Repair maintained
+plan/artefact paths and any path-dependent freeze digest under the shared move
+rules. For an active build, return these results to its coordinator instead of
+writing shared plans or manifests. Starting preparation or partial assembly
+preserves stages; do not move already merged or fulfilled slices backwards.
+
 Merging into integration means assembled, not released. Do not move plans to
 slice or spec `merged/` or `fulfilled/` folders, delete sources, or
 mark the build manifest released. Freeze the assembled candidate's commit and
@@ -123,5 +136,7 @@ After an independently authorized final integration-to-base merge, confirm
 landed commits. Move slices to `merged/` while required acceptance remains
 outstanding, or directly to `fulfilled/` when satisfied; advance `merged/` slices
 once acceptance passes or its limitations are explicitly accepted. Reconcile
-parents under the shared layout. Assembly, preparation, and publication
-preserve child stages and never perform `merged` or fulfillment transitions.
+parents under the shared layout. Assembly advances only `in_release`, never
+`merged` or `fulfilled`. Staging and final PR publication retain `in_release`.
+On cancellation, replacement, or candidate invalidation, reconcile membership
+and return uncovered unmerged plans to `review` (or `in_progress` for fixes).

@@ -220,7 +220,9 @@ Return `Reviewed and pushed` only when:
 
 If the parent head has moved, return `Reviewed provisionally` rather than
 `Reviewed and pushed`. Restack once upstream fixes settle and verify the new tip;
-keep an already completed slice in `review/`. Map prior reviews or run a fresh pass
+keep an already completed slice in `review/`. A rewritten `in_release` source
+invalidates its pinned membership; reconcile it under the plans layout before
+release progression. Map prior reviews or run a fresh pass
 when below the cap. For a capped branch, carry an accepted human disposition
 through a recorded valid restack mapping only when effective behavior and the
 accepted unresolved findings' risk remain unchanged. Keep the original

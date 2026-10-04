@@ -149,7 +149,7 @@ parent specs, slice maps, branch refs, and CI. Specs are selection/grouping
 inputs; executable slices own implementation. Resolve specs and slices by slug
 in their stage folders. Require
 `Approval Status: approved` on both, an approved map, and parent stage `backlog`,
-`to_do`, `in_progress`, or `review`. Reject draft, merged, fulfilled, superseded, or
+`to_do`, `in_progress`, or `review`. Reject draft, in_release, merged, fulfilled, superseded, or
 stale inputs. Require plan review before implementation dispatch; record
 unreviewed selected slices as waiting and complete the required review when
 authorized. Migrate legacy folders under the shared layout. Before creating or
@@ -377,8 +377,11 @@ Keep bulk output outside artefact folders and index concise evidence under
 the last plan. Never publish or refresh protected seed or baseline data here.
 Treat a lock mismatch or unexpected output as a blocker.
 
-Leave completed features in `review/` while release-candidate or human and
-external checks are pending. If a later check reveals a defect, return its
+Leave completed features in `review/` until a recorded, fully assembled release
+candidate covers their pinned tips; then use `in_release` under the shared layout.
+Keep that stage through pending release-candidate, human, or external checks.
+Import release-coordinator membership handoffs and reconcile parents before
+shared stage moves and manifest repairs. Build completion alone does not qualify. If a later check reveals a defect, return its
 owner to `in_progress/` for a fix; restack affected descendants without
 changing their stage unless they need implementation work. Refresh the canonical manifest at its
 stable release path and check every recorded plan and artefact path. Freeze only

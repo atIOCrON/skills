@@ -47,11 +47,12 @@ may be in any order. Independent base-targeted inputs require an explicit order.
 For a stack built by `build-branch-stack`, load its manifest and map each source
 branch to one feature before merging. Migrate encountered legacy plan folders
 using the layout rules and refresh manifest paths. Require unmerged features
-under `plans/slices/review/`; allow confirmed final merges under
+under `plans/slices/review/` or `plans/slices/in_release/`; verify the latter
+against its recorded candidate membership. Allow confirmed final merges under
 `plans/slices/merged/` or `plans/slices/fulfilled/` when resuming. Stop on a missing
 or ambiguous mapping or a destination collision. For parented slices, require approved parent and child
 metadata and an approved map; accept active parents in `backlog`, `to_do`,
-`in_progress`, or `review`, and verified `merged` or `fulfilled` parents on resume.
+`in_progress`, `review`, or `in_release`, and verified `merged` or `fulfilled` parents on resume.
 Reject draft or superseded inputs. Reconcile affected parent progress before merging
 using the complete approved maps, not just this release batch.
 For each unmerged feature, confirm that its human or external acceptance checks
@@ -257,12 +258,14 @@ scripts/cleanup_merged_branches.sh "$remote" "$base" <record-file>
 ```
 
 After merge attempts and any applicable cleanup, reconcile each confirmed final
-merge, including partial runs and resumes. Move slices from `review/` to
+merge, including partial runs and resumes. Move slices from `review/` or
+`in_release/` to
 `plans/slices/merged/` while required acceptance remains outstanding, or directly
 to `plans/slices/fulfilled/` when it passed or was explicitly accepted. Move
 `merged/` slices to `fulfilled/` once acceptance is satisfied. Record final
 destination, landed commit, merge evidence, and outstanding acceptance.
-Leave unmerged features in `review/`. Refresh the manifest's plan and artefact
+Keep unmerged features in `in_release/` while covered by a qualifying assembled
+candidate; otherwise use `review/` under the shared membership rules. Refresh the manifest's plan and artefact
 paths, including its own path if moved, and verify them. If a move or manifest
 update fails, report the confirmed merges and remaining stage work; do not undo
 a merge.
@@ -275,7 +278,7 @@ Reconcile parents under the shared complete-map and acceptance rules. Move
 parents with their maps to `plans/specs/merged/<spec_slug>/` when every active
 child is merged or fulfilled but required acceptance remains outstanding, or
 to `plans/specs/fulfilled/<spec_slug>/` when all fulfillment gates pass.
-Otherwise derive `review`, `in_progress`, `to_do`, or `backlog`. Preserve parent
+Otherwise derive `in_release`, `review`, `in_progress`, `to_do`, or `backlog`. Preserve parent
 approval, repair references, and verify paths.
 
 Report child/parent transitions, reconciliation blockers, incomplete repairs,

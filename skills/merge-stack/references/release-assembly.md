@@ -77,8 +77,10 @@ success. Skip only proven completions; never repeat an unknown merge.
 ## Handoff
 
 Return the candidate commit/tree, all PR and landed SHAs, preserved sources,
-journal, checks, and any unmerged prefix or blocker. Leave feature plans in
-their existing stage. The coordinator handles staging and the final PR. Read
+journal, checks, and any unmerged prefix or blocker. Partial assembly leaves
+feature stages unchanged. After complete assembly, return pinned membership to
+the release coordinator for `in_release` moves and complete-map parent
+reconciliation. The coordinator handles staging and the final PR. Read
 `orchestration-plans-layout.md` for subsequent lifecycle reconciliation: only
 an independently authorized and confirmed final integration-to-base merge
 permits `merged`, or `fulfilled` when required acceptance is satisfied.

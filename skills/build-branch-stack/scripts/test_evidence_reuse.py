@@ -271,6 +271,72 @@ class ReleaseManifestReuseTest(unittest.TestCase):
                 self.set_review_handoff(branch)
                 self.assertEqual(release_validator.validate(manifest), [])
 
+    def test_in_release_requires_handoff_and_pinned_membership(self) -> None:
+        for root in ("plans/slices", "plans"):
+            with self.subTest(root=root):
+                manifest = self.manifest()
+                branch = manifest["branches"][0]
+                branch["plan"] = f"{root}/in_release/test/test.md"
+                self.assertEqual(release_validator.validate(manifest), [
+                    "branches[0].plan in in_release requires review_handoff",
+                    "branches[0].plan in in_release requires release_candidate",
+                ])
+                self.set_review_handoff(branch)
+                branch["release_candidate"] = {
+                    "release_id": "stack-release-test",
+                    "preparation_record": "plans/releases/active/stack-release-test/preparation.json",
+                    "candidate_sha": "e" * 40,
+                    "included_tip_sha": branch["tip_sha"],
+                }
+                branch["checks"].append({
+                    "id": "operator-acceptance", "kind": "external",
+                    "status": "pending", "sha": None, "method": None,
+                    "origin_sha": None, "evidence": None,
+                    "command": "Operator checks the release candidate.",
+                })
+                self.assertEqual(release_validator.validate(manifest), [])
+                branch["tip_sha"] = "f" * 40
+                self.assertIn(
+                    "branches[0].release_candidate.build_tip_sha must equal tip_sha for historical build membership",
+                    release_validator.validate(manifest),
+                )
+                branch["release_candidate"].update({
+                    "candidate_sha": "short", "release_id": "", "preparation_record": "",
+                })
+                errors = release_validator.validate(manifest)
+                for field in ("release_id", "preparation_record"):
+                    self.assertIn(f"branches[0].release_candidate.{field} must be nonempty", errors)
+                self.assertIn("branches[0].release_candidate.candidate_sha must be a full SHA", errors)
+
+    def test_historical_build_membership_preserves_build_identity(self) -> None:
+        manifest = self.manifest()
+        branch = manifest["branches"][0]
+        branch["plan"] = "plans/slices/in_release/test/test.md"
+        self.set_review_handoff(branch)
+        branch["release_candidate"] = {
+            "release_id": "stack-release-test",
+            "preparation_record": "plans/releases/active/stack-release-test/preparation.json",
+            "candidate_sha": "e" * 40,
+            "included_tip_sha": "f" * 40,
+            "build_tip_sha": branch["tip_sha"],
+            "source": branch["source"],
+            "evidence": "plans/releases/active/stack-release-test/preparation.json#changes[0]",
+        }
+        original_tip = branch["tip_sha"]
+        self.assertEqual(release_validator.validate(manifest), [])
+        self.assertEqual(branch["tip_sha"], original_tip)
+        branch["release_candidate"]["source"] = "feature/another"
+        self.assertIn(
+            "branches[0].release_candidate historical membership requires matching source and evidence",
+            release_validator.validate(manifest),
+        )
+        branch["release_candidate"]["source"] = branch["source"]
+        branch["release_candidate"]["evidence"] = ""
+        self.assertIn(
+            "branches[0].release_candidate historical membership requires matching source and evidence",
+            release_validator.validate(manifest),
+        )
+
     def test_fulfilled_and_legacy_done_require_merge(self) -> None:
         for root in ("plans/slices", "plans"):
             for stage in ("fulfilled", "done"):
