@@ -1,6 +1,6 @@
 ---
 name: rebuild-staging-with-branches
-description: Build an integration branch from a pinned origin base and the user's selected feature branches, validate it, then replace staging and verify deployment. The base defaults to origin's advertised default branch.
+description: Assemble selected pushed branches on a pinned origin base, reuse valid test evidence, verify new combinations, then deploy through the staging pipeline. The base defaults to origin's advertised default branch.
 disable-model-invocation: true
 metadata:
   layer: runner
@@ -16,6 +16,11 @@ frozen release manifest or send the user to create one.
 Do not change the base or source branches, deploy production, merge old
 staging, or disturb existing local work. Perform integration work in a
 separate disposable checkout.
+
+An unchanged candidate with passed final stack checks needs deployment
+verification, not another development cycle. A new mix of branches needs
+combined checks; passing each source build does not verify the mix. Reuse
+applicable evidence and let the pipeline build the deployment artifact once.
 
 ## User input
 
@@ -109,7 +114,7 @@ The receipt is evidence produced by this skill, not a prerequisite or release
 scope authority. Do not add freeze digests, review blocks, plan paths, or
 release-orchestration gates.
 
-## Build and validate
+## Assemble
 
 1. Create `feature/staging-integration/<UTC-timestamp>` at the pinned base in
    the disposable checkout. Exclude uncommitted changes. Do not add branches
@@ -120,8 +125,12 @@ release-orchestration gates.
      no-op; and
    - otherwise merge the pinned tip.
 
-   Never reorder the list silently. If the supplied order conflicts with a
-   demonstrated dependency, stop and report it.
+   Branch tips include their ancestors. Check that inherited features are in
+   scope and all functional prerequisites are present; a selected tip may
+   include earlier features the user did not name separately. Report unclear
+   scope or missing prerequisites before proceeding. Never silently reorder
+   inputs, add prerequisites, or cherry-pick around unwanted ancestors.
+   If the supplied order conflicts with a demonstrated dependency, stop.
 3. Classify conflicts. Resolve only mechanical integration conflicts whose
    result is determined by the selected inputs, such as regenerating
    `composer.lock` with the repository's pinned toolchain and locked inputs.
@@ -130,22 +139,64 @@ release-orchestration gates.
    changes on the integration branch, and do not rewrite or restack a source
    branch to repair them.
 4. Confirm that the pinned base and every selected tip are ancestors of the
-   candidate. Inspect dependency locks and patch order. Run the repository's
-   relevant build, tests, and regressions. Any test failure, or any validation
-   result that would require a test or runtime change, is a stop condition:
-   leave the receipt in `building`, do not alter the candidate to make the
-   check pass, and report the failure and the source branch that must be
-   corrected. Only after all checks pass, pin the final candidate commit and
-   tree SHAs, then update the still-ignored receipt.
+   candidate. Pin its commit and tree SHAs, then update the ignored receipt.
    With `expected_candidate_sha`, repeat `scripts/verify_candidate.sh` against
    the final candidate. Do not regenerate locks, resolve conflicts, or add
    commits in this mode: such work changes the release candidate.
+
+## Verify without duplicating work
+
+Inspect the candidate's pipeline and available source-build evidence. Use
+existing build manifests and logs when present; do not require a release
+manifest. Record a compact check list with each check's owner (local or CI),
+fresh or reused result, and evidence path.
+
+- **Previously tested candidate:** reuse passed final combined checks for the
+  exact candidate while their determining inputs remain unchanged. Finished
+  branches or pending final stack checks are insufficient.
+- **New combination:** run applicable combined checks on the assembled
+  candidate. This includes subsets, changed bases, merges and conflict
+  resolutions. Reuse qualifying branch checks; verify interactions across
+  selected features and their shared surfaces. A clean merge or successful
+  compilation does not establish behavioural compatibility.
+- **Evidence reuse:** require a passed originating result and SHA, plus proof
+  that the check's source, configuration, locks, patch order and hashes,
+  fixtures, toolchain, runtime bindings and effective results remain
+  equivalent. Use documented equivalence rules. A new SHA alone does not
+  invalidate evidence; unchanged file paths alone do not establish it. Rerun
+  when determining inputs changed or their equivalence cannot be proved.
+
+Choose checks from the selected features' verification requirements and
+cross-feature risk. Cover dependency/patch compatibility and shared runtime
+behaviour, especially Magento DI, configuration and checkout when affected.
+Broaden to the relevant regression suite when interaction scope is uncertain.
+Do not repeat branch implementation, trim or blanket code reviews.
+
+Prefer one locked install, patch application, compilation, asset generation
+and artifact package in CI, followed by deployment of that same artifact.
+Run required tests locally when CI does not cover them. Defer checks to CI
+only when they run against this candidate and block activation on failure;
+a build-and-deploy pipeline is not evidence that regression tests ran.
+Use the pinned toolchain and install only what local checks need. If those
+checks require a full local build and CI cannot reuse its artifact, record
+why both builds are necessary; otherwise do not create an unused local
+deployment artifact. This skill does not change CI configuration.
+
+Before moving staging, every required check must have passed or be assigned
+to a confirmed CI gate before activation. Any local failure stops the rebuild;
+leave the receipt in `building` and report the source branch to correct.
+Do not alter the integration candidate to make checks pass. After pushing,
+any CI failure stops deployment verification; inspect deployment state before
+retrying or rolling back.
 
 ## Replace and verify staging
 
 1. Inspect pipeline and deployment scripts from the candidate. Preserve their
    code-only versus database-deploy guards. Check for an active staging deploy
    lock. Record the running release and retained rollback release.
+   If remote staging and the healthy live release already match the candidate
+   and all required checks have valid passed evidence, skip backup and ref
+   publication and continue with deployment verification below.
 2. Recheck remote staging immediately before mutation. If it differs from
    `staging_before`, stop; do not silently repin or retry.
    With `expected_candidate_sha`, also recheck the sole input and remote base
@@ -165,18 +216,31 @@ release-orchestration gates.
    staging did not exist. Never use plain `--force`, bypass branch protection,
    open an MR into staging, or deploy intermediate commits. Stop on a failed
    lease.
-5. Follow the staging pipeline. Verify the remote staging SHA, live release,
-   previous release retention, application health, and relevant regressions.
+5. Pushing `staging` triggers its pipeline. Follow that run for the pinned SHA;
+   do not start a second deployment manually or trigger a duplicate pipeline.
+   Confirm assigned CI checks passed, the remote and live candidate SHAs match, the
+   previous release remains available, and deployment lock and maintenance
+   state are clear. Run staging smoke checks for application health, essential
+   journeys and affected surfaces. Rerun deeper checks only where the staging
+   environment invalidates earlier evidence or a smoke failure warrants them.
    Change the receipt to `state: "staged"` and set `staging_after` only after
    the candidate identity and deployment are verified. Otherwise leave it in
    `building` state and record the failure in the report.
+
+Preserve database deployment guards and established recovery procedures.
+Known database drift does not waive them; keep database recovery separate
+from branch verification and follow existing user authorization.
 
 ## Report
 
 Report the resolved base branch and SHA, ordered source SHAs, integration
 branch, candidate commit and tree SHAs, receipt path, backup or prior branch
 absence, previous and live releases, pipeline result, checks, and unresolved
-failures.
+failures. Distinguish fresh and reused checks, deferred CI gates and any
+necessary duplicate build. Record assembly, local verification and pipeline
+timings when available. Report "deployed and ready for user testing" after
+verification; full staging acceptance belongs to `integrate-and-test-staging`
+when requested, and is not implied by deployment.
 
 Also report the exact leased revert command without running it. When staging
 previously existed, the command must restore `staging_before` while leasing on
