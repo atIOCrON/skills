@@ -53,7 +53,7 @@ run_claude() {
 run_cursor() {
   command -v cursor-agent >/dev/null 2>&1 || { echo "error: cursor-agent CLI not found on PATH" >&2; exit 3; }
   local chat_id model
-  model="${CURSOR_REVIEW_MODEL:-grok-4.7-high}"
+  model="${CURSOR_REVIEW_MODEL:-grok-4.6-high}"
   chat_id="$(cursor-agent create-chat)"
   test -n "$chat_id" || { echo "error: cursor-agent create-chat returned no chat id" >&2; exit 4; }
   cursor-agent --model "$model" --trust --auto-review --sandbox enabled \
