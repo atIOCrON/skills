@@ -47,17 +47,18 @@ may be in any order. Independent base-targeted inputs require an explicit order.
 For a stack built by `build-branch-stack`, load its manifest and map each source
 branch to one feature before merging. Migrate encountered legacy plan folders
 using the layout rules and refresh manifest paths. Require unmerged features
-under `plans/slices/review/`; allow confirmed merged features already under
-`plans/slices/fulfilled/` when resuming. Stop on a missing or ambiguous mapping or a
-destination collision. For parented slices, require approved parent and child
+under `plans/slices/review/`; allow confirmed final merges under
+`plans/slices/merged/` or `plans/slices/fulfilled/` when resuming. Stop on a missing
+or ambiguous mapping or a destination collision. For parented slices, require approved parent and child
 metadata and an approved map; accept active parents in `backlog`, `to_do`,
-`in_progress`, or `review`, and verified `fulfilled` parents on resume. Reject
-draft or superseded inputs. Reconcile affected parent progress before merging
+`in_progress`, or `review`, and verified `merged` or `fulfilled` parents on resume.
+Reject draft or superseded inputs. Reconcile affected parent progress before merging
 using the complete approved maps, not just this release batch.
-For each mapped feature, confirm that its human or external acceptance checks
+For each unmerged feature, confirm that its human or external acceptance checks
 passed or an authorized decision explicitly accepted each limitation. Record
-`none applicable` if there are no such checks. Pending acceptance blocks the
-merge and the move to `fulfilled/`.
+`none applicable` if there are no such checks. Pending acceptance blocks a new
+merge and the move to `fulfilled/`; an already confirmed final merge belongs in
+`merged/` while acceptance remains outstanding.
 
 ```bash
 provider=<gitlab|github|auto>
@@ -255,9 +256,12 @@ the clean original checkout:
 scripts/cleanup_merged_branches.sh "$remote" "$base" <record-file>
 ```
 
-After merge attempts and any applicable cleanup, move each confirmed merged
-feature with completed or explicitly accepted acceptance checks from
-`plans/slices/review/` to `plans/slices/fulfilled/`, including after a partial run.
+After merge attempts and any applicable cleanup, reconcile each confirmed final
+merge, including partial runs and resumes. Move slices from `review/` to
+`plans/slices/merged/` while required acceptance remains outstanding, or directly
+to `plans/slices/fulfilled/` when it passed or was explicitly accepted. Move
+`merged/` slices to `fulfilled/` once acceptance is satisfied. Record final
+destination, landed commit, merge evidence, and outstanding acceptance.
 Leave unmerged features in `review/`. Refresh the manifest's plan and artefact
 paths, including its own path if moved, and verify them. If a move or manifest
 update fails, report the confirmed merges and remaining stage work; do not undo
@@ -266,11 +270,13 @@ For an active coordinator, return confirmed merge/stage results instead of
 performing shared moves or manifest writes. Preserve its worktrees/refs until
 reconciliation; cleanup of its resources requires a handoff.
 
-Set moved children's `Slice Status: fulfilled`; preserve approval. Reconcile
-parents under the shared complete-map and acceptance rules. Fulfilled parents
-move with their maps to `plans/specs/fulfilled/<spec_slug>/`; otherwise derive
-`review`, `in_progress`, `to_do`, or `backlog`. Preserve parent approval,
-repair references, and verify paths.
+Set moved children's `Slice Status` to match their folder; preserve approval.
+Reconcile parents under the shared complete-map and acceptance rules. Move
+parents with their maps to `plans/specs/merged/<spec_slug>/` when every active
+child is merged or fulfilled but required acceptance remains outstanding, or
+to `plans/specs/fulfilled/<spec_slug>/` when all fulfillment gates pass.
+Otherwise derive `review`, `in_progress`, `to_do`, or `backlog`. Preserve parent
+approval, repair references, and verify paths.
 
 Report child/parent transitions, reconciliation blockers, incomplete repairs,
 and reasons parents remain open without undoing merges. Verify fulfilled

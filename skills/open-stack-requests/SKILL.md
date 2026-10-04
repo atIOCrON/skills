@@ -44,8 +44,9 @@ Choose one mode:
   stack checks, current-tip trim and reviews or accepted capped disposition,
   qualified pinned ancestors, and forge checks on the exact source SHA.
 
-Exclude confirmed merged branches under `plans/slices/fulfilled/` and
-superseded plans; draft or unapproved slices cannot be published for delivery.
+Exclude confirmed final merges under `plans/slices/merged/` or
+`plans/slices/fulfilled/` and superseded plans; draft or unapproved slices cannot
+be published for delivery.
 After repairs, reload the canonical manifest to resolve moved plan paths.
 
 ## Workflow

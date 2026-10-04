@@ -634,14 +634,13 @@ def validate(data: Any) -> list[str]:
             if (
                 is_text(plan)
                 and plan.startswith((
+                    "plans/slices/merged/", "plans/merged/",
                     "plans/slices/fulfilled/", "plans/fulfilled/",
                     "plans/slices/done/", "plans/done/",
                 ))
                 and change_request.get("state") != "merged"
             ):
-                stage = "fulfilled" if plan.startswith((
-                    "plans/slices/fulfilled/", "plans/fulfilled/",
-                )) else "done"
+                stage = plan.split("/")[2 if plan.startswith("plans/slices/") else 1]
                 errors.append(f"{prefix}.plan in {stage} requires a merged change_request")
 
         if state in {"frozen", "staged", "accepted", "released"}:

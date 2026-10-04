@@ -24,7 +24,8 @@ Work read-only. Do not edit files, refs, plans, or the manifest.
    Resolve each requested branch's plan from the manifest. If absent or moved, search `plans/slices/` by
    slice slug and branch evidence, then legacy plan locations. Derive the stage
    from the slice directory using the shared stages, resolving legacy `done`
-   as `fulfilled` only with confirmed merge and acceptance evidence. Parent
+   as `merged` with a confirmed final merge and outstanding acceptance, or
+   `fulfilled` with confirmed merge and acceptance evidence. Parent
    stage is a rollup and cannot substitute for this branch's child stage.
    Never present a predecessor's plan as the branch's own plan; say "No
    dedicated plan" when appropriate.
@@ -63,7 +64,9 @@ Use clickable absolute links for plan files. Briefly explain missing plans,
 zero-diff branches, exhausted caps, and any provisional Complete branches.
 Do not equate individual branch completion with release readiness or plan
 fulfillment. `Complete` in this table means correctness review is complete;
-`fulfilled` requires confirmed final merge and acceptance. Report any parent
+`merged` means final merge confirmed with acceptance outstanding; `fulfilled`
+requires both. Report any merged slices separately from unmerged review work,
+without changing the review-completion statuses above. Report any parent
 rollup discrepancy read-only, without moving plans.
 If no branches have been accepted yet, say so and report selected work from
 the schedule; do not fabricate a branch table or placeholder commits.

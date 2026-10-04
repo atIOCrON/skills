@@ -80,6 +80,7 @@ the Sheet's old value:
 | `to_do` | To Do |
 | `in_progress` | In Progress |
 | `review` | Review |
+| `merged` | Merged |
 | `fulfilled` | Fulfilled |
 | `superseded` | Superseded |
 
@@ -90,16 +91,19 @@ Ask when status evidence is missing or contradictory; do not invent another valu
 
 Follow the repository's plans-layout contract used by `build-branch-stack`.
 `Review` allows pending human/external acceptance, release-candidate checks,
-review-cap disposition, restacks, or current-tip evidence. `Fulfilled` requires
-confirmed merge and every required final acceptance check passed or its
+review-cap disposition, restacks, or current-tip evidence before final merge.
+`Merged` requires a confirmed final destination merge with required acceptance
+still outstanding; staging or integration assembly alone does not qualify.
+`Fulfilled` requires confirmed merge and every required final acceptance check passed or its
 limitation explicitly accepted. Report a stale `fulfilled` stage when these gates
 are demonstrably unmet; do not edit plans or claim completion from code alone.
 
 `Plan` is the current path relative to the plans repository, for example
 `plans/slices/review/rival_configdebug_setup/rival_configdebug_setup.md`.
 Resolve moved plans by slice slug and explicit branch declaration, including
-legacy locations without moving files. Reconcile legacy `done` to `Fulfilled`
-only with confirmed merge and acceptance evidence; report discrepancies.
+legacy locations without moving files. Reconcile legacy `done` to `Merged` with
+a confirmed final merge and outstanding acceptance, or to `Fulfilled` with
+confirmed merge and acceptance evidence; report discrepancies.
 Leave blank and report the limitation if no matching plan exists but other
 evidence supports status.
 

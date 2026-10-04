@@ -108,7 +108,7 @@ Squash requires an explicit override and authorization recorded with
 ## Completion
 
 Merging into integration means assembled, not released. Do not move plans to
-`plans/slices/fulfilled/` or specs to `plans/specs/fulfilled/`, delete sources, or
+slice or spec `merged/` or `fulfilled/` folders, delete sources, or
 mark the build manifest released. Freeze the assembled candidate's commit and
 tree, deploy that exact commit, and record acceptance separately from
 deployment success.
@@ -120,6 +120,8 @@ checks pass. Leave it open for the final reviewer; preparation never merges
 the final PR or deploys production.
 
 After an independently authorized final integration-to-base merge, confirm
-landed commits and required acceptance, then fulfill slices and reconcile
+landed commits. Move slices to `merged/` while required acceptance remains
+outstanding, or directly to `fulfilled/` when satisfied; advance `merged/` slices
+once acceptance passes or its limitations are explicitly accepted. Reconcile
 parents under the shared layout. Assembly, preparation, and publication
-preserve child stages and never perform fulfillment transitions.
+preserve child stages and never perform `merged` or fulfillment transitions.
