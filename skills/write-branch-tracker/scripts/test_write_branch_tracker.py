@@ -43,6 +43,7 @@ class TrackerTests(unittest.TestCase):
         return tracker.load_rows(self.input)
 
     def test_csv_round_trip_and_no_overwrite(self):
+        self.rows[0]["Status"] = "Merged"
         rows = self.load(self.rows)
         path = tracker.write_csv(rows, self.root, "2026-10-02T12-00-00+1000")
         data = path.read_bytes()

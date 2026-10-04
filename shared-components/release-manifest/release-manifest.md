@@ -340,8 +340,10 @@ tail consistency, linear parent order and spec blocks when supplied, plus
 required fields, full SHAs, unique ordered branches,
 parent order, branch review and check identity, SHA-pinned human dispositions,
 durable `review/` handoff records, ready CR ancestry, merged CRs for
-`fulfilled/` (and legacy `done/`), exclusions, and freeze digest. Active releases
-reject draft and superseded plans. The merge workflow verifies final acceptance
+`merged/`, `fulfilled/` (and legacy `done/`), exclusions, and freeze digest. Confirm
+the final destination merge before using `merged/`; intermediate assembly does
+not qualify. Pending acceptance permits `merged/`, but never `fulfilled/`.
+Active releases reject draft and superseded plans. The merge workflow verifies final acceptance
 before fulfillment.
 Validation proves manifest consistency, not that referenced evidence is true;
 the owning skill must verify those files and Git objects.

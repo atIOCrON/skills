@@ -15,10 +15,10 @@ plans/deployments/<deployment-id>/manifest.json
 plans/audits/<audit-id>/
 ```
 
-Both use `draft`, `backlog`, `to_do`, `in_progress`, `review`, `fulfilled`, and
-`superseded`. `Specification Status` or `Slice Status` must match the folder;
-`Approval Status` is `draft` or `approved`. Delivery progress preserves scope
-approval. Writing requests, folders, and successful checks do not imply approval.
+Both use `draft`, `backlog`, `to_do`, `in_progress`, `review`, `merged`,
+`fulfilled`, and `superseded`. `Specification Status` or `Slice Status` must
+match the folder. `Approval Status` is `draft` or `approved`. Delivery progress
+preserves scope approval. Writing requests, folders, and successful checks do not imply approval.
 
 ## Operational Records
 
@@ -84,7 +84,7 @@ and approval to `draft` and its existing map to `stale`. Preserve child stages
 and evidence; block affected delivery until spec and map are reapproved.
 Changes to a slice's approved outcome, ownership, exclusions, or dependencies
 require reapproval through `write-slices`: save it as a draft, mark the map
-stale, and preserve implementation and review evidence. After fulfillment,
+stale, and preserve implementation and review evidence. After final merge,
 use a follow-up slice for new work. Clarifications preserve approval.
 
 An implementation-only split preserving approved outcomes, ownership,
@@ -114,15 +114,18 @@ release or currently running batch:
 | Mapped child states | Parent stage |
 | --- | --- |
 | Every slice fulfilled and required parent acceptance passed or explicitly accepted | `fulfilled` |
-| Every slice in review or fulfilled, with final acceptance or merge still pending | `review` |
+| Every slice merged or fulfilled, with required child or parent acceptance outstanding | `merged` |
+| Every slice in review, merged, or fulfilled, with at least one final merge pending | `review` |
 | Any slice started, and at least one slice remains in backlog, to_do, or in_progress | `in_progress` |
 | None started and at least one selected in to_do | `to_do` |
 | Every slice in backlog | `backlog` |
 
-A defect returning a child to `in_progress` returns its parent there. Add no
-acceptance gate absent from the approved spec. `merge-stack` reconciles
-fulfillment after confirmed final merges and acceptance, including partial
-runs and resumes; intermediate integration merges do not fulfill plans.
+A defect returning an unmerged child to `in_progress` returns its parent there.
+Keep merged work in `merged` while acceptance remains unresolved; track required
+fixes in follow-up slices without undoing the confirmed merge. Add no acceptance
+gate absent from the approved spec. `merge-stack` reconciles `merged` and
+`fulfilled` after confirmed final merges, including partial runs and resumes;
+intermediate integration merges establish neither stage.
 
 On a parent transition, move its folder and map, update `Specification Status`,
 repair references, and report the change in that workflow. Read-only workflows
@@ -160,14 +163,17 @@ encountered plans while preserving approval, acceptance IDs, evidence, and progr
   Invalid maps block progress derivation; repair the map before moving the
   parent out of its legacy location. Keep legacy draft specs unapproved;
   preserve recorded fulfillment and supersession subject to their evidence.
-- Legacy slices in `backlog`, `to_do`, `in_progress`, or `review` keep that stage.
+- Legacy slices in `backlog`, `to_do`, `in_progress`, `review`, or `merged` keep
+  that stage, subject to confirmed final-merge evidence for `merged`.
   Add explicit slice status and approval metadata from recorded approvals and
   the approved map; do not invent approval for unmatched or unapproved plans.
   Unapproved plans become saved drafts while preserving their existing evidence.
 - Legacy `plans/slices/done/` or `plans/done/` becomes `fulfilled/` only after
   confirming landed merges and completed or explicitly accepted acceptance.
-  Pending acceptance or an unmerged change goes to `review`; a failed check
-  requiring implementation goes to `in_progress`.
+  A confirmed final merge with pending acceptance goes to `merged`; an unmerged
+  change goes to `review`, or `in_progress` when a failed check needs a fix.
+- Encountered `review` slices with confirmed final merges go to `merged` while
+  acceptance remains pending, or directly to `fulfilled` once satisfied.
 - Move `plans/specs/<spec_slug>/` to its reconciled lifecycle stage and
   `plans/<stage>/<slug>/` under `plans/slices/`, applying the same rules.
   Classify a legacy broad specification through `write-specs`; never treat it
@@ -192,9 +198,9 @@ integration, and deployment state; spreadsheets and prose are reconciled views.
   or the five-pass cap. Finish accepted cap remediation and closure; record
   unresolved findings. Do not wait for ancestor reviews or descendants to
   finish this slice's review passes.
-- `review`: the slice's implementation and trim are complete, and correctness
-  passes are clean or capped. At entry, its committed, pushed tip passes
-  exact-tip verification; record `review_handoff` on that SHA and preserve
+- `review`: final destination merge is pending; implementation and trim are
+  complete, and correctness passes are clean or capped. At entry, its pushed tip
+  passes exact-tip verification; record `review_handoff` on that SHA and preserve
   artefacts. A capped slice may await human disposition here. Keep it here
   through routine restacks, pending current-tip checks, review mappings, human
   acceptance, and external or release-candidate checks. A changed ancestor
@@ -202,7 +208,15 @@ integration, and deployment state; spreadsheets and prose are reconciled views.
   not undo completed implementation. Return to `in_progress` when a defect,
   failed check, or behavioral change requires implementation work. Record
   pending checks with owners, procedures, and prerequisites. Parent `review`
-  means the complete outcome awaits final acceptance or merge.
+  means at least one mapped slice awaits its final merge.
+- `merged`: the final destination merge (normally master) and landed commit are
+  confirmed, but required acceptance remains pending or unresolved. Record merge
+  evidence and each outstanding check's owner, procedure, and result. Staging
+  deployment and intermediate integration merges do not qualify. A spec enters
+  `merged` when every active mapped slice is merged or fulfilled and required
+  child or parent acceptance remains outstanding. Preserve merge history when
+  acceptance fails; use follow-up slices for fixes. Move directly from `review`
+  to `fulfilled` when acceptance is already satisfied at final merge.
 - `fulfilled`: every final required acceptance check passed or its limitation
   was explicitly accepted by an authorized decision maker, and the change
   request's final destination merge and landed commit are confirmed. Review-cap

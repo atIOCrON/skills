@@ -37,7 +37,7 @@ writing. Report the absolute specification path.
 ## Specification Lifecycle
 
 `Specification Status` must match its folder: `draft`, `backlog`, `to_do`,
-`in_progress`, `review`, `fulfilled`, or `superseded`. Record separate
+`in_progress`, `review`, `merged`, `fulfilled`, or `superseded`. Record separate
 `Approval Status: draft` or `approved`. Use the shared parent-progress rules
 to derive delivery stage from the complete approved slice map.
 
@@ -45,8 +45,9 @@ Save, revise, and trim the file with both statuses `draft`, then present its
 absolute path for explicit user approval. Writing requests do not imply
 approval. Approval sets `Approval Status: approved` and moves the folder to
 `backlog/`. `write-slices` saves map and child drafts before their approval;
-build and merge workflows reconcile subsequent parent stages. Fulfillment
-requires confirmed final merges and required acceptance.
+build and merge workflows reconcile subsequent parent stages. `merged` means
+all active slices landed but required acceptance remains outstanding;
+fulfillment requires confirmed final merges and required acceptance.
 
 Material changes to acceptance IDs, scope, binding decisions, authorized
 complexity, required verification, or external acceptance reset stage and

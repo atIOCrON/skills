@@ -87,8 +87,9 @@ authorization and applicable acceptance. No nested attempts directory is needed.
    integration-to-base PR with individual PR links and acceptance evidence.
 5. Leave that PR open for the final reviewer. Authorization for individual
    assembly merges does not authorize merging it. Keep feature plans out of
-   `plans/slices/fulfilled/` and specs out of `plans/specs/fulfilled/` until the
-   final merge and required acceptance are confirmed.
+   slice and spec `merged/` and `fulfilled/` folders until the final merge is
+   confirmed. Then use `merged` while required acceptance remains outstanding,
+   or `fulfilled` once satisfied, under the shared layout.
 
 ## Report
 

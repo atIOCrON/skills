@@ -149,7 +149,7 @@ parent specs, slice maps, branch refs, and CI. Specs are selection/grouping
 inputs; executable slices own implementation. Resolve specs and slices by slug
 in their stage folders. Require
 `Approval Status: approved` on both, an approved map, and parent stage `backlog`,
-`to_do`, `in_progress`, or `review`. Reject draft, fulfilled, superseded, or
+`to_do`, `in_progress`, or `review`. Reject draft, merged, fulfilled, superseded, or
 stale inputs. Require plan review before implementation dispatch; record
 unreviewed selected slices as waiting and complete the required review when
 authorized. Migrate legacy folders under the shared layout. Before creating or

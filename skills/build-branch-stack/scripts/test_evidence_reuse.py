@@ -284,6 +284,24 @@ class ReleaseManifestReuseTest(unittest.TestCase):
                     branch["change_request"]["state"] = "merged"
                     self.assertEqual(release_validator.validate(manifest), [])
 
+    def test_merged_requires_merge_but_allows_pending_external_acceptance(self) -> None:
+        for root in ("plans/slices", "plans"):
+            with self.subTest(root=root):
+                manifest = self.manifest()
+                branch = manifest["branches"][0]
+                branch["plan"] = f"{root}/merged/test/test.md"
+                branch["checks"].append({
+                    "id": "operator-acceptance", "kind": "external",
+                    "status": "pending", "sha": None, "method": None,
+                    "origin_sha": None, "evidence": None,
+                    "command": "Operator checks the landed change on master.",
+                })
+                self.assertEqual(release_validator.validate(manifest), [
+                    "branches[0].plan in merged requires a merged change_request",
+                ])
+                branch["change_request"]["state"] = "merged"
+                self.assertEqual(release_validator.validate(manifest), [])
+
     def test_draft_and_superseded_plans_cannot_enter_active_release(self) -> None:
         for root in ("plans/slices", "plans"):
             for stage in ("draft", "superseded"):
