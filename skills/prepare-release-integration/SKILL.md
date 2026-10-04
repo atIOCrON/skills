@@ -27,6 +27,9 @@ otherwise obtain missing authorization at the relevant boundary.
 Read `references/release-preparation.md`. Create the preparation record without
 rewriting the build manifest's parent pins, targets, reviews, or freeze digest.
 Link it from that manifest's integration state when present.
+For active builds, follow the shared Concurrent Build Snapshot rules: pin a
+qualified prefix in separate preparation state, return results to its coordinator,
+and obtain a handoff before source mutation. Do not freeze unfinished queue work.
 Create new records under `plans/releases/active/<release-id>/`; resolve existing
 records on resume. Follow the shared record's lifecycle moves and preserve links
 to builds and deployment receipts without copying their evidence.

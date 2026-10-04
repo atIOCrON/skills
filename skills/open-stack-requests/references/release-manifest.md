@@ -17,6 +17,70 @@ Build runs also maintain a `sessions` array under the build runner's runtime
 guidance. Preserve every contributing context and its handoff evidence across
 resumption; session provenance does not replace SHA-pinned checks or reviews.
 
+## Build Schedule
+
+Add `schedule` for coordinated builds. Legacy manifests remain valid; infer and
+preserve their layout on resume. The coordinator writes canonical state in the
+original workspace; other agents return evidence/release links for import.
+
+```json
+{
+  "schedule": {
+    "selection": "queue",
+    "layout": "linear",
+    "coordinator": {"session_id": null, "worker_ref": "/root", "workspace": "<absolute-original-workspace>"},
+    "spec_order": ["example"],
+    "ordering_reason": "Prerequisites first, then quick eligible specs",
+    "current_spec": "example",
+    "tail": {"branch": "master", "sha": "<full-base-sha>"},
+    "work": [
+      {
+        "slice_slug": "example_slice",
+        "spec_slug": "example",
+        "plan": "plans/slices/to_do/example_slice/example_slice.md",
+        "source": "feature/example-slice",
+        "status": "queued",
+        "worker_ref": null,
+        "worktree": null,
+        "authoring_base": null,
+        "prepared_sha": null,
+        "waiting_on": []
+      }
+    ]
+  },
+  "branches": []
+}
+```
+
+Extend the existing manifest; do not create another tracker. Selection is
+`queue` or `explicit`; layout is `linear` or `dependency`. Work statuses are
+`queued`, `implementing`, `prepared`, `stacked`, `complete`, or `blocked`:
+`prepared` has a verified authoring candidate; `stacked` is accepted, verified,
+and pushed; `complete` also has its own review handoff. Blocked fixes preserve
+accepted branch history.
+
+Keep `spec_order` and work in acceptance order, grouped by spec; use a standalone
+legacy slice's slug as its group. Record workers, worktrees, authoring base
+`{branch, sha}`, prepared SHA, and waiting reasons. `current_spec` may be null
+before start or after implementation drains, without waiting for review/release.
+The tail is the last accepted tip, or pinned base before acceptance. Update it
+when that tip changes, and update schedule paths when plans move.
+
+Only accepted branches enter `branches`; planned names/authoring tips remain in
+`work`. Empty `branches` is allowed only for a `building` scheduled build with
+selected work. Accepted branches record `slice_slug`, `spec_slug`,
+`stacking_reason`, and `code_prerequisites` (required slice slugs). `parent`/
+`target` describe Git placement; `dependency_reason` describes code needs or is
+`none`. In linear mode each parent is the preceding accepted branch, starting
+at `base`, regardless of functional independence. Provisional parent SHA pins
+may lag upstream tips; reconcile before release.
+
+Exclude scheduling state from the freeze digest; include accepted stacking and
+prerequisite fields when present, preserving legacy digests. Separate release
+records pin qualified prefixes and link build evidence without freezing
+unfinished work. Publication handoffs pin stable sources and ownership. Read
+the build skill's `queue-build.md` and `scheduling.md` for dispatch.
+
 ## Shape
 
 ```json
@@ -127,9 +191,11 @@ result and current-tip identity proof. Leave `method` and `origin_sha` null for
 pending agent checks and all external checks.
 
 List branches in integration order. `target` is the change-request target;
-`parent` is the demonstrated code prerequisite. They normally match. Use
-`dependency_reason: "none"` for an independent branch. A generated-file
-conflict alone is not dependency evidence.
+`parent` is the actual Git predecessor, either a code prerequisite or an
+explicit linear stacking predecessor. They normally match. Use
+`dependency_reason: "none"` for a functionally independent branch, including
+one placed above another in linear mode; explain placement in `stacking_reason`.
+A generated-file conflict alone is not code dependency evidence.
 
 Record one review entry for each of `claude`, `codex`, and `cursor`. For a
 direct review, set `method` to `direct` and use the reviewed tip for both `sha`
@@ -269,7 +335,9 @@ Run:
 python <skill-root>/scripts/validate_release_manifest.py <manifest>
 ```
 
-The validator checks required fields, full SHAs, unique ordered branches,
+The validator checks scheduled selection, unique work assignments, accepted
+tail consistency, linear parent order and spec blocks when supplied, plus
+required fields, full SHAs, unique ordered branches,
 parent order, branch review and check identity, SHA-pinned human dispositions,
 durable `review/` handoff records, ready CR ancestry, merged CRs for
 `fulfilled/` (and legacy `done/`), exclusions, and freeze digest. Active releases

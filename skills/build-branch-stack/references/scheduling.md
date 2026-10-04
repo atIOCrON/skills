@@ -1,52 +1,66 @@
 # Scheduling Contract
 
-Keep eligible work running while preserving branch-local gates. After each
-implementation, verification, push, trim, or correctness result, update state
-and dispatch newly eligible work before waiting. Continue useful local work
-while workers run. Input order creates no dependency.
+Prioritize parallel work. After each implementation, verification, push, trim,
+or correctness result, update state and dispatch eligible work before waiting.
+Read `queue-build.md` for selection, spec blocks, and ownership. Linear order
+controls stack placement, not functional dependency.
 
 ## Dispatch
 
 | Event | Work unlocked |
 | --- | --- |
-| Readiness complete; required parent verified and pinned, or no dependency | Implementation in an isolated checkout |
+| Readiness passed; code prerequisites in a verified pinned base | Isolated implementation, including later specs |
 | Candidate committed | Exact-candidate verification |
-| Candidate verified | Push; eligible descendant implementation |
-| Tip verified and pushed; parent pinned | This branch's trim |
-| This branch's trim proportionate; tip verified and pushed | This branch's correctness pass 1 |
-| Prior findings handled; trim still valid; new tip verified and pushed | Next eligible correctness pass or closure under `code-review-loop.md` |
+| Independent candidate verified but not next in order | Mark prepared; dispatch other work |
+| Next candidate prepared; predecessor verified and pinned | Coordinator restacks, verifies, pushes, and accepts |
+| Accepted tip verified and pushed | Its trim; dependent implementation |
+| Its trim proportionate; tip verified and pushed | Correctness pass 1 |
+| Prior findings handled; trim valid; new tip verified and pushed | Next eligible pass or closure under `code-review-loop.md` |
 
-Dispatch independent branches concurrently. Overlap implementation,
-verification, trim, and correctness across branches. A verified parent permits
-provisional descendant implementation before ancestor reviews finish. Each
-branch completes its own trim before correctness; siblings need not finish.
-Handle results as they arrive without changing commits still under review.
+Fill useful worker/reviewer capacity with independent slices within and across
+specs. Prioritize the current block and work that unlocks prerequisites, then
+later specs. Impose no branch-count, wave-size, or one-spec dispatch limit.
+Without parallel capacity, finish the current spec first unless concretely blocked.
 
-Before launching an expensive check, apply the capability's equivalence rules.
-Reuse valid evidence for unchanged determining inputs and effective results;
-otherwise rerun the check.
+Serialize only work with unavailable code prerequisites, anticipated major
+conflicts, actual resource limits, or integrity issues. Minor same-file overlap,
+ordinary rebasing, and predictable generated-file reconciliation are expected
+costs. Major conflicts involve competing runtime contracts/architectures,
+incompatible dependency/patch ordering, or broad rewrites likely to need
+redesign. Name affected paths/contracts and expected impact; generic conflict
+risk is insufficient. Keep unrelated work running.
 
-## Capacity and isolation
+Verified prerequisites unlock provisional descendants before ancestor reviews
+finish. Do not implement dependent behavior against empty branches or missing
+contracts; independent research/preparation may proceed.
 
-Assign implementation workers separate worktrees, explicit ownership, and
-distinct evidence paths. Keep reviewer inputs immutable. Serialize conflicting
-shared mutations, including manifest writes, stage moves, and branch-ref
-updates, without stopping unrelated work.
+Overlap implementation, verification, trim, and correctness. Each accepted
+branch finishes its own trim before correctness; sibling/spec reviews impose
+no barrier. Review immutable, pinned parent-to-tip diffs. Later-spec results
+wait prepared for ordered acceptance without occupying idle workers.
 
-Record actual worker, reviewer, and shared-resource capacity. Dispatch all
-eligible work up to that capacity; impose no branch-count or wave-size limit.
-Prioritize work that unlocks descendants or final checks, then other eligible
-work; avoid starving independent branches.
-Before any wait, check for dispatchable work. Every queued task needs a concrete
-dependency, ownership conflict, resource constraint, integrity issue, or
-capacity limit. Ancestor review status, sibling progress, and input order are
-insufficient reasons to wait.
+Reuse expensive checks only under capability equivalence rules for unchanged
+inputs and effective results. Otherwise rerun; re-verify after a base change.
 
-Restack only affected descendants once their upstream fixes settle; continue
-eligible pinned-diff reviews and unrelated work. No release-wide implementation,
-trim, correctness, or restack barrier applies.
+## Capacity and Isolation
 
-For A → B and independent C: dispatch A and C concurrently. Once A is verified
-and pushed, start A's trim and B's implementation concurrently. Start A's
-correctness when its trim finishes, even while B is unfinished. For 100
-independent branches, dispatch all 100 if actual capacity permits.
+Use separate worktrees, explicit ownership, pinned authoring bases, and distinct
+evidence paths. The coordinator owns canonical state and accepted refs/tail,
+subject to publication handoffs; worker branches are separate from the stack.
+
+Record actual worker, reviewer, and shared-resource capacity. Before waiting,
+check dispatchable work. Every waiting task needs a concrete prerequisite,
+major conflict, resource/capacity limit, ownership/integrity issue, or acceptance
+order reason. Pending ancestor/sibling reviews, later spec placement, and
+routine conflict risk do not justify idle implementation capacity.
+
+Resolve ordinary conflicts autonomously within scope, preserving backups and
+owned ranges. Behavior changes require fresh verification/review. Restack
+affected descendants once upstream fixes settle; continue pinned-diff reviews
+and unrelated work. No build-wide implementation, review, or restack barrier
+applies; final release gates remain.
+
+For independent A1, A2, B1 in specs A then B: dispatch all three if capacity
+permits; accept A1, restack/verify/accept A2, then B1. A's reviews may continue.
+For A1 -> A2, start A2 once A1 is verified and pushed; independent B1 can start
+earlier from a verified base.

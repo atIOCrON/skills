@@ -4,7 +4,28 @@ Use `plans/releases/active/<release-id>/preparation.json` for PR assembly state.
 operational record does not replace a build manifest or change its dependency
 pins, review evidence, freeze digest, or feature stages. When a build manifest
 exists, link this record under `integration.release_preparation` and retain its
-original targets; release PR destinations belong here.
+original targets; release PR destinations belong here. If its coordinator is
+active, return the link and publication results for coordinator import rather
+than writing the live build manifest yourself.
+
+## Concurrent Build Snapshot
+
+Select a qualified, ancestry-closed prefix of an ongoing linear build. Pin its
+build ID/path, source/parent SHAs, and verification/review links here; do not copy
+or freeze the unfinished manifest. Planned names and prepared candidates are
+not release inputs. Selected branches, inherited unmerged work, and
+candidate-wide checks must meet applicable build/repository gates. Later
+unselected work does not block a complete prefix; ready status requires exact
+pinned evidence.
+
+Before ready publication or release mutation, obtain a coordinator handoff
+pinning source heads and a return condition. Source rewrites wait; other work
+continues. The release agent owns this record and its isolated integration
+branch, not build sources, stages, or evidence. Return source repairs to the
+coordinator. Source drift invalidates affected snapshots/approvals under existing
+rules. Preserve release/deployment authorization boundaries. After a final base
+merge, return landed identities for coordinator reconciliation of plans and
+remaining descendants.
 
 Record `lifecycle: "active"` separately from assembly state. After confirmed
 final merge and required acceptance, record `released` and move the whole folder
@@ -38,9 +59,9 @@ Initially, each independent root targets integration; each stacked change
 targets its nearest selected unmerged predecessor. Use the input dependency
 map and Git ancestry together. Reject unlisted inherited work, cycles, and a
 parent that is not an ancestor. Do not turn independent roots into a chain.
-An ordering dependency already present in Git must be represented even when
-the features are functionally independent. For mixed stacks, keep the user's
-order when it puts every predecessor first; otherwise report the conflict.
+Represent Git ordering, including explicit linear placement, separately from
+functional dependency. For mixed stacks, preserve user order when predecessors
+come first; otherwise report the conflict.
 
 Fresh runs create new non-draft PRs. Before each creation, record its source,
 destination, both SHAs, author, and intended metadata. Immediately record the

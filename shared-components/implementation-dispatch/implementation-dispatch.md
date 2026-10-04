@@ -13,6 +13,9 @@ Require:
 - dispatch type: `initial-implementation`, `verification-fix`, or
   `code-review-fix`;
 - owned files or modules;
+- isolated worktree, owned authoring branch and pinned base SHA;
+- canonical build manifest's absolute path, spec/slice identity, and whether
+  the result is a prepared candidate or the next stack candidate;
 - fix requests or verification failures for non-initial dispatches;
 - relevant artifact paths.
 - reviewed or failed commit SHA for fix dispatches.
@@ -20,6 +23,9 @@ Require:
 For every dispatch, include the contents of
 `references/orchestration-plans-layout.md` in the worker prompt and assign
 execution and evidence subdirectories within its ownership scope.
+Workers edit assigned checkouts/evidence and return SHAs, changes, and waiting
+reasons. The coordinator owns canonical plan moves, manifest writes, and accepted
+refs. Workers cannot restack others' branches or accept later specs out of order.
 
 ## Initial Implementation
 

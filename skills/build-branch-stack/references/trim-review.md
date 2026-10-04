@@ -1,5 +1,9 @@
 # Trim Review
 
+For coordinated linear builds, trim only accepted stack branches. The
+coordinator must restack, verify, and accept `prepared` candidates first under
+`queue-build.md`.
+
 Start a branch's trim as soon as its own tip is verified and pushed and its
 parent SHA is pinned. Launch all eligible branches concurrently, subject only
 to reviewer capacity. Review each pinned parent-to-tip diff. An unfinished or

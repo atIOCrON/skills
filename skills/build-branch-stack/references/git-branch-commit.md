@@ -4,7 +4,9 @@ Create or adopt local plan branches and commit approved candidate trees. Do not
 push or create change requests.
 
 Base branch `<base-branch>` defaults to the remote default; chained mode passes
-the local dependency parent. Name branches by repository policy, or use `fix/`,
+the local stacking predecessor, which need not be a functional dependency.
+For parallel authoring use the assigned verified base; only the coordinator
+restacks and accepts candidates onto the final tail. Name branches by repository policy, or use `fix/`,
 `feature/`, `docs/`, `refactor/`, or `chore/` for the corresponding change. Never
 name tools, models, assistants, or bots in a branch.
 
@@ -70,9 +72,10 @@ first.
 1. Record old base and branch tips, any old remote tip, and the new parent
    SHA. Create a recoverable backup ref for the old tip.
 2. Rebase with `git rebase --onto <new-base-sha> <old-base-sha> <branch-name>`.
-   Stop automatic restacking on conflicts. Inspect and resolve each conflict
-   under the plan's scope, preserving a backup of the old tip. Apply the
-   generated-metadata exception in `code-review-loop.md` only with its proof.
+   Resolve ordinary conflicts autonomously within scope, retaining the backup.
+   Stop only affected operations for integrity failures, unavailable prerequisites,
+   or resolutions outside authority; continue eligible work. The generated-metadata
+   exception in `code-review-loop.md` requires its proof.
 3. Compare ranges with `git range-diff` and deterministic source, tree, and
    effective-output identity checks. Classify each delta as `verbatim`, `mechanical
    regeneration`, or `intentional behavior change`.

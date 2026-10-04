@@ -1,6 +1,6 @@
 ---
 name: branch-stack-status
-description: Report the current status and completed review-loop counts for an ordered branch stack.
+description: Report a build's selected queue, accepted stack tail, parallel work, and completed review-loop counts without changing state.
 disable-model-invocation: false
 metadata:
   layer: capability
@@ -8,13 +8,20 @@ metadata:
 
 # Branch Stack Status
 
-Input: an ordered list of branch names and, when available, the release
-manifest path.
+Accept ordered branch names or a build/legacy release manifest. Explicit branch
+scope takes precedence. Otherwise discover the uniquely applicable unfinished
+build under the original workspace's `plans/builds/`; if ambiguous, list IDs,
+paths, and owners rather than combine stacks.
 
 Work read-only. Do not edit files, refs, plans, or the manifest.
 
-1. Read the current release manifest. For each requested branch, resolve its
-   plan file from the manifest. If absent or moved, search `plans/slices/` by
+1. Read the current build manifest (or supplied legacy release manifest).
+   Report `schedule` selection, spec order/current spec, coordinator, verified
+   tail, and queued/implementing/prepared/blocked work with assignments and
+   waiting reasons. Check accepted refs for tail drift; report without repair.
+   For manifest-only input, tabulate accepted `branches` in manifest order and
+   summarize planned/prepared work separately; neither counts as accepted.
+   Resolve each requested branch's plan from the manifest. If absent or moved, search `plans/slices/` by
    slice slug and branch evidence, then legacy plan locations. Derive the stage
    from the slice directory using the shared stages, resolving legacy `done`
    as `fulfilled` only with confirmed merge and acceptance evidence. Parent
@@ -49,7 +56,7 @@ Work read-only. Do not edit files, refs, plans, or the manifest.
    - Implementation Started: implementation or required branch verification
      has begun but no verified candidate is finished.
    - Not Started: no implementation work has begun.
-5. Output a Markdown table with exactly these columns:
+5. Output the accepted/requested branch table with exactly these columns:
    Branch | Plan file | Status | Trim Loops | Code Loops
 
 Use clickable absolute links for plan files. Briefly explain missing plans,
@@ -58,3 +65,5 @@ Do not equate individual branch completion with release readiness or plan
 fulfillment. `Complete` in this table means correctness review is complete;
 `fulfilled` requires confirmed final merge and acceptance. Report any parent
 rollup discrepancy read-only, without moving plans.
+If no branches have been accepted yet, say so and report selected work from
+the schedule; do not fabricate a branch table or placeholder commits.

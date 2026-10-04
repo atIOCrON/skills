@@ -28,6 +28,11 @@ Infer the forge from `origin` only when unambiguous. Read
 `references/orchestration-plans-layout.md`, and the selected provider
 adapter. Read `references/change-request-description.md` when writing CR text.
 Read `references/release-manifest.md` and validate the manifest first.
+For active builds, use pinned accepted branches from the coordinator's schedule;
+prepared candidates cannot publish. Return CR metadata for import unless given
+a write handoff. Ready publication also needs stable-head ownership. Prepare
+qualified prefixes through the separate release path rather than freeze an
+unfinished build to satisfy build-only ready mode.
 
 Choose one mode:
 
@@ -64,8 +69,10 @@ After repairs, reload the canonical manifest to resolve moved plan paths.
    stack-sheet text verbatim and adding branch evidence. Verify source and
    target SHAs, draft state, effective squash support, and source retention
    through the provider adapter.
-   Independent branches target the base. Write the CR URL and state back to the
-   manifest and validate it. End here in draft mode.
+   Independent roots target the base; linear branches target their recorded
+   predecessor regardless of functional dependency. Return CR URL/state to the
+   active coordinator, or update/validate under a write handoff. Without another
+   owner, update directly. End here in draft mode.
 4. In ready mode, query the provider for applicable branch-push and CR checks
    on each exact source SHA. Wait for every configured or policy-required check to pass.
    If none apply, record `none applicable`; a skipped or absent expected
