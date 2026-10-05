@@ -91,10 +91,12 @@ Name the concrete missing gate, such as an unverified tip, unpushed tip, failed
 integrity check, or reviewer capacity. Use `null` when no next pass is needed.
 Ancestor movement alone is not a blocker. Record each branch's trim status,
 reviewed or mapped tip, and ledger path in the manifest.
-For v1 review records, return the completed pass receipt defined in
-`release-manifest.md`; the coordinator publishes it with derived current and
-historical trim counts and runs `scripts/validate_review_records.py` against
-the original project. Preserve disqualified receipts without counting them.
+Return each completed pass receipt defined in `operational-records.md`, including
+triage, reviewed SHA and three validated reviewer outputs. The coordinator
+publishes the receipt and derived trim counts together in canonical schema-v2
+JSON, then runs `scripts/validate_operational_records.py <manifest> --project-root <original-project>`. Preserve disqualified receipts without counting them.
+Historical v1 records retain their `release-manifest.md` receipt and validator;
+never publish v1 state under an adopted canonical path.
 
 Once upstream fixes settle, restack only affected descendants
 in dependency order and verify each changed tip. Retain an already proportionate

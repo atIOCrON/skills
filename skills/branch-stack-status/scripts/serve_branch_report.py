@@ -15,7 +15,15 @@ import webbrowser
 
 from validate_operational_records import load_record, validate_record, record_paths
 
-HEADERS = ['Target branches', 'Source branches', 'Stages', 'Statuses', 'Trim loops', 'Code loops', 'Specs', 'Slices', 'Builds', 'Releases', 'PRs', 'Deployments']
+COLUMNS = [{'id':key,'label':title,'default':default} for key,title,default in [
+    ('target','Target branches',True),('source','Source branches',True),('stage','Stages',True),
+    ('status','Statuses',True),('trim_loops','Trim loops',True),('code_loops','Code loops',True),
+    ('specs','Specs',True),('slice','Slices',True),('builds','Builds',True),('releases','Releases',True),
+    ('prs','PRs',True),('deployments','Deployments',True),('problem','Operator problems',False),
+    ('solution','Solutions',False),('test_path','Suggested operator test paths',False),
+    ('pass_condition','Pass conditions',False),('types','Types',True),('change_surfaces','Change surfaces',True),
+    ('packages','Packages',True)]]
+HEADERS = [column['label'] for column in COLUMNS]
 MAX_RECORD_BYTES = 16 * 1024 * 1024
 
 
@@ -204,7 +212,12 @@ class Report:
                     deployed.append(item)
                 elif members:
                     deployment_history.append({**item,'memberships':members})
-            rows.append({'id':slug,'source':source,'target':target,'stage':data['stage'] if data else 'Unclear',**summary,
+            handoff = (branch or scheduled or {}).get('operator_handoff')
+            handoff_state = handoff['state'] if handoff else 'not_recorded'
+            if handoff and handoff['state']=='ready' and handoff['sha']!=tip:
+                handoff_state='stale'
+                notes.append('Operator handoff describes a different pin; its wording is historical until reconciled.')
+            rows.append({'operator_handoff':handoff,'handoff_state':handoff_state,'id':slug,'source':source,'target':target,'stage':data['stage'] if data else 'Unclear',**summary,
                          'notes':notes + (data['notes'] if data else []) + summary['notes'],'tip_sha':tip,
                          'specs':spec_links,'slice':label(slug,entry['path']) if entry else {'name':slug,'url':''},
                          'builds':build_links,'releases':release_links,'prs':list({p['url']:p for p in prs}.values()),
@@ -234,7 +247,7 @@ class Report:
             groups.append({'name':ordered[0]['target'] or 'No branch assigned','rows':ordered})
             for slug in component:
                 remaining.pop(slug)
-        return {'project':self.root.name,'refreshed_at':datetime.now(timezone.utc).isoformat(),'headers':HEADERS,'groups':groups,
+        return {'project':self.root.name,'refreshed_at':datetime.now(timezone.utc).isoformat(),'headers':HEADERS,'columns':COLUMNS,'groups':groups,
                 'issues':list(dict.fromkeys(self.issues)),
                 'notes':['Stages describe delivery; statuses describe recorded implementation and review progress.',
                          'Only schema-v2 JSON is consumed. Markdown evidence and Git state are not parsed.',
@@ -247,14 +260,14 @@ PAGE = r'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="view
 :root{color-scheme:light;font-family:system-ui,-apple-system,sans-serif;color:#193128;background:#f5f7f4}*{box-sizing:border-box}body{margin:0}header{padding:26px 30px 18px;border-bottom:1px solid #d8e1da;background:#fff}h1{margin:0 0 8px;font-size:26px;letter-spacing:-.6px}.sub{color:#66756c;font-size:13px}.tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;align-items:center}input,button{font:inherit;font-size:13px;border:1px solid #cbd6ce;border-radius:6px;padding:9px 11px;background:#fff;color:inherit}input[type=search]{min-width:230px;flex:1;max-width:420px}.overview{padding:14px 30px;color:#55665b;font-size:13px}.notice{background:#fff4de;color:#745617;border:1px solid #e6d4a8;margin:0 30px 16px;padding:12px;border-radius:6px}.wrap{overflow:auto;margin:0 24px 25px;border:1px solid #d5dfd7;background:#fff;border-radius:8px;max-height:calc(100vh - 215px)}table{border-collapse:separate;border-spacing:0;min-width:1640px;width:100%;font-size:12px}th{position:sticky;top:0;background:#eef3ee;text-align:left;padding:12px 11px;font-size:11px;letter-spacing:.04em;color:#4d6253;z-index:2;border-bottom:1px solid #cdd9cf}td{padding:12px 11px;border-bottom:1px solid #e6ece7;vertical-align:top;max-width:210px;overflow-wrap:anywhere}td.branch{min-width:205px;max-width:245px;font-family:ui-monospace,monospace;font-size:11px}.row:hover{background:#f3f8f2}.row{cursor:pointer}.group td{background:#f1f5f0;color:#53694e;padding:9px 12px;font-size:11px;font-weight:650}.badge{display:inline-block;padding:4px 7px;border-radius:4px;background:#e9eee9;white-space:nowrap}.review,.in_release{background:#fff0cc;color:#7e5912}.merged,.fulfilled,.complete{background:#dceee0;color:#275b34}.in_progress{background:#e1ecfb;color:#28537b}.unclear,.exhausted{background:#f7e2df;color:#913b31}a{color:#265e43;text-decoration:none}a:hover{text-decoration:underline}.links a{display:block;margin-bottom:5px}.context{opacity:.65}.detail td{background:#f9fbf8;padding:22px 25px}.detail-box{max-width:1100px;display:grid;grid-template-columns:1fr 1fr;gap:20px}.detail h3{margin:0 0 8px;font-size:13px}.detail pre{font-family:inherit;white-space:pre-wrap;line-height:1.6;font-size:12px;max-height:370px;overflow:auto;margin:0}.empty{text-align:center;padding:40px;color:#637366}.error{color:#933b31}.count{text-align:center;min-width:70px}.section{margin-top:16px}footer{padding:0 30px 22px;color:#708074;font-size:11px}.compact{max-height:82px;overflow:auto}.detail summary{cursor:pointer;font-weight:600;margin-bottom:8px}
 .predecessors{display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer}.predecessors input{margin:0;accent-color:#245c40}
 .filter{position:relative;font-size:13px;min-width:150px}.filter>summary{padding:9px 11px;border:1px solid #cbd6ce;border-radius:6px;background:#fff;cursor:pointer;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.filter[open]>summary{border-color:#245c40}.filter-menu{position:absolute;top:calc(100% + 5px);left:0;background:#fff;border:1px solid #cbd6ce;border-radius:6px;box-shadow:0 8px 24px #19312825;min-width:260px;max-width:min(430px,85vw);z-index:10;padding:8px;max-height:330px;overflow:auto}.filter-menu label{display:flex;gap:9px;align-items:start;padding:7px 5px;cursor:pointer;overflow-wrap:anywhere}.filter-menu input{margin:2px 0 0;accent-color:#245c40}.filter-menu label:hover{background:#f1f5f0}.filter-menu .all{border-bottom:1px solid #e6ece7;font-weight:600;margin-bottom:5px}.filter:focus-within>summary{outline-offset:2px}
-</style>
-<header><h1>Slice report</h1><div class="sub" id="subtitle">Reading project records…</div><div class="tools"><input id="search" type="search" placeholder="Find branches, slices, specs or builds" aria-label="Search"><details id="stage" class="filter"><summary>Stages</summary><div class="filter-menu"></div></details><details id="status" class="filter"><summary>Statuses</summary><div class="filter-menu"></div></details><details id="build" class="filter"><summary>Builds</summary><div class="filter-menu"></div></details><details id="release" class="filter"><summary>Releases</summary><div class="filter-menu"></div></details><details id="spec" class="filter"><summary>Specs</summary><div class="filter-menu"></div></details><label class="predecessors"><input id="predecessors" type="checkbox">Show predecessors</label></div></header>
+.filter-menu input[type=search]{width:100%;min-width:0;max-width:none;margin:0 0 8px;flex:none}.filter-choices{max-height:260px;overflow:auto}.filter-choice[hidden]{display:none}.filter-menu .filter-empty{padding:8px;color:#66756c}.column-actions{display:flex;gap:6px;padding-bottom:8px}.operator-text{min-width:230px;max-width:330px;line-height:1.5}.hold{background:#e7e1f3;color:#594471}table{min-width:0;width:max-content;min-width:100%}</style>
+<header><h1>Slice report</h1><div class="sub" id="subtitle">Reading project records…</div><div class="tools"><input id="search" type="search" placeholder="Find branches, slices, specs or builds" aria-label="Search"><details id="stage" class="filter"><summary>Stages</summary><div class="filter-menu"></div></details><details id="status" class="filter"><summary>Statuses</summary><div class="filter-menu"></div></details><details id="build" class="filter"><summary>Builds</summary><div class="filter-menu"></div></details><details id="release" class="filter"><summary>Releases</summary><div class="filter-menu"></div></details><details id="spec" class="filter"><summary>Specs</summary><div class="filter-menu"></div></details><details id="types" class="filter"><summary>Types</summary><div class="filter-menu"></div></details><details id="surfaces" class="filter"><summary>Change surfaces</summary><div class="filter-menu"></div></details><details id="packages" class="filter"><summary>Packages</summary><div class="filter-menu"></div></details><details id="columns" class="filter"><summary>Columns</summary><div class="filter-menu"></div></details><label class="predecessors"><input id="predecessors" type="checkbox">Show predecessors</label></div></header>
 <div id="overview" class="overview"></div><details id="issues" class="notice" hidden><summary></summary><div></div></details><div class="wrap"><table><thead><tr id="headers"></tr></thead><tbody id="rows"></tbody></table></div><footer id="foot"></footer>
 <script>
 const $ = id => document.getElementById(id);
-const expanded = new Set(), names = {stage:'stages',status:'statuses',build:'builds',release:'releases',spec:'specs'};
+const expanded = new Set(), names = {stage:'stages',status:'statuses',build:'builds',release:'releases',spec:'specs',types:'types',surfaces:'change surfaces',packages:'packages'};
 const params = new URLSearchParams(location.search), selected = {};
-let report = null, busy = false;
+let report = null, busy = false, visibleColumns = null, columnStorageKey = null;
 for (const id of Object.keys(names)) {
   const values = params.getAll(id);
   selected[id] = values.includes('*') ? new Set() : values.length ? new Set(values) : id === 'stage' ? null : new Set();
@@ -292,32 +305,101 @@ function saveFilters() {
   if ($('predecessors').checked) query.set('predecessors', '1');
   history.replaceState(null, '', location.pathname + (query.size ? '?' + query : ''));
 }
+function choiceMenu(id) {
+  const menu = $(id).querySelector('.filter-menu');
+  if (!menu.querySelector('input[type=search]')) {
+    const search = document.createElement('input'); search.type = 'search';
+    search.placeholder = 'Search ' + (names[id] || 'columns'); search.setAttribute('aria-label',search.placeholder);
+    const choices = el('div',undefined,'filter-choices'), empty = el('div','No matching options.','filter-empty');
+    empty.hidden = true; menu.append(search,choices,empty);
+    search.oninput = () => searchChoices(id);
+  }
+  return menu.querySelector('.filter-choices');
+}
+function searchChoices(id) {
+  const menu = $(id).querySelector('.filter-menu'), query = menu.querySelector('input[type=search]').value.trim().toLowerCase();
+  let found = false;
+  for (const choice of menu.querySelectorAll('.filter-choice')) {
+    choice.hidden = !choice.classList.contains('all') && !choice.textContent.toLowerCase().includes(query);
+    if (!choice.hidden && !choice.classList.contains('all')) found = true;
+  }
+  menu.querySelector('.filter-empty').hidden = found;
+}
 function options(id, available) {
   const values = [...new Set(available)].sort(), container = $(id);
   if (selected[id] === null) selected[id] = new Set(values.filter(v => !['fulfilled','superseded','done'].includes(v)));
-  const summary = container.querySelector('summary'), menu = container.querySelector('.filter-menu');
+  const summary = container.querySelector('summary'), choices = choiceMenu(id);
   summary.textContent = selected[id].size === 0 ? 'All ' + names[id] : selected[id].size === 1 ? [...selected[id]][0] : selected[id].size + ' ' + names[id];
   summary.title = selected[id].size ? [...selected[id]].join(', ') : 'All ' + names[id];
-  const choices = document.createDocumentFragment();
+  const fragment = document.createDocumentFragment();
   for (const value of [null, ...new Set([...values, ...selected[id]])]) {
-    const label = el('label', undefined, value === null ? 'all' : '');
+    const label = el('label',undefined,'filter-choice' + (value === null ? ' all' : ''));
     const input = document.createElement('input'); input.type = 'checkbox';
     input.checked = value === null ? !selected[id].size : selected[id].has(value);
-    label.append(input, el('span', value === null ? 'All ' + names[id] : value + (values.includes(value) ? '' : ' (missing from current records)')));
+    label.append(input,el('span',value === null ? 'All ' + names[id] : value + (values.includes(value) ? '' : ' (missing from current records)')));
     input.onchange = () => {
       if (value === null) selected[id].clear();
       else if (input.checked) selected[id].add(value);
       else selected[id].delete(value);
-      saveFilters(); options(id, available); render();
+      saveFilters(); options(id,available); render();
     };
-    choices.append(label);
+    fragment.append(label);
   }
-  menu.replaceChildren(choices);
+  choices.replaceChildren(fragment); searchChoices(id);
+}
+function configureColumns() {
+  const ids = new Set(report.columns.map(c=>c.id));
+  if (visibleColumns === null) {
+    columnStorageKey = 'slice-report-columns:' + location.origin + ':' + report.project;
+    try {
+      const saved = JSON.parse(localStorage.getItem(columnStorageKey));
+      if (Array.isArray(saved)) visibleColumns = new Set(saved.filter(id=>ids.has(id)));
+    } catch (_) { /* Storage may be disabled; preferences still work in this page. */ }
+    if (!visibleColumns || !visibleColumns.size) visibleColumns = new Set(report.columns.filter(c=>c.default).map(c=>c.id));
+  }
+  const choices = choiceMenu('columns'), menu = $('columns').querySelector('.filter-menu');
+  if (!menu.querySelector('.column-actions')) {
+    const actions = el('div',undefined,'column-actions');
+    for (const [title,predicate] of [['Show all',()=>true],['Reset',c=>c.default]]) {
+      const button = el('button',title); button.onclick = () => { visibleColumns = new Set(report.columns.filter(predicate).map(c=>c.id)); saveColumns(); configureColumns(); render(); };
+      actions.append(button);
+    }
+    menu.insertBefore(actions,choices);
+  }
+  const fragment = document.createDocumentFragment();
+  for (const column of report.columns) {
+    const label = el('label',undefined,'filter-choice'), input = document.createElement('input');
+    input.type = 'checkbox'; input.checked = visibleColumns.has(column.id); label.append(input,el('span',column.label));
+    input.onchange = () => {
+      if (!input.checked && visibleColumns.size===1) { input.checked=true; return; }
+      if (input.checked) visibleColumns.add(column.id); else visibleColumns.delete(column.id);
+      saveColumns(); render();
+    };
+    fragment.append(label);
+  }
+  choices.replaceChildren(fragment); searchChoices('columns');
+}
+function saveColumns() {
+  try { localStorage.setItem(columnStorageKey,JSON.stringify([...visibleColumns])); } catch (_) {}
+}
+function columns() { return report.columns.filter(column=>visibleColumns.has(column.id)); }
+function cellContent(row,id) {
+  if (['target','source'].includes(id)) return row[id] || (id==='source' ? 'Not assigned' : 'Not recorded');
+  if (['stage','status'].includes(id)) return el('span',row[id],'badge ' + row[id].toLowerCase().replaceAll(' ','_'));
+  if (['trim_loops','code_loops'].includes(id)) return String(row[id]);
+  if (id==='slice') return link(row.slice);
+  if (['specs','builds','releases','prs'].includes(id)) return links(row[id]);
+  if (id==='deployments') return links(row.deployments.map(d=>({...d,name:d.environment + ' · ' + d.name.replace(/^staging-rebuild-/, '')})));
+  const handoff = row.operator_handoff;
+  if (!handoff) return 'Not recorded';
+  const value = Array.isArray(handoff[id]) ? handoff[id].join('; ') || 'None' : handoff[id] || 'Not recorded';
+  return (row.handoff_state==='ready' ? '' : row.handoff_state[0].toUpperCase()+row.handoff_state.slice(1)+' · ') + value;
 }
 function detail(row) {
-  const tr = el('tr', undefined, 'detail'), td = el('td'); td.colSpan = 12;
+  const tr = el('tr', undefined, 'detail'), td = el('td'); td.colSpan = columns().length;
   const box = el('div', undefined, 'detail-box'), left = el('div'), right = el('div');
   left.append(el('h3','Slice JSON record'), link(row.slice), el('pre', JSON.stringify(row.plan_record,null,2) || 'No valid canonical slice record.'));
+  if (row.operator_handoff) left.append(el('h3','Operator handoff · ' + row.handoff_state),el('pre',JSON.stringify(row.operator_handoff,null,2)));
   right.append(el('h3','Source and review evidence'), el('pre', `Source: ${row.tip_sha || 'Not recorded'}\nReview record: ${row.review_sha || 'Not recorded'}\n\n${row.notes.join('\n\n') || 'No evidence conflicts detected.'}`));
   for (const [title, entries] of [['Build history',row.build_history],['Release / PR destination / acceptance',row.release_history],['Other deployment versions and attempts',row.deployment_history]]) {
     if (!entries.length) continue;
@@ -330,10 +412,11 @@ function includes(id, values) { return !selected[id].size || values.some(value =
 function render() {
   if (!report) return;
   const wrap = document.querySelector('.wrap'), scrollTop = wrap.scrollTop, scrollLeft = wrap.scrollLeft;
+  $('headers').replaceChildren(...columns().map(column=>el('th',column.label)));
   const all = report.groups.flatMap(group => group.rows), query = $('search').value.toLowerCase().trim(), matches = new Set();
   for (const row of all) {
-    const text = [row.source,row.target,row.id,...row.specs.map(x=>x.name),...row.builds.map(x=>x.name),...row.releases.map(x=>x.name)].join(' ').toLowerCase();
-    if ((!query || text.includes(query)) && includes('stage',[row.stage]) && includes('status',[row.status]) && includes('build',row.builds.map(x=>x.name)) && includes('release',row.releases.map(x=>x.name)) && includes('spec',row.specs.map(x=>x.name))) matches.add(row.id);
+    const text = [row.source,row.target,row.id,...row.specs.map(x=>x.name),...row.builds.map(x=>x.name),...row.releases.map(x=>x.name),...Object.values(row.operator_handoff || {}).filter(v=>typeof v==='string' || Array.isArray(v)).flat()].join(' ').toLowerCase();
+    if ((!query || text.includes(query)) && includes('stage',[row.stage]) && includes('status',[row.status]) && includes('build',row.builds.map(x=>x.name)) && includes('release',row.releases.map(x=>x.name)) && includes('spec',row.specs.map(x=>x.name)) && includes('types',row.operator_handoff?.types || []) && includes('surfaces',row.operator_handoff?.change_surfaces || []) && includes('packages',row.operator_handoff?.packages || [])) matches.add(row.id);
   }
   const show = new Set(matches), sources = new Map(all.filter(row=>row.source).map(row=>[row.source,row]));
   if ($('predecessors').checked) {
@@ -349,17 +432,16 @@ function render() {
     const rows = group.rows.filter(row=>show.has(row.id));
     if (!rows.length) continue;
     const heading = el('tr', undefined, 'group'), cell = el('td', `${group.name} · ${rows.length} slice${rows.length === 1 ? '' : 's'}`);
-    cell.colSpan = 12; heading.append(cell); fragment.append(heading);
+    cell.colSpan = columns().length; heading.append(cell); fragment.append(heading);
     for (const row of rows) {
       const tr = el('tr', undefined, 'row' + (matches.has(row.id) ? '' : ' context'));
       tr.dataset.id = row.id; tr.tabIndex = 0;
       tr.setAttribute('aria-expanded', expanded.has(row.id)); tr.setAttribute('aria-label','Details for ' + row.id);
       const add = (content, cls) => { const td = el('td',undefined,cls); td.append(typeof content === 'string' ? el('span',content) : content); tr.append(td); };
-      add(row.target || 'Not recorded','branch'); add(row.source || 'Not assigned','branch');
-      add(el('span',row.stage,'badge ' + row.stage)); add(el('span',row.status,'badge ' + row.status.toLowerCase().replaceAll(' ','_')));
-      add(String(row.trim_loops),'count'); add(String(row.code_loops),'count');
-      add(links(row.specs)); add(link(row.slice)); add(links(row.builds)); add(links(row.releases)); add(links(row.prs));
-      add(links(row.deployments.map(deployment=>({...deployment,name:deployment.environment + ' · ' + deployment.name.replace(/^staging-rebuild-/, '')}))));
+      for (const column of columns()) {
+        const cls = ['target','source'].includes(column.id) ? 'branch' : ['trim_loops','code_loops'].includes(column.id) ? 'count' : ['problem','solution','test_path','pass_condition'].includes(column.id) ? 'operator-text' : '';
+        add(cellContent(row,column.id),cls);
+      }
       const toggle = () => { expanded.has(row.id) ? expanded.delete(row.id) : expanded.add(row.id); render(); };
       tr.onclick = toggle;
       tr.onkeydown = event => { if (event.target === tr && ['Enter',' '].includes(event.key)) { event.preventDefault(); toggle(); } };
@@ -367,7 +449,7 @@ function render() {
     }
   }
   if (!show.size) {
-    const tr = el('tr'), td = el('td','No slices match these filters.','empty'); td.colSpan = 12; tr.append(td); fragment.append(tr);
+    const tr = el('tr'), td = el('td','No slices match these filters.','empty'); td.colSpan = columns().length; tr.append(td); fragment.append(tr);
   }
   $('rows').replaceChildren(fragment); wrap.scrollTop = scrollTop; wrap.scrollLeft = scrollLeft;
   $('overview').textContent = `${matches.size} matching slice${matches.size === 1 ? '' : 's'}${show.size > matches.size ? ' · ' + (show.size-matches.size) + ' predecessors shown for context' : ''} · Click a slice for details`;
@@ -380,9 +462,10 @@ async function refresh() {
     report = await response.json(); const all = report.groups.flatMap(group=>group.rows);
     $('subtitle').textContent = report.project + ' · Read ' + new Date(report.refreshed_at).toLocaleTimeString() + ' · Refreshes automatically every __REFRESH__ seconds';
     $('subtitle').classList.remove('error');
-    $('headers').replaceChildren(...report.headers.map(header=>el('th',header)));
+    configureColumns();
     options('stage',all.map(row=>row.stage)); options('status',all.map(row=>row.status)); options('build',all.flatMap(row=>row.builds.map(x=>x.name)));
     options('release',all.flatMap(row=>row.releases.map(x=>x.name))); options('spec',all.flatMap(row=>row.specs.map(x=>x.name)));
+    options('types',all.flatMap(row=>row.operator_handoff?.types || [])); options('surfaces',all.flatMap(row=>row.operator_handoff?.change_surfaces || [])); options('packages',all.flatMap(row=>row.operator_handoff?.packages || []));
     $('issues').hidden = !report.issues.length;
     $('issues').querySelector('summary').textContent = report.issues.length + ' record issue(s)';
     $('issues').querySelector('div').replaceChildren(...report.issues.map(issue=>el('p',issue)));
@@ -393,8 +476,8 @@ async function refresh() {
 }
 $('search').oninput = () => { saveFilters(); render(); };
 $('predecessors').onchange = () => { saveFilters(); render(); };
-document.addEventListener('click', event => { for (const id of Object.keys(names)) if (!$(id).contains(event.target)) $(id).open = false; });
-document.addEventListener('keydown', event => { if (event.key === 'Escape') for (const id of Object.keys(names)) $(id).open = false; });
+document.addEventListener('click', event => { for (const id of [...Object.keys(names),'columns']) if (!$(id).contains(event.target)) $(id).open = false; });
+document.addEventListener('keydown', event => { if (event.key === 'Escape') for (const id of [...Object.keys(names),'columns']) $(id).open = false; });
 setInterval(() => { if (!document.hidden) refresh(); }, __REFRESH__ * 1000);
 refresh();
 </script></html>

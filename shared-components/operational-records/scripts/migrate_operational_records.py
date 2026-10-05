@@ -14,7 +14,7 @@ import os
 from validate_operational_records import load_record, validate_record, scope_digest
 
 SHA = re.compile(r'^[0-9a-f]{40,64}$')
-STAGES = {'draft','backlog','to_do','in_progress','review','in_release','merged','fulfilled','superseded'}
+STAGES = {'draft','backlog','to_do','in_progress','hold','review','in_release','merged','fulfilled','superseded'}
 
 
 def markdown_value(text, label, allowed):

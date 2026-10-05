@@ -10,9 +10,16 @@ Require:
 - pushed source branch;
 - target branch, defaulting to the repository's remote default.
 
-When a stack sheet is supplied, use its matching source-branch row for the
-operator-facing text. Treat the sheet as maintained and current; investigate
-only when branch evidence contradicts it.
+For a schema-v2 build, read the selected source/pin's `operator_handoff` under
+the operational-records contract. Copy ready, matching-pin problem, solution,
+test_path and pass_condition into their sections; link the canonical manifest.
+Do not reconstruct missing JSON from a Sheet or Markdown, or silently copy
+draft/stale wording. Report it for the build coordinator to reconcile.
+
+For an explicitly supplied historical stack sheet without canonical handoff
+data, use its matching source-branch row. Investigate branch contradictions and
+report conflicts between canonical JSON and Sheet text; do not silently choose.
+Suggested paths and conditions are not executed acceptance results.
 
 ## Workflow
 

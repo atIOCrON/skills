@@ -118,7 +118,7 @@ for bundle in "$release_bundle" "$status_bundle"; do
     "$bundle" scripts/validate_release_manifest.py
 done
 
-for skill in branch-stack-status build-branch-stack write-specs write-slices open-stack-requests merge-stack prepare-release-integration rebuild-staging-with-branches integrate-and-test-staging; do
+for skill in branch-stack-status build-branch-stack write-specs write-slices open-stack-requests merge-stack prepare-release-integration rebuild-staging-with-branches integrate-and-test-staging write-branch-tracker; do
   bundle="$repo_root/skills/$skill"
   sync_one shared-components/operational-records/operational-records.md "$bundle" references/operational-records.md
   sync_one shared-components/operational-records/operational-records.schema.json "$bundle" references/operational-records.schema.json

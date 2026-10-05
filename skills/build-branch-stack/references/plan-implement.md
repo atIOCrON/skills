@@ -141,6 +141,15 @@ are not production evidence. Run planned adversarial checks for complex or
 cross-cutting work.
 Report failures honestly; if verification is impossible here, say why.
 
+## Operator handoff
+
+When invoked by a build coordinator, return `operator_handoff` using the bundled
+`operational-records.md` contract and exact classifications. Reconcile its four
+operator descriptions, changed surfaces and registered package/module identities
+against the branch-only diff after implementation or fixes. Suggested checks do
+not claim executed acceptance. Workers return draft or ready data for the pinned
+candidate; the coordinator owns canonical writes and validation.
+
 ## Output
 
 ```markdown

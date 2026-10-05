@@ -24,3 +24,10 @@ Edit only the assigned checkout. If this is a provisional code-review fix,
 keep edits uncommitted for reconciliation after all reviewer outputs arrive.
 Otherwise edit the current plan branch. Do not amend the reviewed commit; the
 orchestrator will create and verify a new commit.
+
+Return a structured `operator_handoff` under `operational-records.md` with the
+candidate SHA, operator problem, solution, suggested test path, pass condition,
+purpose types, change surfaces, exact affected packages and evidence paths.
+Describe branch-owned behavior and separate suggested acceptance from executed
+checks. Draft before implementation; refresh after fixes and return ready only
+when complete for the verified candidate. The coordinator publishes it.

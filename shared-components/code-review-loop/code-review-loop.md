@@ -37,9 +37,10 @@ Targeted closure, same-session format or completion repair, transport retry,
 valid restack or test-only mappings, and an incomplete reviewer launch do
 not count. Preserve the count across task resumptions, implementation shapes,
 and architecture epochs.
-For v1 review records, return each completed pass receipt under
-`release-manifest.md`. The coordinator publishes it and derived counts together,
-then runs `scripts/validate_review_records.py` against the original project.
+Return each completed pass receipt under `operational-records.md`. The
+coordinator publishes it and derived counts together in canonical schema-v2
+JSON, then runs `scripts/validate_operational_records.py <manifest> --project-root <original-project>`. Historical v1 records retain their `release-manifest.md`
+receipt and validator; never publish v1 state under an adopted canonical path.
 Record disqualifications without deleting receipts; mappings do not add passes.
 
 Assess each validated response when it arrives. Independently confirmed

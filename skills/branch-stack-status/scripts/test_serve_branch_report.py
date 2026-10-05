@@ -56,6 +56,23 @@ class ContractTests(unittest.TestCase):
             data=build([branch('one')]);mutation(data);self.assertTrue(records.validate_record(data))
         self.assertFalse(records.validate_record(build([branch('one')])))
 
+    def test_operator_handoff_strict_fields_pin_and_ready_completeness(self):
+        data=build([branch('one')]); b=data['branches'][0]
+        self.assertTrue(records.require_operator_handoffs(data))
+        b['operator_handoff']={'state':'ready','sha':A,'problem':'Problem','solution':'Solution',
+            'test_path':'Try it','pass_condition':'Expected outcome','types':['Fix'],
+            'change_surfaces':['Theme'],'packages':[],'evidence':['plans/evidence/operator.json'],'reason':None}
+        self.assertFalse(records.validate_record(data));self.assertFalse(records.require_operator_handoffs(data))
+        for key,value in [('sha',B),('problem',None),('types',['Invented']),('packages',['a','a']),('legacy_alias','value')]:
+            changed=copy.deepcopy(data);changed['branches'][0]['operator_handoff'][key]=value
+            self.assertTrue(records.validate_record(changed),key)
+        b['operator_handoff'].update(state='unknown',reason=None)
+        self.assertTrue(records.validate_record(data))
+        b['operator_handoff'].update(state='draft',sha=None)
+        self.assertFalse(records.validate_record(data))
+        b['implementation'].update(status='verified',sha=A)
+        self.assertTrue(records.require_operator_handoffs(data))
+
     def test_released_build_requires_freeze_qualification(self):
         data=build([branch('one')]);data['state']='released'
         errors=records.validate_record(data)
@@ -159,6 +176,28 @@ class ReportTests(unittest.TestCase):
             rows=self.rows()
         self.assertEqual((rows[0]['source'],rows[0]['code_loops']),('feature/one',0))
         plan.write_text('Different Markdown with invented clean reviews');self.assertEqual(self.rows(),rows)
+
+    def test_operator_text_comes_only_from_selected_json_and_marks_pin_conflict(self):
+        self.b['operator_handoff']={'state':'ready','sha':A,'problem':'JSON problem','solution':'JSON solution',
+            'test_path':'JSON test','pass_condition':'JSON condition','types':['Fix'],'change_surfaces':['Theme'],
+            'packages':[],'evidence':['plans/evidence/operator.json'],'reason':None}
+        self.write('plans/builds/build/manifest.json',build([self.b]))
+        (self.root/'plans/slices/review/one/one.md').write_text('Operator problem: Markdown must not be read')
+        row=self.rows()[0];self.assertEqual(row['operator_handoff']['problem'],'JSON problem');self.assertEqual(row['handoff_state'],'ready')
+        self.write('plans/slices/review/one/record.json',slice_record('one',sha=B))
+        row=self.rows()[0];self.assertEqual(row['handoff_state'],'stale');self.assertEqual(row['operator_handoff']['sha'],A)
+        self.b.pop('operator_handoff');self.write('plans/builds/build/manifest.json',build([self.b]))
+        self.assertEqual(self.rows()[0]['handoff_state'],'not_recorded')
+
+    def test_held_slice_uses_explicit_json_stage_and_zero_counts(self):
+        data=build([branch('one')]);data['branches'][0]['implementation']['status']='not_started'
+        self.write('plans/builds/build/manifest.json',data)
+        (self.root/'plans/slices/review/one/record.json').unlink()
+        held=slice_record('one',stage='hold');self.write('plans/slices/hold/one/record.json',held)
+        self.assertFalse(records.validate_record(held))
+        row=self.rows()[0]
+        self.assertEqual((row['stage'],row['status'],row['trim_loops'],row['code_loops']),('hold','Not Started',0,0))
+        self.assertIn('hold',__import__('migrate_operational_records').STAGES)
 
     def test_bad_schema_is_rejected_without_legacy_aliases(self):
         data=build([self.b]);data['schema_version']=1;data['release_id']='legacy';self.write('plans/builds/build/manifest.json',data)

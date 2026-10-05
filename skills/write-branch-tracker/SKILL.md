@@ -8,8 +8,13 @@ metadata:
 
 # Write Branch Tracker
 
-Write one row per requested branch from its current implementation, canonical
-release manifest, plans, and review artefacts.
+Write one row per requested branch. For current builds, use the strict JSON
+contract in [references/operational-records.md](references/operational-records.md)
+and [its schema](references/operational-records.schema.json). Operator fields
+come only from the selected build/source/pin's `operator_handoff`; never redraft
+them independently from a Sheet or Markdown. Report missing/draft/stale data to
+the coordinator for reconciliation. Historical research below applies only to
+explicitly requested records without canonical handoff data.
 
 ## Destination and scope
 
@@ -64,8 +69,18 @@ is independently supported; report that evidence limitation.
 
 ## Validate and deliver
 
-Prepare a JSON array using the writing guide's exact 15 keys. Resolve this
-skill's script relative to `SKILL.md`:
+For current builds, generate the exact 15-key rows from canonical JSON:
+
+```bash
+python3 scripts/export_operator_rows.py <project> <build-manifest> \
+  --source <branch> --source <other-branch> > <temporary-rows.json>
+```
+
+The exporter validates the contract and selected pin and rejects missing, draft
+or stale handoffs. It reads JSON only and preserves the four operator texts
+apart from flattening whitespace for CSV cells. Then validate/deliver those rows
+with the writer below. For explicit historical research, prepare the same exact
+15-key array using the writing guide. Resolve scripts relative to `SKILL.md`:
 
 ```bash
 python3 scripts/write_branch_tracker.py rows.json \

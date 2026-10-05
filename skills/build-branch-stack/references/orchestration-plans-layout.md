@@ -17,10 +17,15 @@ plans/deployments/<deployment-id>/manifest.json
 plans/audits/<audit-id>/
 ```
 
-Both use `draft`, `backlog`, `to_do`, `in_progress`, `review`, `in_release`, `merged`,
+Both use `draft`, `backlog`, `to_do`, `in_progress`, `hold`, `review`, `in_release`, `merged`,
 `fulfilled`, and `superseded`. `Specification Status` or `Slice Status` must
 match the folder. `Approval Status` is `draft` or `approved`. Delivery progress
 preserves scope approval. Writing requests, folders, and successful checks do not imply approval.
+
+`hold` records an explicit pause; retain approval, selection, pins and evidence.
+Record the authority and reason, update canonical JSON with the folder move,
+and resume only under the recorded authority. A hold establishes no delivery
+completion or review waiver.
 
 ## Operational Records
 

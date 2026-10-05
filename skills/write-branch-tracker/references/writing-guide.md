@@ -34,6 +34,15 @@ terminator. Use the user's timezone (default `Australia/Sydney`) for the name:
 YYYY-MM-DDTHH-MM-SS+ZZZZ-branch-tracker.csv
 ```
 
+## Canonical operator fields
+
+For current builds, `operator_handoff` in the selected canonical build/source/pin
+is authoritative. Use `export_operator_rows.py`; do not regenerate its wording
+from Markdown, Git or Sheets. Its arrays use the strict schema enums; the CSV
+export joins multiple values with `; `. Draft, absent or mismatched-pin handoffs
+require coordinator reconciliation before export. The research below is for
+explicitly requested historical records without canonical handoff data.
+
 ## Research each row
 
 Use multiple forms of evidence where available:
@@ -84,6 +93,7 @@ the Sheet's old value:
 | `merged` | Merged |
 | `fulfilled` | Fulfilled |
 | `superseded` | Superseded |
+| `hold` | On Hold |
 
 `Deprecated` requires explicit branch retirement evidence; it is not a plan
 stage. Use `Superseded` for a plan replaced by identified plans. Branch age,
