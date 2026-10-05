@@ -1,5 +1,10 @@
 # Release Preparation Record
 
+Use `operational-records.md` and its strict schema-v2 release contract for new
+or adopted `preparation.json` files. Validate with
+`scripts/validate_operational_records.py`; narrative historical field lists
+below are context, not alternate JSON formats.
+
 Use `plans/releases/active/<release-id>/preparation.json` for PR assembly state. This
 operational record does not replace a build manifest or change its dependency
 pins or review evidence. Confirmed assembly advances selected plans to
@@ -43,7 +48,7 @@ whole-release record exists.
 
 Record:
 
-- `kind: "release-preparation"`, `schema_version: 1`, release ID, repository,
+- `kind: "release"`, `schema_version: 2`, release ID, repository,
   remote, and provider;
 - base branch and full SHA; integration branch and starting SHA;
 - ordered changes: source, full head SHA, original parent branch and SHA,

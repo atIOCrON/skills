@@ -3,8 +3,10 @@
 Specs and executable slices share lifecycle stages; approval is separate:
 
 ```text
+plans/specs/<stage>/<spec_slug>/record.json
 plans/specs/<stage>/<spec_slug>/<spec_slug>.md
 plans/specs/<stage>/<spec_slug>/<spec_slug>.slices.md
+plans/slices/<stage>/<slug>/record.json
 plans/slices/<stage>/<slug>/<slug>.md
 plans/slices/<stage>/<slug>/<slug>.reviews/
 plans/slices/<stage>/<slug>/<slug>.execution/
@@ -21,6 +23,10 @@ match the folder. `Approval Status` is `draft` or `approved`. Delivery progress
 preserves scope approval. Writing requests, folders, and successful checks do not imply approval.
 
 ## Operational Records
+
+Maintain schema-v2 `record.json` with each spec and slice. Operational JSON
+contracts are in `operational-records.md`; Markdown is narrative, not report
+input. Update JSON on approval, selection, stage moves and source rewrites.
 
 Build manifests record implementation, branch dependencies, reviews, checks,
 and every contributing session. Keep them in `builds/<build-id>/` after their

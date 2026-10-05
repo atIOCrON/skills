@@ -72,3 +72,38 @@ without changing the review-completion statuses above. Report any parent
 rollup discrepancy read-only, without moving plans.
 If no branches have been accepted yet, say so and report selected work from
 the schedule; do not fabricate a branch table or placeholder commits.
+
+## Local Browser Report
+
+For an operator browser view, run the bundled standard-library server from
+this skill's directory:
+
+```bash
+python3 scripts/serve_branch_report.py /absolute/project/path
+```
+
+It opens a loopback-only page and runs until Ctrl+C. Use `--no-open` when
+opening the URL in Codex, `--port` for another port, and `--refresh` to change
+the default 15-second refresh interval. It reads canonical JSON on each refresh without editing records or querying Git.
+
+The browser table uses Target branches, Source branches, Stages, Statuses,
+Trim loops, Code loops, Specs, Slices, Builds, Releases, PRs, and Deployments,
+in that order. Stages, Statuses, Builds, Releases, and Specs filters support
+multiple selections, OR within a filter and AND between filters. Stages alone
+controls fulfilled and superseded. Filters show only matching rows by default;
+check Show predecessors to include dimmed ancestors for context. Refresh is
+automatic and browser reload preserves filters and this choice in the URL.
+Rows follow target/source ancestry. Target is the stack/comparison parent, with current PR destinations
+in row details. Preserve historical source identities and flag unverified
+current-source review mappings and missing/conflicting loop counts as Unclear.
+Deployment links require recorded deployment success and inclusion of the
+relevant source version; other versions and failed attempts stay in history.
+This browser mode does not change the five-column conversational status format.
+Read `references/operational-records.md` and its schema for exact source files.
+The browser consumes only schema-v2 JSON, validates every record, and shows
+field-specific contract errors. It never parses Markdown, legacy field aliases,
+or Git state. Slice JSON selects the current build/source/pin explicitly.
+Counts come from JSON receipts; unknown historical accounting stays Unclear.
+Use `scripts/validate_operational_records.py <original-project>` for a read-only
+project check. Historical reconciliation is a separate explicit import with
+`scripts/migrate_operational_records.py`; it is never part of page refresh.

@@ -6,6 +6,15 @@ metadata:
   layer: capability
 ---
 
+
+Read `references/operational-records.md` before creating or updating plan metadata,
+builds, releases or deployments. Its schema-v2 JSON contract is authoritative
+for operational records. Write and validate canonical JSON alongside each state
+change; do not leave the browser report to reconstruct state from Markdown.
+Use `scripts/validate_operational_records.py <record> --project-root <original-project>`
+for each owned record before handoff. Whole-project audit findings are separate.
+Keep historical extensions and existing authorization, verification and review
+gates; they do not authorize schema aliases or inferred reporting values.
 # Write Specifications
 
 Write the parent specification for a complete product or system outcome. A

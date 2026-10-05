@@ -6,6 +6,15 @@ metadata:
   layer: runner
 ---
 
+
+Read `references/operational-records.md` before creating or updating plan metadata,
+builds, releases or deployments. Its schema-v2 JSON contract is authoritative
+for operational records. Write and validate canonical JSON alongside each state
+change; do not leave the browser report to reconstruct state from Markdown.
+Use `scripts/validate_operational_records.py <record> --project-root <original-project>`
+for each owned record before handoff. Whole-project audit findings are separate.
+Keep historical extensions and existing authorization, verification and review
+gates; they do not authorize schema aliases or inferred reporting values.
 # Prepare Release Integration
 
 Coordinate `open-stack-requests`, `merge-stack`, and
@@ -23,6 +32,11 @@ scope and evidence; an explicit user branch list is also supported. Do not
 require draft PRs. Resolve the remote default branch unless the user names a
 base. Accept explicit upfront authorization for merging and staging deployment;
 otherwise obtain missing authorization at the relevant boundary.
+Validate contributing schema-v2 build records with the operational validator
+before selecting qualification evidence. Reconcile historical records explicitly
+before adoption; legacy validation does not supply dashboard state.
+Release preparation records and deployment receipts use their own contracts;
+do not apply the build review-record schema to them.
 
 Read `references/release-preparation.md`. Create the preparation record without
 rewriting the build manifest's parent pins, targets, or reviews. Apply only the
