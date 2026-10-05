@@ -872,6 +872,9 @@
         },
         "extensions": {
           "type": "object"
+        },
+        "operator_handoff": {
+          "$ref": "#/$defs/operator_handoff"
         }
       },
       "required": [
@@ -974,6 +977,9 @@
         },
         "extensions": {
           "type": "object"
+        },
+        "operator_handoff": {
+          "$ref": "#/$defs/operator_handoff"
         }
       },
       "required": [
@@ -1620,6 +1626,140 @@
         "evidence",
         "unresolved",
         "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "operator_handoff": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "enum": [
+            "draft",
+            "ready",
+            "unknown"
+          ]
+        },
+        "sha": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "problem": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "solution": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "test_path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pass_condition": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "Feature",
+              "Fix",
+              "Operations",
+              "Tests",
+              "Documentation",
+              "Housekeeping"
+            ]
+          }
+        },
+        "change_surfaces": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "First-party code",
+              "Composer patch",
+              "Theme",
+              "Configuration",
+              "Data/schema",
+              "Tests",
+              "Documentation",
+              "Tooling"
+            ]
+          }
+        },
+        "packages": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+          }
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "state",
+        "sha",
+        "problem",
+        "solution",
+        "test_path",
+        "pass_condition",
+        "types",
+        "change_surfaces",
+        "packages",
+        "evidence",
+        "reason"
       ],
       "additionalProperties": false
     }
