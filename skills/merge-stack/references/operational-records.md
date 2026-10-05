@@ -38,6 +38,9 @@ references. Scoped producer validation also checks evidence paths exist and
 are nonempty inside `plans/`, without reading Markdown contents. It returns nonzero and field-specific errors. It reads JSON only.
 Run the same script with `<original-project>` alone for a whole-project audit.
 Unrelated historical errors do not block a scoped producer check.
+Check evidence must identify a nonempty file, not a directory. For successful
+commands with empty stdout, link the execution JSON receipt containing the
+command, candidate identity and exit status; retain the original empty log.
 A valid shape does not prove the truth of evidence; the producing skill must
 run its existing checks and review-output validators before recording success.
 
@@ -92,7 +95,13 @@ requires three clean current-tip reviewer results and proportionate trim.
 `historical_completed_passes`, equal to the immutable imported baseline plus completed receipts in each
 disjoint period. The baseline is null for new phases. Historical import may
 carry explicit valid JSON counts into a baseline with an immutable audit JSON
-evidence path; it never synthesizes reviewer receipts or parses prose counts.
+evidence path. A separately authorized evidence reconciliation may establish a
+missing baseline by auditing triage, accepted reviewer outputs and qualification
+proof for each counted pass. Record included and disqualified attempts, original
+SHAs, evidence paths and input hashes in the audit JSON. Directory counts or a
+prose total alone are insufficient. Do not synthesize missing receipt details;
+new passes require complete receipts. The dashboard reads neither narrative
+counts nor audit evidence to derive values.
 The baseline and new receipts must cover disjoint passes. Each completed receipt contains a stable ID, UTC completion time,
 reviewed SHA, triage path and three distinct validated reviewer outputs on that
 SHA. Disqualified receipts retain a reason and do not count. Incomplete launches,
@@ -105,6 +114,39 @@ null counts, an empty receipt array, a null baseline and an explicit reason. Thi
 not zero. A separately established current clean result may still be recorded;
 it does not manufacture historical receipts. Never use unknown accounting for
 new completed passes. Preserve historical counts in immutable import evidence.
+
+## Operator handoff
+
+Build `branches` and `schedule.work` may contain the defined `operator_handoff`
+object. It is optional only so untouched existing builds remain readable;
+all new and adopted producer entries require it. Validate build handoffs with
+`--require-operator-handoff` in addition to `--project-root`.
+
+Every object has `state` (`draft`, `ready`, `unknown`), `sha`, `problem`,
+`solution`, `test_path`, `pass_condition`, `types`, `change_surfaces`, `packages`,
+`evidence`, and `reason`. Unknown text and unprepared SHA use explicit nulls;
+classifications, packages and evidence use arrays, never delimited strings.
+Unknown state requires a reason. Ready requires the current implementation pin,
+all four nonempty descriptions, types, surfaces and evidence. Packages may be
+empty when none are affected. Arrays contain unique entries; purpose types
+are ordered with the primary type first. Exact types and surfaces are in the
+schema. Name Composer packages from their metadata or first-party Magento
+modules from registration; exclude inherited and untouched packages.
+
+Draft before implementation. Workers return the object with their evidence;
+only the coordinator writes canonical state. Describe the actual branch-owned
+outcome, supported staging actions, prerequisites, observable pass conditions,
+and developer/third-party checks that the operator cannot establish. Suggested
+checks are not execution or acceptance results. Reconcile after scope changes,
+fixes or restacks; refresh the SHA only after checking applicability. Keep
+superseded wording in immutable audit evidence. Verified implementation
+handoffs must be ready before producer validation succeeds.
+
+The selected build/source owns these values. Reports and exports consume this
+object only; they do not extract descriptions from Markdown, extensions or
+Sheets. Missing old handoffs display as not recorded. Draft, unknown or
+pin-conflicting text is labelled explicitly and does not borrow another build's
+handoff. `Pass condition` describes expected proof; `Type(s)` classifies purpose.
 
 ## Releases and deployments
 

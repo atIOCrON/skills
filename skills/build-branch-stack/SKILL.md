@@ -225,12 +225,14 @@ before moving files. For a fresh run, initialize the canonical JSON manifest
 from the pinned starting base, selected specs/slices, explicit exclusions, real
 code prerequisites, declared surfaces, and planned checks. Keep unimplemented
 work in `schedule.work`, not placeholder branch entries. In linear mode,
-`branches` contains only accepted, verified, pushed stack branches. Validate with
-`scripts/validate_release_manifest.py`. New builds use the v1 review accounting
-in `release-manifest.md`. At pass completion and each review/restack handoff,
-the coordinator imports receipts, derives counts and runs
-`python3 <skill-root>/scripts/validate_review_records.py <manifest> --project-root <original-project>`.
-Use `--allow-legacy` only for unreconciled historical records; never fabricate
+`branches` contains only accepted, verified, pushed stack branches. Use schema-v2 `operational-records.md` for new and adopted JSON.
+At each implementation, pass and review/restack handoff, import validated
+receipts and the worker's `operator_handoff`, derive counts, and run
+`scripts/validate_operational_records.py <manifest> --project-root <original-project> --require-operator-handoff`.
+Initialize handoffs as draft; after implementation verification, reconcile
+operator text and classifications against the branch-only diff and current
+pin, then mark ready. A suggested test and pass condition claim no acceptance
+result. Retain historical v1 tools only for historical records; never fabricate
 receipts to pass validation. Reconcile Sheet and prose trackers
 from the manifest.
 

@@ -32,13 +32,11 @@ FIELDS = (
 )
 STATUSES = (
     "Draft", "Backlog", "To Do", "In Progress", "Review", "In Release", "Merged", "Fulfilled",
-    "Superseded", "Deprecated",
+    "Superseded", "Deprecated", "On Hold",
 )
-TYPES = ("Feature", "Fix", "Operations", "Tests", "Documentation", "Housekeeping")
-SURFACES = (
-    "First-party code", "Composer patch", "Theme", "Configuration",
-    "Data/schema", "Tests", "Documentation", "Tooling",
-)
+HANDOFF_SCHEMA = json.loads((Path(__file__).resolve().parents[1] / "references" / "operational-records.schema.json").read_text())["$defs"]["operator_handoff"]["properties"]
+TYPES = tuple(HANDOFF_SCHEMA["types"]["items"]["enum"])
+SURFACES = tuple(HANDOFF_SCHEMA["change_surfaces"]["items"]["enum"])
 OPERATOR_FIELDS = {"To Do", "Note"}
 OPTIONAL_FIELDS = OPERATOR_FIELDS | {"Plan", "Package(s)"}
 SUFFIX = "-branch-tracker.csv"

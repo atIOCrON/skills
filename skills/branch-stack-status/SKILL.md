@@ -88,8 +88,13 @@ the default 15-second refresh interval. It reads canonical JSON on each refresh 
 
 The browser table uses Target branches, Source branches, Stages, Statuses,
 Trim loops, Code loops, Specs, Slices, Builds, Releases, PRs, and Deployments,
-in that order. Stages, Statuses, Builds, Releases, and Specs filters support
-multiple selections, OR within a filter and AND between filters. Stages alone
+in that order, followed by Operator problems, Solutions, Suggested operator
+test paths, Pass conditions, Types, Change surfaces and Packages. The four text
+columns start hidden. Columns lets the operator choose visible columns and
+retains that preference in browser storage per project. Every filter and the
+column chooser has its own option search. Types, Change surfaces and Packages
+join Stages, Statuses, Builds, Releases and Specs as filters supporting multiple
+selections, OR within a filter and AND between filters. Stages alone
 controls fulfilled and superseded. Filters show only matching rows by default;
 check Show predecessors to include dimmed ancestors for context. Refresh is
 automatic and browser reload preserves filters and this choice in the URL.

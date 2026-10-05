@@ -126,6 +126,40 @@ def phase_errors(phase, kind, tip, at):
     return errors
 
 
+def operator_handoff_errors(item, tip, at):
+    handoff = item.get('operator_handoff')
+    if handoff is None:
+        return []  # Untouched records predate this additive schema-v2 field.
+    errors = []
+    for field in ('problem','solution','test_path','pass_condition','reason'):
+        if isinstance(handoff[field],str) and not handoff[field].strip():
+            errors.append(at + '.' + field + ' must not be whitespace-only')
+    for field in ('types','change_surfaces','packages','evidence'):
+        if len(handoff[field]) != len(set(handoff[field])):
+            errors.append(at + '.' + field + ' contains duplicate values')
+    if handoff['state'] == 'unknown' and not handoff['reason']:
+        errors.append(at + '.reason is required when unknown')
+    if handoff['state'] == 'ready':
+        if tip is None or handoff['sha'] != tip:
+            errors.append(at + '.sha must match the implementation pin when ready')
+        if any(not handoff[k] for k in ('problem','solution','test_path','pass_condition','types','change_surfaces','evidence')):
+            errors.append(at + ' ready requires complete operator text, classifications and evidence')
+    return errors
+
+
+def require_operator_handoffs(data):
+    if data['kind'] != 'build':
+        return []
+    errors = []
+    for group,items in [('branches',data['branches']),('schedule.work',data['schedule']['work'] if data['schedule'] else [])]:
+        for index,item in enumerate(items):
+            if 'operator_handoff' not in item:
+                errors.append(f'$.{group}[{index}].operator_handoff is required for new or adopted producer records')
+            elif item['implementation']['status']=='verified' and item['operator_handoff']['state']!='ready':
+                errors.append(f'$.{group}[{index}].operator_handoff must be ready after implementation verification')
+    return errors
+
+
 def scope_digest(data):
     """Bind canonical scope/pins and required checks; review progress is not scope."""
     payload = {'base':data['base'], 'branches':[
@@ -175,6 +209,7 @@ def validate_record(data, expected_kind=None, path=None, root=None):
             errors.append('$.branches contains duplicate source identities')
         for index, branch in enumerate(data['branches']):
             at = f'$.branches[{index}]'
+            errors.extend(operator_handoff_errors(branch,branch['tip_sha'],at+'.operator_handoff'))
             if branch['target'] != branch['parent']['branch']:
                 errors.append(at + '.target must equal its stack parent; PR destinations belong in change_request')
             disposition=branch.get('human_disposition')
@@ -217,6 +252,7 @@ def validate_record(data, expected_kind=None, path=None, root=None):
                 errors.append('$.schedule.work contains duplicate slice identities')
             for index,item in enumerate(work):
                 at = f'$.schedule.work[{index}]'
+                errors.extend(operator_handoff_errors(item,item['prepared_sha'],at+'.operator_handoff'))
                 check_ids = [c['id'] for c in item['checks']]
                 if len(check_ids) != len(set(check_ids)):
                     errors.append(at + '.checks contains duplicate IDs')
@@ -304,6 +340,8 @@ def validate_project(root):
 def validate_evidence(data,root):
     """Stat producer evidence references; never interpret narrative files."""
     references=[]
+    def handoff(item):
+        if item.get('operator_handoff'):references.extend(item['operator_handoff']['evidence'])
     def phase(phase):
         if phase['evidence']:references.append(phase['evidence'])
         if phase['baseline']:references.append(phase['baseline']['evidence'])
@@ -313,6 +351,7 @@ def validate_evidence(data,root):
     if data['kind']=='build':
         entries=data['branches']+(data['schedule']['work'] if data['schedule'] else [])
         for entry in entries:
+            handoff(entry)
             phase(entry['trim_review']);phase(entry['review_progress'])
             references.extend(c['evidence'] for c in entry['checks'] if c['evidence'])
     elif data['kind']=='deployment' and data['evidence']:
@@ -387,6 +426,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('path',type=Path,help='Canonical JSON file or project root')
     parser.add_argument('--print-scope-digest',action='store_true')
+    parser.add_argument('--require-operator-handoff',action='store_true',help='Require operator handoffs on all build work/branches and ready text for verified implementations')
     parser.add_argument('--project-root',type=Path,help='Check this file and its related records in the original project')
     args = parser.parse_args()
     try:
@@ -400,6 +440,7 @@ def main():
         else:
             data=load_record(args.path)
             errors=validate_record(data,path=args.path,root=args.project_root)
+            if not errors and args.require_operator_handoff:errors.extend(require_operator_handoffs(data))
             if not errors and args.project_root:
                 errors.extend(validate_related(data,args.project_root))
                 errors.extend(validate_evidence(data,args.project_root))
