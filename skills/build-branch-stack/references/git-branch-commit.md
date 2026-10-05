@@ -6,9 +6,12 @@ push or create change requests.
 Base branch `<base-branch>` defaults to the remote default; chained mode passes
 the local stacking predecessor, which need not be a functional dependency.
 For parallel authoring use the assigned verified base; only the coordinator
-restacks and accepts candidates onto the final tail. Name branches by repository policy, or use `fix/`,
-`feature/`, `docs/`, `refactor/`, or `chore/` for the corresponding change. Never
-name tools, models, assistants, or bots in a branch.
+restacks and accepts candidates onto the final tail. Name new branches
+`<type>/<change-description>`. Choose the type from the change's purpose:
+`feature` for new behavior, `fix` for corrections, `docs` for documentation,
+`refactor` for restructuring without behavior changes, or `chore` for maintenance.
+Do not default every change to `feature`. Never name tools, models, assistants,
+or bots in a branch.
 
 ## Branch Start
 

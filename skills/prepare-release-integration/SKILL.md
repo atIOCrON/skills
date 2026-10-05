@@ -69,7 +69,7 @@ authorization and applicable acceptance. No nested attempts directory is needed.
 1. Pin the remote base, source and parent SHAs, and merge order. Validate ancestry
    and release membership, including inherited commits. Preserve the primary
    checkout; use an isolated checkout for Git operations.
-2. Create a fresh `feature/release-integration/<release-id>` at the pinned base,
+2. Create a fresh `release/<release-id>` at the pinned base,
    or use the exact name the user supplied. Push with an explicit absence lease
    and verify it. On resume, require the recorded ref; do not overwrite a
    pre-existing branch from another run. Never assemble from old staging.

@@ -53,7 +53,7 @@ For example:
 /rebuild-staging-with-branches
 
 On top of the repository default branch:
-feature/staging-integration/20260918T104341Z
+integration/20260918T104341Z
 feature/checkout-card-refresh
 feature/some-other-branch
 ```
@@ -115,7 +115,7 @@ The receipt is deployment evidence, not release selection or acceptance authorit
 
 ## Assemble
 
-1. Create `feature/staging-integration/<UTC-timestamp>` at the pinned base in
+1. Create `integration/<UTC-timestamp>` at the pinned base in
    the disposable checkout. Exclude uncommitted changes. Do not add branches
    the user did not list.
 2. Process the pinned feature tips in the user's exact order:

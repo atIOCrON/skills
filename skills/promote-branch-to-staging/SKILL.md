@@ -18,7 +18,7 @@ Use this skill only when **all** of these are true:
 - The candidate branch is finished and already on `origin`.
 - Current `origin/staging` is an **ancestor** of the candidate (fast-forward
   of what staging already runs). Typical case: staging still points at a
-  pinned `feature/staging-integration/<UTC>`, and the new feature was branched
+  pinned `integration/<UTC-timestamp>`, and the new feature was branched
   from that exact SHA.
 - The user authorized moving the staging pointer. Do not promote unsolicited.
 
@@ -40,7 +40,7 @@ Practice: push the candidate SHA to `refs/heads/staging` with
 feature stay at their existing SHAs. Only `staging` moves. Revert moves it
 back.
 
-Do **not** create an extra `feature/staging-integration/<UTC>` that merely
+Do **not** create an extra `integration/<UTC-timestamp>` that merely
 duplicates the candidate SHA. That name is for a rebuild that produces a new
 integration commit. A named feature already *is* the candidate.
 
