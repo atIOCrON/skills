@@ -1,0 +1,1625 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:skills:operational-records:2",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/spec"
+    },
+    {
+      "$ref": "#/$defs/slice"
+    },
+    {
+      "$ref": "#/$defs/build"
+    },
+    {
+      "$ref": "#/$defs/release"
+    },
+    {
+      "$ref": "#/$defs/deployment"
+    }
+  ],
+  "$defs": {
+    "human_disposition": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "pending",
+            "accepted",
+            "rejected"
+          ]
+        },
+        "sha": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decided_by": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decided_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "utc-timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mappings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from_sha": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40,64}$"
+              },
+              "to_sha": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40,64}$"
+              },
+              "method": {
+                "enum": [
+                  "equal_range_diff",
+                  "reviewed_restack"
+                ]
+              },
+              "evidence": {
+                "type": "string",
+                "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+              }
+            },
+            "required": [
+              "from_sha",
+              "to_sha",
+              "method",
+              "evidence"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "status",
+        "sha",
+        "decided_by",
+        "decided_at",
+        "reason",
+        "evidence",
+        "mappings"
+      ],
+      "additionalProperties": false
+    },
+    "pin": {
+      "type": "object",
+      "properties": {
+        "branch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40,64}$"
+        }
+      },
+      "required": [
+        "branch",
+        "sha"
+      ],
+      "additionalProperties": false
+    },
+    "freeze": {
+      "type": "object",
+      "properties": {
+        "frozen_at": {
+          "type": "string",
+          "format": "utc-timestamp"
+        },
+        "authorized_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "frozen_at",
+        "authorized_by",
+        "scope_digest"
+      ],
+      "additionalProperties": false
+    },
+    "candidate": {
+      "type": "object",
+      "properties": {
+        "sha": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tree_sha": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "sha",
+        "tree_sha"
+      ],
+      "additionalProperties": false
+    },
+    "pr": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^https?://"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "enum": [
+            "none",
+            "draft",
+            "ready",
+            "merged",
+            "closed",
+            "unknown"
+          ]
+        },
+        "target_branch": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "landed_sha": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "url",
+        "state",
+        "target_branch",
+        "landed_sha"
+      ],
+      "additionalProperties": false
+    },
+    "reviewer": {
+      "type": "object",
+      "properties": {
+        "reviewer": {
+          "enum": [
+            "claude",
+            "codex",
+            "cursor"
+          ]
+        },
+        "validated": {
+          "enum": [
+            true
+          ]
+        },
+        "sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40,64}$"
+        },
+        "evidence": {
+          "type": "string",
+          "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+        }
+      },
+      "required": [
+        "reviewer",
+        "validated",
+        "sha",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "baseline": {
+      "type": "object",
+      "properties": {
+        "completed_passes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "historical_completed_passes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "evidence": {
+          "type": "string",
+          "pattern": "^plans/audits/.+\\.json$"
+        }
+      },
+      "required": [
+        "completed_passes",
+        "historical_completed_passes",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "receipt": {
+      "type": "object",
+      "properties": {
+        "pass_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "period": {
+          "enum": [
+            "current",
+            "historical"
+          ]
+        },
+        "status": {
+          "enum": [
+            "completed",
+            "disqualified"
+          ]
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "utc-timestamp"
+        },
+        "reviewed_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40,64}$"
+        },
+        "triage_evidence": {
+          "type": "string",
+          "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+        },
+        "reviewers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reviewer"
+          }
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "pass_id",
+        "period",
+        "status",
+        "completed_at",
+        "reviewed_sha",
+        "triage_evidence",
+        "reviewers",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "review_result": {
+      "type": "object",
+      "properties": {
+        "reviewer": {
+          "enum": [
+            "claude",
+            "codex",
+            "cursor"
+          ]
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "clean",
+            "changes_required",
+            "waived",
+            "unknown"
+          ]
+        },
+        "sha": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "method": {
+          "anyOf": [
+            {
+              "enum": [
+                "direct",
+                "equal_range_diff",
+                "reviewed_restack",
+                "test_only_closure"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "origin_sha": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "reviewer",
+        "status",
+        "sha",
+        "evidence",
+        "method",
+        "origin_sha"
+      ],
+      "additionalProperties": false
+    },
+    "implementation": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "not_started",
+            "running",
+            "verified",
+            "unknown"
+          ]
+        },
+        "sha": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "required_check_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "sha",
+        "required_check_ids",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "check": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "agent",
+            "external"
+          ]
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "pending",
+            "blocked_by_environment"
+          ]
+        },
+        "sha": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "status",
+        "sha",
+        "evidence",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "trim": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "not_started",
+            "running",
+            "proportionate",
+            "waived",
+            "unknown"
+          ]
+        },
+        "sha": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "accounting": {
+          "enum": [
+            "receipts",
+            "unknown"
+          ]
+        },
+        "completed_passes": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "historical_completed_passes": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "passes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/receipt"
+          }
+        },
+        "baseline": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/baseline"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "applicability": {
+          "enum": [
+            "normal",
+            "zero_diff"
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "sha",
+        "evidence",
+        "accounting",
+        "completed_passes",
+        "historical_completed_passes",
+        "passes",
+        "baseline",
+        "reason",
+        "applicability"
+      ],
+      "additionalProperties": false
+    },
+    "code": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "not_started",
+            "running",
+            "clean",
+            "review_cap_reached",
+            "waived",
+            "unknown"
+          ]
+        },
+        "sha": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "accounting": {
+          "enum": [
+            "receipts",
+            "unknown"
+          ]
+        },
+        "completed_passes": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "historical_completed_passes": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "passes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/receipt"
+          }
+        },
+        "baseline": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/baseline"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pass_limit": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "status",
+        "sha",
+        "evidence",
+        "accounting",
+        "completed_passes",
+        "historical_completed_passes",
+        "passes",
+        "baseline",
+        "reason",
+        "pass_limit"
+      ],
+      "additionalProperties": false
+    },
+    "branch": {
+      "type": "object",
+      "properties": {
+        "slice_slug": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "spec_slug": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "plan": {
+          "type": "string",
+          "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parent": {
+          "$ref": "#/$defs/pin"
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tip_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40,64}$"
+        },
+        "tree_sha": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "implementation": {
+          "$ref": "#/$defs/implementation"
+        },
+        "trim_review": {
+          "$ref": "#/$defs/trim"
+        },
+        "review_progress": {
+          "$ref": "#/$defs/code"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/check"
+          }
+        },
+        "reviews": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/review_result"
+          }
+        },
+        "change_request": {
+          "$ref": "#/$defs/pr"
+        },
+        "human_disposition": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/human_disposition"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "slice_slug",
+        "spec_slug",
+        "plan",
+        "source",
+        "parent",
+        "target",
+        "tip_sha",
+        "tree_sha",
+        "implementation",
+        "trim_review",
+        "review_progress",
+        "checks",
+        "reviews",
+        "change_request",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "work": {
+      "type": "object",
+      "properties": {
+        "slice_slug": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "spec_slug": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "plan": {
+          "type": "string",
+          "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "queued",
+            "implementing",
+            "prepared",
+            "stacked",
+            "complete",
+            "blocked"
+          ]
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/pin"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "prepared_sha": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "waiting_on": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "implementation": {
+          "$ref": "#/$defs/implementation"
+        },
+        "trim_review": {
+          "$ref": "#/$defs/trim"
+        },
+        "review_progress": {
+          "$ref": "#/$defs/code"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/check"
+          }
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "slice_slug",
+        "spec_slug",
+        "plan",
+        "source",
+        "status",
+        "parent",
+        "prepared_sha",
+        "waiting_on",
+        "implementation",
+        "trim_review",
+        "review_progress",
+        "checks",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "schedule": {
+      "type": "object",
+      "properties": {
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/work"
+          }
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "work",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "change": {
+      "type": "object",
+      "properties": {
+        "slice_slug": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "build_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "head_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40,64}$"
+        },
+        "original_parent": {
+          "$ref": "#/$defs/pin"
+        },
+        "state": {
+          "enum": [
+            "pending",
+            "merged",
+            "unknown"
+          ]
+        },
+        "pr": {
+          "$ref": "#/$defs/pr"
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "slice_slug",
+        "build_id",
+        "source",
+        "head_sha",
+        "original_parent",
+        "state",
+        "pr",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "member": {
+      "type": "object",
+      "properties": {
+        "slice_slug": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tip_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40,64}$"
+        }
+      },
+      "required": [
+        "slice_slug",
+        "source",
+        "tip_sha"
+      ],
+      "additionalProperties": false
+    },
+    "spec": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "enum": [
+            2
+          ]
+        },
+        "kind": {
+          "enum": [
+            "spec"
+          ]
+        },
+        "spec_slug": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "stage": {
+          "enum": [
+            "draft",
+            "backlog",
+            "to_do",
+            "in_progress",
+            "review",
+            "in_release",
+            "merged",
+            "fulfilled",
+            "superseded"
+          ]
+        },
+        "approval": {
+          "enum": [
+            "draft",
+            "approved",
+            "unknown"
+          ]
+        },
+        "plan": {
+          "type": "string",
+          "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+        },
+        "slice_map": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "enum": [
+                "draft",
+                "approved",
+                "stale",
+                "unknown"
+              ]
+            },
+            "owners": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "acceptance_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "slice_slug": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  }
+                },
+                "required": [
+                  "acceptance_id",
+                  "slice_slug"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "status",
+            "owners"
+          ],
+          "additionalProperties": false
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "spec_slug",
+        "stage",
+        "approval",
+        "plan",
+        "slice_map",
+        "unresolved",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "slice": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "enum": [
+            2
+          ]
+        },
+        "kind": {
+          "enum": [
+            "slice"
+          ]
+        },
+        "slice_slug": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "spec_slug": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stage": {
+          "enum": [
+            "draft",
+            "backlog",
+            "to_do",
+            "in_progress",
+            "review",
+            "in_release",
+            "merged",
+            "fulfilled",
+            "superseded"
+          ]
+        },
+        "approval": {
+          "enum": [
+            "draft",
+            "approved",
+            "unknown"
+          ]
+        },
+        "plan": {
+          "type": "string",
+          "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+        },
+        "current": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "build_id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+                },
+                "source": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "tip_sha": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{40,64}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "build_id",
+                "source",
+                "tip_sha"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "slice_slug",
+        "spec_slug",
+        "stage",
+        "approval",
+        "plan",
+        "current",
+        "notes",
+        "unresolved",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "build": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "enum": [
+            2
+          ]
+        },
+        "kind": {
+          "enum": [
+            "build"
+          ]
+        },
+        "build_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+        },
+        "state": {
+          "enum": [
+            "building",
+            "frozen",
+            "staged",
+            "accepted",
+            "released"
+          ]
+        },
+        "base": {
+          "$ref": "#/$defs/pin"
+        },
+        "branches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/branch"
+          }
+        },
+        "schedule": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/schedule"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "freeze": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/freeze"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "build_id",
+        "state",
+        "base",
+        "branches",
+        "schedule",
+        "freeze",
+        "unresolved",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "release": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "enum": [
+            2
+          ]
+        },
+        "kind": {
+          "enum": [
+            "release"
+          ]
+        },
+        "release_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+        },
+        "lifecycle": {
+          "enum": [
+            "active",
+            "released",
+            "superseded",
+            "cancelled"
+          ]
+        },
+        "state": {
+          "enum": [
+            "preparing",
+            "assembling",
+            "assembled",
+            "testing",
+            "ready",
+            "merged",
+            "unknown"
+          ]
+        },
+        "base": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/pin"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "integration_branch": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "candidate": {
+          "$ref": "#/$defs/candidate"
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/change"
+          }
+        },
+        "final_pr": {
+          "$ref": "#/$defs/pr"
+        },
+        "acceptance": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "enum": [
+                "pending",
+                "passed",
+                "accepted",
+                "failed",
+                "unknown"
+              ]
+            },
+            "evidence": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "status",
+            "evidence"
+          ],
+          "additionalProperties": false
+        },
+        "staging_receipt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "release_id",
+        "lifecycle",
+        "state",
+        "base",
+        "integration_branch",
+        "candidate",
+        "changes",
+        "final_pr",
+        "acceptance",
+        "staging_receipt",
+        "unresolved",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "deployment": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "enum": [
+            2
+          ]
+        },
+        "kind": {
+          "enum": [
+            "deployment"
+          ]
+        },
+        "deployment_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+        },
+        "environment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "release_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "candidate": {
+          "$ref": "#/$defs/candidate"
+        },
+        "outcome": {
+          "enum": [
+            "pending",
+            "verified",
+            "failed",
+            "unknown"
+          ]
+        },
+        "included_slices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/member"
+          }
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "deployment_id",
+        "environment",
+        "release_id",
+        "candidate",
+        "outcome",
+        "included_slices",
+        "evidence",
+        "unresolved",
+        "extensions"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

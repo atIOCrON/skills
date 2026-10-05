@@ -1,5 +1,10 @@
 # Release Manifest
 
+New and adopted records use `operational-records.md` and schema-v2 validation.
+The v1 templates below document historical qualification evidence; they are
+not the format for new canonical manifests or dashboard inputs. Preserve their
+freeze, lineage and review gates when writing schema-v2 state.
+
 Use one canonical JSON manifest for each implementation build. Store it at
 `plans/builds/<build-id>/manifest.json` unless the repository defines
 another stable path; retain legacy `release_id` fields for schema compatibility.
@@ -86,6 +91,7 @@ the build skill's `queue-build.md` and `scheduling.md` for dispatch.
 ```json
 {
   "schema_version": 1,
+  "review_records_version": 1,
   "release_id": "release-name",
   "state": "building",
   "base": {"branch": "master", "sha": "<full-sha>"},
@@ -106,7 +112,10 @@ the build skill's `queue-build.md` and `scheduling.md` for dispatch.
       "surfaces": ["storefront"],
       "review_progress": {
         "status": "pending",
+        "sha": null,
         "completed_passes": 0,
+        "historical_completed_passes": 0,
+        "passes": [],
         "pass_limit": 5,
         "evidence": null
       },
@@ -123,6 +132,9 @@ the build skill's `queue-build.md` and `scheduling.md` for dispatch.
       "trim_review": {
         "status": "pending",
         "sha": null,
+        "completed_passes": 0,
+        "historical_completed_passes": 0,
+        "passes": [],
         "evidence": null
       },
       "review_handoff": null,
@@ -214,8 +226,8 @@ A branch with automation-clean reviews requires all three entries. A capped
 branch retains its actual reviewer results and cap marker even when a human
 accepts it; human acceptance never changes a reviewer entry to `clean`.
 
-Use optional branch-level `review_progress` to preserve orchestration state
-across resumed runs. Its status is `pending`, `clean`, or
+Legacy manifests may use optional branch-level `review_progress` to preserve
+orchestration state across resumed runs; v1 review records require it. Its status is `pending`, `clean`, or
 `review_cap_reached`; `completed_passes` counts only completed fresh discovery
 passes and `pass_limit` is the configured cap. Set `evidence` to the triage
 ledger path when the cap is reached. A capped branch remains in the manifest
@@ -327,13 +339,71 @@ invalidation of integration, pipeline, and acceptance results affected by the
 change. Send noncritical additions to a later release unless the user
 explicitly changes the frozen scope.
 
+## Structured review accounting
+
+New builds set `review_records_version: 1`. Both `trim_review` and
+`review_progress` require `completed_passes`, `historical_completed_passes`,
+and `passes`. Derive each count from completed receipts in its period; do not
+maintain a separate report total. Current and historical periods are disjoint;
+their sum is the displayed count and, for correctness, the plan's cap count.
+Resumption, restacking, closures, retries and format repairs never reset the
+period or add a pass. `sha` describes the current result, equals `tip_sha` when
+complete, and is null while pending. Retain original receipt SHAs through
+restacks; existing review mappings establish current-tip applicability.
+
+The coordinator imports a receipt only after all three outputs pass the
+existing phase-specific checks and one triage is recorded:
+
+```json
+{
+  "pass_id": "<build-id>-code-1",
+  "period": "current",
+  "status": "completed",
+  "completed_at": "2026-10-04T09:00:00Z",
+  "reviewed_sha": "<full-sha>",
+  "triage_evidence": "plans/slices/<stage>/<slug>/<slug>.reviews/triage.md",
+  "reviewers": [
+    {"reviewer": "claude", "validated": true, "sha": "<full-sha>", "evidence": "<project-plans-output-path>"},
+    {"reviewer": "codex", "validated": true, "sha": "<full-sha>", "evidence": "<project-plans-output-path>"},
+    {"reviewer": "cursor", "validated": true, "sha": "<full-sha>", "evidence": "<project-plans-output-path>"}
+  ]
+}
+```
+
+Use stable unique IDs within each phase. A subsequently disqualified receipt
+stays on record with `status: "disqualified"` and a nonempty `reason`; exclude
+it from counts. Incomplete launches stay in execution records. A documented
+zero-diff trim exemption uses `applicability: "zero_diff"`, zero receipts and
+its evidence path. Waivers retain their separate authorization and evidence.
+
+Publish receipts, derived counts and result identity together at every completed
+pass, disqualification and restack handoff; validate before reporting success.
+Evidence paths must resolve to nonempty files within the original project's
+`plans/`. Workers return receipts; only the coordinator writes the manifest.
+Do not set `validated: true` solely because a file exists: run the existing
+reviewer-output checks and triage first.
+
+Legacy manifests retain their existing contract until their evidence is
+reconciled. Add v1 only after every accepted branch has valid receipts; leave
+unprovable historical counts unknown rather than inventing or resetting them.
+Historical reconciliation uses the explicit operational-record import. The browser never parses legacy ledgers.
+
 ## Validation
 
 Run:
 
 ```bash
 python <skill-root>/scripts/validate_release_manifest.py <manifest>
+python <skill-root>/scripts/validate_review_records.py <manifest> --project-root <original-project>
 ```
+
+The second command includes the existing manifest checks and requires v1
+review accounting, matching receipt totals, three validated output references,
+UTC completion times, current result SHAs and nonempty local evidence files.
+Use `--allow-legacy` only when inspecting an unreconciled historical manifest;
+it does not certify legacy review counts. Both scripts are read-only and return
+nonzero with field-specific errors. They check record integrity, not reviewer
+judgment or the truth of evidence.
 
 The validator checks scheduled selection, unique work assignments, accepted
 tail consistency, linear parent order and spec blocks when supplied, plus

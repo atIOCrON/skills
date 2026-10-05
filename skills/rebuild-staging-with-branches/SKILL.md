@@ -6,6 +6,15 @@ metadata:
   layer: runner
 ---
 
+
+Read `references/operational-records.md` before creating or updating plan metadata,
+builds, releases or deployments. Its schema-v2 JSON contract is authoritative
+for operational records. Write and validate canonical JSON alongside each state
+change; do not leave the browser report to reconstruct state from Markdown.
+Use `scripts/validate_operational_records.py <record> --project-root <original-project>`
+for each owned record before handoff. Whole-project audit findings are separate.
+Keep historical extensions and existing authorization, verification and review
+gates; they do not authorize schema aliases or inferred reporting values.
 # Rebuild Staging With Branches
 
 Make `origin/staging` match one tested integration of a pinned base and the
@@ -90,29 +99,19 @@ assume that the base is `main`, `master`, or `develop`.
    ignored receipt is the only permitted change in the user's original
    workspace.
 
-Start the receipt with `state: "building"`. Keep it small and record at least:
+Start the schema-v2 deployment receipt with `outcome: "pending"`, explicit
+`deployment_id`, environment, optional release ID, null candidate pins and an
+empty `included_slices` array. Record ordered inputs, base, backup, old staging
+pointer and pipeline/recovery evidence under `extensions`. Update candidate
+pins during assembly and record exact slice/source/tip membership from validated
+release/build JSON or verified Git ancestry. No Markdown inference is allowed.
+An integration branch supplied by release preparation must carry the release's
+individual slice membership, not just the integration source itself.
 
-- `release_id`: `staging-rebuild-<UTC-timestamp>`;
-- `kind`: `deployment`, and `environment`: `staging`;
-- `state`: `building`, changed to `staged` only after verified deployment;
-- `created_from`: `user_branch_list`;
-- `base`: the actual remote, branch name, and pinned full SHA;
-- `branches`: ordered `source` and pinned `tip_sha` entries;
-- `integration`: branch name, candidate commit SHA, tree SHA, and merge order;
-- `staging_before`: the old `origin/staging` SHA or `null`;
-- `backup`: the backup branch name or `null`; and
-- `staging_after`: the new staging SHA, once verified.
-
-When supplied, also record `expected_candidate_sha` and the originating release
-record path. Keep receipts independent of release lifecycle moves; preserve
-failed and superseded deployments in the same directory structure.
-
-Use `null` for candidate, tree, backup, and staging-after values that are not
-known yet, then update them as the rebuild advances.
-
-The receipt is evidence produced by this skill, not a prerequisite or release
-scope authority. Do not add freeze digests, review blocks, plan paths, or
-release-orchestration gates.
+Use `outcome: "verified"` only after the candidate and deployment checks pass;
+record its evidence path. Preserve failed attempts with `outcome: "failed"`
+and failure details. Validate the receipt before publishing each transition.
+The receipt is deployment evidence, not release selection or acceptance authority.
 
 ## Assemble
 
@@ -223,9 +222,9 @@ retrying or rolling back.
    state are clear. Run staging smoke checks for application health, essential
    journeys and affected surfaces. Rerun deeper checks only where the staging
    environment invalidates earlier evidence or a smoke failure warrants them.
-   Change the receipt to `state: "staged"` and set `staging_after` only after
-   the candidate identity and deployment are verified. Otherwise leave it in
-   `building` state and record the failure in the report.
+   Set `outcome: "verified"`, candidate pins and evidence only after the
+   candidate identity and deployment are verified. Otherwise record `failed`
+   with its evidence, or keep `pending` while the outcome remains unknown.
 
 Preserve database deployment guards and established recovery procedures.
 Known database drift does not waive them; keep database recovery separate

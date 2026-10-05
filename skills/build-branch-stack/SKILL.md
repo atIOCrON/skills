@@ -6,6 +6,15 @@ metadata:
   layer: runner
 ---
 
+
+Read `references/operational-records.md` before creating or updating plan metadata,
+builds, releases or deployments. Its schema-v2 JSON contract is authoritative
+for operational records. Write and validate canonical JSON alongside each state
+change; do not leave the browser report to reconstruct state from Markdown.
+Use `scripts/validate_operational_records.py <record> --project-root <original-project>`
+for each owned record before handoff. Whole-project audit findings are separate.
+Keep historical extensions and existing authorization, verification and review
+gates; they do not authorize schema aliases or inferred reporting values.
 # Build Branch Stack
 
 Build and push reviewed slices from explicit scope or, when none is supplied,
@@ -217,7 +226,12 @@ from the pinned starting base, selected specs/slices, explicit exclusions, real
 code prerequisites, declared surfaces, and planned checks. Keep unimplemented
 work in `schedule.work`, not placeholder branch entries. In linear mode,
 `branches` contains only accepted, verified, pushed stack branches. Validate with
-`scripts/validate_release_manifest.py`. Reconcile Sheet and prose trackers
+`scripts/validate_release_manifest.py`. New builds use the v1 review accounting
+in `release-manifest.md`. At pass completion and each review/restack handoff,
+the coordinator imports receipts, derives counts and runs
+`python3 <skill-root>/scripts/validate_review_records.py <manifest> --project-root <original-project>`.
+Use `--allow-legacy` only for unreconciled historical records; never fabricate
+receipts to pass validation. Reconcile Sheet and prose trackers
 from the manifest.
 
 Move only the selected reviewed feature directories from

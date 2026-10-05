@@ -91,6 +91,10 @@ Name the concrete missing gate, such as an unverified tip, unpushed tip, failed
 integrity check, or reviewer capacity. Use `null` when no next pass is needed.
 Ancestor movement alone is not a blocker. Record each branch's trim status,
 reviewed or mapped tip, and ledger path in the manifest.
+For v1 review records, return the completed pass receipt defined in
+`release-manifest.md`; the coordinator publishes it with derived current and
+historical trim counts and runs `scripts/validate_review_records.py` against
+the original project. Preserve disqualified receipts without counting them.
 
 Once upstream fixes settle, restack only affected descendants
 in dependency order and verify each changed tip. Retain an already proportionate

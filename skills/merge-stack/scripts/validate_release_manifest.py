@@ -12,6 +12,8 @@ import re
 import sys
 from typing import Any
 
+from validate_review_records import validate_review_records
+
 
 SHA_RE = re.compile(r"^[0-9a-f]{40,64}$")
 STATES = {"building", "frozen", "staged", "accepted", "released"}
@@ -83,6 +85,9 @@ def scope_payload(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def scope_digest(data: dict[str, Any]) -> str:
+    if data.get("schema_version") == 2:
+        from validate_operational_records import scope_digest as canonical_scope_digest
+        return canonical_scope_digest(data)
     encoded = json.dumps(
         scope_payload(data), ensure_ascii=False, separators=(",", ":"), sort_keys=True
     ).encode("utf-8")
@@ -226,6 +231,9 @@ def validate(data: Any) -> list[str]:
     errors: list[str] = []
     if not isinstance(data, dict):
         return ["manifest root must be an object"]
+    if data.get("schema_version") == 2:
+        from validate_operational_records import validate_record
+        return validate_record(data, "build")
 
     if data.get("schema_version") != 1:
         errors.append("schema_version must be 1")
@@ -315,6 +323,10 @@ def validate(data: Any) -> list[str]:
                 review_progress = {}
             progress_status = review_progress.get("status")
             completed_passes = review_progress.get("completed_passes")
+            cap_count = completed_passes
+            historical = review_progress.get("historical_completed_passes")
+            if data.get("review_records_version") == 1 and isinstance(completed_passes, int) and isinstance(historical, int):
+                cap_count = completed_passes + historical
             pass_limit = review_progress.get("pass_limit")
             progress_evidence = review_progress.get("evidence")
             if progress_status not in REVIEW_PROGRESS_STATES:
@@ -342,7 +354,7 @@ def validate(data: Any) -> list[str]:
             if progress_evidence is not None and not is_text(progress_evidence):
                 errors.append(f"{progress_prefix}.evidence must be null or a path")
             if progress_status == "review_cap_reached":
-                if completed_passes != pass_limit:
+                if cap_count != pass_limit:
                     errors.append(
                         f"{progress_prefix} cap status requires completed_passes equal pass_limit"
                     )
@@ -752,6 +764,7 @@ def validate(data: Any) -> list[str]:
         if is_text(freeze.get("scope_digest")) and freeze.get("scope_digest") != scope_digest(data):
             errors.append("freeze.scope_digest does not match the current release scope")
 
+    errors.extend(validate_review_records(data, require=False))
     return errors
 
 

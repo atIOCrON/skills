@@ -11,6 +11,7 @@ publish_bundle="$repo_root/skills/open-stack-requests"
 merge_bundle="$repo_root/skills/merge-stack"
 integration_bundle="$repo_root/skills/integrate-and-test-staging"
 release_bundle="$repo_root/skills/prepare-release-integration"
+status_bundle="$repo_root/skills/branch-stack-status"
 failed=0
 
 sync_one() {
@@ -107,5 +108,22 @@ sync_one shared-components/release-manifest/release-manifest.md \
   "$integration_bundle" references/release-manifest.md
 sync_one shared-components/release-manifest/scripts/validate_release_manifest.py \
   "$integration_bundle" scripts/validate_release_manifest.py
+
+for bundle in "$branch_bundle" "$publish_bundle" "$merge_bundle" "$integration_bundle" "$release_bundle" "$status_bundle"; do
+  sync_one shared-components/release-manifest/scripts/validate_review_records.py \
+    "$bundle" scripts/validate_review_records.py
+done
+for bundle in "$release_bundle" "$status_bundle"; do
+  sync_one shared-components/release-manifest/scripts/validate_release_manifest.py \
+    "$bundle" scripts/validate_release_manifest.py
+done
+
+for skill in branch-stack-status build-branch-stack write-specs write-slices open-stack-requests merge-stack prepare-release-integration rebuild-staging-with-branches integrate-and-test-staging; do
+  bundle="$repo_root/skills/$skill"
+  sync_one shared-components/operational-records/operational-records.md "$bundle" references/operational-records.md
+  sync_one shared-components/operational-records/operational-records.schema.json "$bundle" references/operational-records.schema.json
+  sync_one shared-components/operational-records/scripts/validate_operational_records.py "$bundle" scripts/validate_operational_records.py
+done
+sync_one shared-components/operational-records/scripts/migrate_operational_records.py "$status_bundle" scripts/migrate_operational_records.py
 
 exit "$failed"

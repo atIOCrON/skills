@@ -37,6 +37,10 @@ Targeted closure, same-session format or completion repair, transport retry,
 valid restack or test-only mappings, and an incomplete reviewer launch do
 not count. Preserve the count across task resumptions, implementation shapes,
 and architecture epochs.
+For v1 review records, return each completed pass receipt under
+`release-manifest.md`. The coordinator publishes it and derived counts together,
+then runs `scripts/validate_review_records.py` against the original project.
+Record disqualifications without deleting receipts; mappings do not add passes.
 
 Assess each validated response when it arrives. Independently confirmed
 material findings may start provisional edits in a separate implementation
