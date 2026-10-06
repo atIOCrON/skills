@@ -76,12 +76,14 @@ and report transitions, moves, and reasons.
 
 ## Scale The Initial Plan
 
-Start with the smallest sufficient change. Inspect its owned behaviour, failure
-impact, and effects on persistence, public contracts, and runtime coordination.
-Scale design and verification to those risks. Small fixes may need only a short
+Start with the smallest sufficient change. Identify which requested outcomes
+existing behaviour already supplies and the remaining gap before adding
+requirements or machinery. Inspect the change's owned behaviour, failure impact,
+and effects on persistence, public contracts, and runtime coordination. Scale
+design and verification to those risks. Small fixes may need only a short
 specification and one slice.
 
-Use existing platform behaviour, tests, and release procedures. Add machinery
+Reuse existing platform behaviour, tests, and release procedures. Add machinery
 or gates only for demonstrated gaps; inspect uncertainty before adding scope.
 
 ## Required Content
@@ -92,8 +94,8 @@ or gates only for demonstrated gaps; inspect uncertainty before adding scope.
 - Explicit non-goals and binding constraints.
 - Stable acceptance IDs (`AC-01`, `AC-02`, ...), each expressing one observable
   behaviour or verifiable system property.
-- Agent-run verification sufficient to prove the changed behaviour and relevant
-  preserved contracts.
+- Changed outcomes distinguished from preserved contracts, with sufficient
+  agent-run verification for the change and plausibly affected contracts.
 
 Include applicable decisions, dependencies, external acceptance, and authorized
 complexity. For required new or modified tables and views, specify name, grain,
@@ -142,20 +144,23 @@ or binding repository policy.
 
 Distinguish one-time verification from ongoing regression coverage. Existing
 checks, diff review, or direct inspection may satisfy acceptance; each acceptance
-ID does not require a new test. Add tests only for credible failures in behaviour
-or integration the project continues to own. Do not duplicate upstream coverage
-solely because native behaviour is being restored.
+ID does not require a new test. Preserving a contract does not by itself require
+fresh tests. Add tests only for credible failures in behaviour or integration
+the project continues to own. Do not duplicate upstream coverage solely because
+native behaviour is being restored.
 
 Do not add tests asserting that removed project-owned customizations remain
 absent. Confirm removal through one-time inspection. Absence assertions are
 appropriate when retained project-owned behaviour must continue suppressing
 upstream behaviour.
 
-For any added fixture, harness, service dependency, full API or end-to-end run,
-manual acceptance step, or observation window, state the failure it detects and
-why cheaper checks cannot. Prove changed runtime behaviour at a sufficient
-executable seam; source assertions may supplement it. Do not reconstruct
-unchanged upstream lifecycles with fakes.
+For each added check, including fixtures, harnesses, service dependencies, full
+API or end-to-end runs, manual acceptance steps, and observation windows, name
+the credible failure it catches that existing evidence or a cheaper check would
+miss. Otherwise remove it, unless the user or binding repository policy requires
+it. Prove changed runtime behaviour at a sufficient executable seam; source
+assertions may supplement it. Do not reconstruct unchanged upstream lifecycles
+with fakes.
 
 Require human or external acceptance only when behaviour needs that environment
 or authority; otherwise use `none`. Routine deployment monitoring becomes a
@@ -177,20 +182,19 @@ machinery, or verification.
 2. Compare with the smallest viable design using native ownership and existing
    checks. Remove unnecessary layers, mechanisms, duplicate criteria, fixtures,
    and gates.
-3. Review verification separately. For each proposed new test, fixture, harness,
-   or gate, identify the credible failure it catches that remaining checks would
-   miss. Remove checks that only confirm deletion, duplicate coverage, or guard
-   against hypothetical future changes. Agent-proposed gates remain eligible
-   for removal.
+3. Review verification separately using the added-check rule above. Remove checks
+   that only confirm deletion, duplicate coverage, or guard against hypothetical
+   future changes. Agent-proposed gates remain eligible for removal.
 4. Confirm requirements and behavioural proof remain sufficient. Preserve
    acceptance IDs; never silently renumber them or waive user requirements or
    gates required by the user or binding repository policy.
 5. Repeat only after a material reduction. Stop when no justified reduction
    remains; do not manufacture findings or require repeated clean passes.
 
-Briefly report reductions or why the draft is proportionate. Apply existing
-lifecycle rules to approved contract changes; add no approval stage, ledger,
-or mandatory reviewer fleet.
+Briefly report concrete removals or why a considered simplification would fail
+a requirement or miss a credible risk. Calling the draft "proportionate" is not
+evidence of trimming. Apply existing lifecycle rules to approved contract
+changes; add no approval stage, ledger, or mandatory reviewer fleet.
 
 ## Planning Rules
 
