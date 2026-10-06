@@ -81,14 +81,21 @@ revisions add splits, dependencies, or checks.
 
 1. Justify each extra slice and blocker. Remove administrative splits and
    dependencies based on list order or hypothetical reuse.
-2. Inherit parent requirements and reuse checks. Justify added machinery,
-   fixtures, checks, and gates by demonstrated slice risks. Choose the cheapest
-   sufficient behavioural seam and ordinary reversion when it suffices.
+2. Carry forward the parent's smallest-change and verification rules. Identify
+   what existing behaviour already supplies before adding requirements or
+   machinery. Separate changed outcomes from preserved contracts; preservation
+   alone does not require fresh tests. Reuse parent and existing evidence. For
+   each added check or gate, name the credible failure it catches that existing
+   evidence or a cheaper check would miss; otherwise remove it unless required
+   by the user or binding repository policy. Justify added machinery and fixtures
+   by demonstrated slice risks. Choose the cheapest sufficient behavioural seam
+   and ordinary reversion when it suffices.
 3. Remove duplicated parent prose and sibling coverage. Confirm each acceptance
    ID has one owner and every slice passes the slice test.
 4. Repeat only after a material reduction; stop when no justified reduction
-   remains. Briefly report reductions or retained boundaries without adding an
-   approval stage or ledger.
+   remains. Briefly report concrete removals or why a considered simplification
+   would fail a requirement or miss a credible risk. Calling the plans
+   "proportionate" is not evidence of trimming. Add no approval stage or ledger.
 
 Preserve approved outcomes, constraints, and evidence requirements. Propose
 disproportionate parent requirements as amendments via `write-specs`; do not
@@ -142,8 +149,9 @@ progress. Apply the shared approval, revision, and move rules. Each child needs:
 - demonstrated dependency and intended branch target;
 - release, disable, removal, or rollback boundary;
 - inherited binding decisions and explicitly authorized complexity;
-- sufficient agent-run behavioural checks, with human or external acceptance
-  only when required; and
+- changed outcomes distinguished from preserved contracts, with sufficient
+  agent-run behavioural checks and human or external acceptance only when
+  required; and
 - required new or modified database objects, when applicable, at the same
   precision as the parent spec.
 
