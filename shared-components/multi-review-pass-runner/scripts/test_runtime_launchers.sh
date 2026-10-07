@@ -51,6 +51,11 @@ cat > "$stub_bin/cursor-agent" <<'STUB'
 set -euo pipefail
 printf 'cursor %s\n' "$*" >> "$STUB_ARGS_LOG"
 if [ "${1:-}" = "create-chat" ]; then echo "cursor-session-1"; exit 0; fi
+if [ "${1:-}" = "--help" ]; then echo "usage: cursor-agent -p, --print <prompt>"; exit 0; fi
+if [ "${1:-}" != "--model" ] || [ "${2:-}" != "${STUB_CURSOR_MODEL:-cursor-grok-4.6-high}" ]; then
+  echo "unavailable Cursor model: ${2:-missing}" >&2
+  exit 99
+fi
 prompt="$(cat) $*"
 case "$prompt" in
   *"Preflight probe"*) echo "REVIEWER_SMOKE_OK" ;;
@@ -65,6 +70,7 @@ chmod +x "$stub_bin/codex" "$stub_bin/claude" "$stub_bin/cursor-agent"
 export HOME="$tmp_root/home"
 export PATH="$stub_bin:$PATH"
 export STUB_ARGS_LOG="$tmp_root/args.log"
+unset CURSOR_REVIEW_MODEL STUB_CURSOR_MODEL
 
 artifact_dir="$tmp_root/artifacts"
 mkdir -p "$artifact_dir"
@@ -214,7 +220,7 @@ fi
 grep -qF -- '-s read-only -a never' "$STUB_ARGS_LOG"
 grep -qF -- '--permission-mode plan' "$STUB_ARGS_LOG"
 grep -qF -- '--auto-review --sandbox enabled' "$STUB_ARGS_LOG"
-grep -qF -- '--model grok-4.6-high' "$STUB_ARGS_LOG"
+grep -qF -- '--model cursor-grok-4.6-high' "$STUB_ARGS_LOG"
 if grep -qF -- '--mode ask' "$STUB_ARGS_LOG"; then
   echo "cursor launchers must use default agent mode, not ask mode" >&2
   exit 1
@@ -222,5 +228,20 @@ fi
 grep -qF 'CODEX_CLOSURE_OK' "$artifact_dir/codex-closure.md"
 grep -qF 'CLAUDE_CLOSURE_OK' "$artifact_dir/claude-closure.md"
 grep -qF 'CURSOR_CLOSURE_OK' "$artifact_dir/cursor-closure.md"
+
+# The same explicit model override must reach preflight, launch, and resume.
+export CURSOR_REVIEW_MODEL="cursor-test-override"
+export STUB_CURSOR_MODEL="$CURSOR_REVIEW_MODEL"
+override_dir="$tmp_root/cursor-model-override"
+mkdir -p "$override_dir"
+printf 'REVIEW\n' > "$override_dir/cursor-prompt.md"
+"$preflight_script" cursor "$repo_root" > "$override_dir/preflight.txt"
+"$script_dir/launch_cursor_review.sh" "$override_dir/cursor-prompt.md" "$override_dir" "$repo_root"
+printf 'CLOSURE\n' > "$override_dir/cursor-closure-prompt.md"
+"$script_dir/resume_review.sh" cursor "$override_dir/cursor-closure-prompt.md" "$override_dir" "$repo_root"
+grep -qF 'model: cursor-test-override' "$override_dir/preflight.txt"
+grep -qF -- '- model: cursor-test-override' "$override_dir/cursor-session.md"
+grep -qF 'CURSOR_REVIEW_OK' "$override_dir/cursor-raw-attempt1.md"
+grep -qF 'CURSOR_CLOSURE_OK' "$override_dir/cursor-closure.md"
 
 echo "runtime launcher tests passed"
