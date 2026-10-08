@@ -250,9 +250,9 @@ Use the scheduling contract to dispatch work as each branch becomes eligible.
 Pin each authoring base and eventual stack parent separately. Failed
 verification or integrity blocks dependent work, not unrelated preparation;
 unfinished ancestor reviews do not block implementation or the next spec block.
-Keep descendants in
-`in_progress/` until their own trim and correctness passes finish. Draft CRs may
-publish on verified pinned branches; ready CRs still need a qualified chain.
+Keep prepared slices in `in_progress/` until stack acceptance and review mapping;
+accepted slices stay there until their own trim and correctness finish. Draft
+CRs require accepted, verified pinned branches; ready CRs need a qualified chain.
 
 For each eligible implementation, dispatch these branch-local steps:
 
@@ -289,11 +289,13 @@ For each eligible implementation, dispatch these branch-local steps:
 Record parallel authoring results as `prepared` in `schedule.work`. The
 coordinator restacks onto the tail in spec order, re-verifies, pushes, and
 records accepted pins/checks in `branches` before advancing `schedule.tail`.
-Formal trim/correctness requires acceptance; reuse prepared-tip evidence only
-with valid identity/mapping proof. Follow `queue-build.md` for publication handoffs.
+Prepared candidates may run provisional trim/correctness on their verified,
+pushed tips and pinned authoring parents. Record receipts in `schedule.work`;
+carry conclusions onto accepted tips only through valid identity/mapping proof.
+Follow `queue-build.md` for acceptance, evidence transfer, and publication handoffs.
 
-Start each accepted branch's trim once its tip is verified and pushed and its
-parent SHA is pinned. Run eligible trim passes concurrently, subject only to reviewer capacity.
+Start each prepared or accepted branch's trim once its tip is verified and pushed
+and its review parent SHA is pinned. Run eligible passes up to reviewer capacity.
 A moving ancestor makes a descendant provisional, not ineligible. Within a
 branch, triage pass N, apply accepted reductions, verify and push, then start pass N+1.
 Start correctness pass 1 when that branch's trim is proportionate. Run eligible
@@ -317,7 +319,7 @@ seek human disposition separately for release readiness.
 
 Move each slice to `review/` when its verified pushed tip has proportionate
 trim, passed branch checks, and clean correctness reviews or the exhausted cap.
-Require a valid pinned parent, not ancestor review completion. Preserve
+Require stack acceptance and current-tip review coverage, not clean ancestors. Preserve
 `.reviews/`, `.evidence/`, and `.execution/`; record `review_handoff` with the
 transition SHA, outcome, and evidence. Record pending human, external, and
 release-candidate checks with owners and prerequisites. Refresh paths and

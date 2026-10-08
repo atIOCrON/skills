@@ -73,15 +73,22 @@ Reserve names/order in `schedule.work`. Create branches when workers start from
 a verified commit, without empty branches or placeholder SHAs for future work.
 Independent workers may share a verified authoring base. Record that base and
 the result SHA separately from the final pin; candidates remain `prepared`
-until accepted in order.
+until accepted in order. Provisional reviews follow `scheduling.md`; import
+receipts and link packs and ledgers in `schedule.work`. Update `prepared_sha`,
+checks, and handoffs after verified fixes.
+Do not advance the tail or move prepared slices to `review/`.
 
 Under `git-branch-commit.md`, the coordinator backs up each candidate, transfers
 only its owned commit range onto the tail, resolves ordinary conflicts, compares
 changes, verifies the exact new commit, and pushes with the expected lease.
-Apply existing review-mapping rules; conflict resolutions require proof to retain
-reviews. Only then add it to `branches` and advance `schedule.tail`. Prepared
-candidates are neither accepted tails nor releasable slices. Reviews and final
-candidate checks remain separate gates.
+Finish or isolate any in-flight pass before rewriting its source or pack.
+Transfer receipts, counts, and valid current-tip results into the accepted branch
+record without resetting pass numbers or the cap. Retain conclusions through
+`code-review-loop.md` mappings and `trim-review.md` carry-forward rules; those
+references govern invalidated results. Review coverage may remain pending at
+acceptance. Add the verified, pushed branch to `branches` and advance
+`schedule.tail`. Prepared candidates are neither accepted tails nor releasable
+slices. Reviews and final candidate checks remain separate gates.
 
 ## Ownership and Concurrent Release Work
 
@@ -91,7 +98,8 @@ evidence paths and return results. Delegate shared mutations through a handoff
 naming scope, expected SHAs, owner, and return condition. Register contexts in
 `sessions`; provenance alone grants no branch-write lease.
 
-Other agents may review pinned accepted commits and prepare release snapshots.
+Other agents may review pinned prepared or accepted commits and prepare release
+snapshots.
 Assign review ownership to avoid duplicate passes. The coordinator imports
 evidence and CR state; other agents own separate outputs/preparation records.
 Default to a qualified, ancestry-closed prefix. Pin commits and evidence links

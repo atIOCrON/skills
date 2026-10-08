@@ -9,9 +9,9 @@ Require an approved `<feature_dir>/<slug>.md` in `in_progress/`, implementation
 ownership, plan branch, dependency-parent branch, and pinned parent SHA. The
 caller creates or validates and checks out the plan branch first.
 For parallel linear builds, start from the assigned verified authoring base.
-Under `queue-build.md`, return a prepared result after step 6; the coordinator
-restacks, verifies, and accepts it before steps 7-9. Prepared SHAs stay in
-`schedule.work`; the coordinator owns accepted `branches`, moves, and writes.
+Under `queue-build.md`, return a prepared result after step 6. Steps 7-9 may run
+provisionally before stack acceptance under `scheduling.md`. Prepared SHAs and
+receipts stay in `schedule.work`; the coordinator owns acceptance, moves, and writes.
 
 ## Route
 

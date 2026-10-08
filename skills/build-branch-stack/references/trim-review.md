@@ -1,18 +1,19 @@
 # Trim Review
 
-For coordinated linear builds, trim only accepted stack branches. The
-coordinator must restack, verify, and accept `prepared` candidates first under
-`queue-build.md`.
+Prepared linear candidates may trim provisionally against their pinned authoring
+parents before stack acceptance. Keep receipts in `schedule.work` and the slice
+in `in_progress/` until acceptance under `queue-build.md`. Apply the same review
+and fix rules as accepted branches.
 
 Start a branch's trim as soon as its own tip is verified and pushed and its
-parent SHA is pinned. Launch all eligible branches concurrently, subject only
+review parent SHA is pinned. Launch all eligible branches concurrently, subject only
 to reviewer capacity. Review each pinned parent-to-tip diff. An unfinished or
 moving ancestor leaves a descendant provisional; it does not delay its trim
 pass. A verified descendant may push provisionally on its recorded parent SHA
 even if the ancestor ref advanced, provided the pinned SHA remains the tip's
 ancestor, integrity checks pass, and the push uses an explicit lease against
 the expected remote branch state, including absence for a new branch. Restack
-once upstream fixes settle.
+once its intended stack parent is available or upstream fixes settle.
 
 ## Standards and scope
 
