@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the machine-actionable code-review response schema."""
+"""Diagnose review serialization; failures alone do not prove missing substance."""
 
 from __future__ import annotations
 
@@ -61,7 +61,7 @@ def validate(
     for heading in HEADINGS:
         count = lines.count(heading)
         if count == 0:
-            completion_errors.append(f"missing heading: {heading}")
+            format_errors.append(f"missing heading: {heading}")
         elif count > 1:
             format_errors.append(f"heading appears {count} times: {heading}")
         else:
@@ -88,10 +88,11 @@ def validate(
         format_errors.append(f"finding IDs use the wrong pass or reviewer: {', '.join(wrong_ids)}")
 
     if all(lines.count(heading) == 1 for heading in HEADINGS):
+        defined_ids: set[str] = set()
         for heading in HEADINGS:
             body = section_lines(lines, heading)
             if not body:
-                completion_errors.append(f"empty section: {heading}; use - None")
+                format_errors.append(f"empty section: {heading}; coordinator must assess omission")
                 continue
             if "- None" in body and body != ["- None"]:
                 format_errors.append(f"{heading} mixes - None with other content")
@@ -102,12 +103,17 @@ def validate(
                 continue
             bullets = [line for line in body if line.startswith("- ")]
             if not bullets:
-                completion_errors.append(f"{heading} contains no finding bullets")
+                format_errors.append(f"{heading} contains no finding bullets")
                 continue
             for bullet in bullets:
                 match = re.match(r"^- \[([^]]+)]", bullet)
                 if not match or not expected_id.fullmatch(match.group(1)):
                     format_errors.append(f"invalid finding ID in {heading}: {bullet[:100]}")
+                if match:
+                    finding_id = match.group(1)
+                    if finding_id in defined_ids:
+                        format_errors.append(f"duplicate finding ID: {finding_id}")
+                    defined_ids.add(finding_id)
                 if " - Evidence:" not in bullet:
                     completion_errors.append(f"finding lacks evidence in {heading}: {bullet[:100]}")
                 if " - Recommendation:" not in bullet:

@@ -35,8 +35,9 @@ upstream fixes settle and restack, verification, and review mapping or a fresh
 pass finish.
 
 Run at most five completed discovery passes for one plan. A pass counts when
-all three reviewers have produced validated outputs and triage is recorded.
-Targeted closure, same-session format or completion repair, transport retry,
+all three reviews are substantively complete on the pinned scope and SHA,
+findings are preserved, and triage is recorded under `multi-review-pass-runner`.
+Targeted closure, local normalization/assessment, substantive clarification, transport retry,
 valid restack or test-only mappings, and an incomplete reviewer launch do
 not count. Preserve the count across task resumptions, implementation shapes,
 and architecture epochs.
@@ -46,15 +47,15 @@ JSON, then runs `scripts/validate_operational_records.py <manifest> --project-ro
 receipt and validator; never publish v1 state under an adopted canonical path.
 Record disqualifications without deleting receipts; mappings do not add passes.
 
-Assess each validated response when it arrives. Independently confirmed
-material findings may start provisional edits in a separate implementation
+Assess each complete response as it arrives, despite formatting failures.
+Independently confirmed material findings may start provisional edits in a separate implementation
 checkout while other reviewers run. Keep the reviewed SHA, branch tip, neutral
 pack, and reviewer checkout unchanged apart from expected review artefacts.
 Focused checks may run in the implementation checkout; do not commit or push
 provisional edits.
-The pass remains incomplete until all three outputs are validated, reconciled,
-and recorded in one triage. If later feedback contradicts the fix or triggers
-architecture reassessment, revise or discard the provisional work.
+Reconcile all three reviews in one triage before counting the pass. Retain
+normalization/assessment evidence. Revise or discard provisional work if later
+feedback contradicts the fix or requires architecture reassessment.
 
 Before deciding the post-fix review action, record a risk classification.
 Treat changed production behavior, interfaces, lifecycle ownership, dependency
@@ -161,15 +162,16 @@ For each pass:
 3. Create `<feature_dir>/<plan_slug>.reviews/code-review-pass<N>/`.
 4. Run `multi-review-pass-runner` with `code-review.md` and
    `code-review-loop-code-review-invocation.md`. Start all three reviewers fresh
-   and require exhaustive review after the first blocker. Validate each output
-   before triage. Repair malformed or incomplete output in the originating
-   session; do not replace a completed reviewer merely because its response
-   violated the schema.
-5. As each output validates, assess its evidence class, pinned SHA, supported
-   path, failure family, and prior ledger history. Reject static hypotheses.
-   Before provisional dispatch, check the architecture and fix-cycle rules and
-   whether removing or simplifying new machinery is the smaller resolution.
-   After all three outputs validate and the runner's mutation check passes,
+   and require exhaustive review after the first blocker. Use complete reviews
+   despite formatting failures; preserve originals and repair headings/IDs locally
+   under the runner. Never retry/restart solely for formatting. Clarify only
+   unclear substance, scope or commit identity; use saved evidence first.
+5. As each complete response arrives, assess its evidence class, pinned SHA,
+   supported path, failure family, and prior ledger history. Reject static
+   hypotheses through triage while preserving the reported findings. Before
+   provisional dispatch, check the architecture and fix-cycle rules and whether
+   removing or simplifying new machinery is the smaller resolution. After all
+   three reviews are substantively complete and the mutation check passes,
    triage them together. Batch accepted blocker and should-fix findings for the
    original worker, including any needed changes to provisional edits. Do not
    routinely fix nits. Skill feedback and closure observations cannot trigger

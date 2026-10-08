@@ -22,6 +22,10 @@ scope, review base and commit SHAs, neutral pack, and cross-pass ledger path:
 ## Rules
 
 - Treat comments as hypotheses; deduplicate them before acting.
+- Use complete, understandable reviews even when formatting validation fails.
+  The coordinator preserves originals and repairs headings/IDs locally under
+  `multi-review-pass-runner`; do not request formatting retries or restarts.
+  Preserve every reported finding and record its disposition in triage.
 - Independently accept only `reproduced` or `binding-proof` findings that meet
   the material-finding definition. A reviewer label is not evidence.
 - For `reproduced`, confirm the pinned SHA, supported production-like path,
@@ -69,12 +73,13 @@ change, evidence class, evidence, and verification check. The worker must
 reproduce the failure or confirm the binding proof before editing. Fixes never
 mutate the reviewed SHA.
 
-Before all three outputs arrive, the orchestrator may assess one validated
+Before all three outputs arrive, the orchestrator may assess one complete
 response against the pinned commit and existing ledger. A confirmed material
 finding may be sent as a provisional fix request, identified by reviewer
 finding ID, only after checking recurrence and fix-cycle limits. Keep this
 assessment outside the ledger and implementation outside the reviewer checkout.
-After all three outputs validate, reconcile overlapping or conflicting findings
+After all three reviews are substantively complete on the pinned scope and SHA,
+with local normalization/assessment evidence, reconcile overlapping or conflicting findings
 and write the ledger once. Reassess or discard provisional edits that the full
 triage does not support; only then treat the fix request as accepted.
 

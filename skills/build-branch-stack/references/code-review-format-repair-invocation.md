@@ -1,44 +1,54 @@
-# Code Review Format Repair
+# Coordinator Review Normalization
 
-Your previous review completed, but its output did not conform to the required
-schema.
+Use complete, understandable reviews even if formatting validation fails.
+Repair headings and finding IDs yourself; never resume or restart a reviewer
+solely for formatting. Preserve the original and save a normalized copy without
+changing findings, severity, evidence, recommendations, uncertainty or conclusions.
+Disposition false positives in triage; retain them in the review.
 
-Do not repeat the review or inspect the repository again. Preserve the existing
-analysis, findings, severities, finding IDs, evidence, and recommendations.
-Reformat or complete that response using the exact seven-section structure
-below. You may add only information already established in your analysis. Do
-not open new findings.
+Preserve valid IDs. Assign `code-p<pass_number>-<reviewer_slug>-NN` to malformed
+or absent IDs from confirmed launch context and update references. Disambiguate
+duplicate labels by source occurrence/location only when references are clear;
+record each occurrence without merging findings.
 
-Write `- None` for an empty section. Include no preamble or trailing
-commentary. Use exactly one proportionality line. End with exactly one
-permitted status line.
+Use the usual seven sections when faithful to the response. Never invent proof,
+severity, proportionality, a clean verdict, or `- None` for an omitted section.
+Otherwise keep a faithful representation and retain serialization diagnostics.
+Check completeness, scope and commit identity against the whole review and saved
+prompt, pack and session evidence. Existing proof requirements still govern
+accepted material findings; reject unsupported findings in triage.
 
-```markdown
-## Blockers
-- [{finding_id}] [path/to/file.py:line] <finding> - Failure family: <invariant / runtime owner / supported path / observable failure> - Evidence class: <reproduced|binding-proof> - Pinned SHA: <40-character review SHA> - Supported path: <normal supported operation> - Existing facilities only: yes - Evidence: <Reproduction: command or procedure; Artifact: path; Observed: result | Proof: binding source; Chain: deduction> - Recommendation: <smallest fix>
+Clarify only missing or unclear substance, scope or commit identity. Recover
+saved evidence first, then ask the originating reviewer a focused content question
+or the user for decisions they own. Never accept an incomplete review or silently
+resolve conflicting SHAs.
 
-## Should-fix
-- [{finding_id}] [path/to/file.py:line] <finding> - Failure family: <invariant / runtime owner / supported path / observable failure> - Evidence class: <reproduced|binding-proof> - Pinned SHA: <40-character review SHA> - Supported path: <normal supported operation> - Existing facilities only: yes - Evidence: <Reproduction: command or procedure; Artifact: path; Observed: result | Proof: binding source; Chain: deduction> - Recommendation: <smallest fix>
+If automatic repair is insufficient, save a normalized draft and assessment JSON
+inside the pass directory. Confirm completeness and preservation before setting
+the fields below; hashes bind the assessment to the exact responses:
 
-## Nits
-- [{finding_id}] [path/to/file.py:line] <finding> - Evidence: <citation> - Recommendation: <fix>
-
-## Contradictions
-- [{finding_id}] [path/to/file.py:line] <source conflict> - Evidence: <evidence> - Recommendation: <resolution>
-
-## Related Existing Issues
-- [{finding_id}] [path/to/file.py:line] <pre-existing issue> - Evidence: <evidence> - Recommendation: <follow-up or why it blocks>
-
-## Proportionality
-- <Proportionate - concise reason; or Not proportionate - finding IDs and concise reason>
-
-## Skill Feedback
-- <non-blocking workflow feedback>
+```json
+{
+  "normalized_path": "/absolute/pass/cursor-normalized-draft.md",
+  "source_sha256": "<SHA-256 of preserved raw response>",
+  "output_sha256": "<SHA-256 of normalized draft>",
+  "reviewer": "cursor",
+  "pass_number": 1,
+  "review_sha": "<confirmed full review commit SHA>",
+  "review_scope": "<confirmed base, tip and scope>",
+  "scope_identity_evidence": "<saved prompt/pack/session paths and identity confirmation>",
+  "semantic_complete": true,
+  "all_findings_preserved": true,
+  "identity_confirmed": true,
+  "completeness_reason": "<why coverage is complete; resolution of apparent content gaps>",
+  "preservation_reason": "<how all findings and their meaning were retained>",
+  "finding_ids": [{"source_occurrence": 1, "old": "cursor-1", "new": "code-p1-cursor-01"}],
+  "changes": ["<presentation edits and any remaining serialization diagnostics>"]
+}
 ```
 
-End with exactly one:
-
-- `Fix blockers before next pass`
-- `Resolve contradictions`
-- `Address findings before next pass`
-- `Review pass clean`
+Run the helper with `--coordinator-assessment <json>` as shown in
+`multi-review-pass-runner.md`. Link the original, draft, assessment and resulting
+normalization record from triage/pass evidence. Proceed with triage; all three
+reviews must be complete and reconciled before counting the pass. Repair adds
+no pass or user override and does not change operational JSON schemas.

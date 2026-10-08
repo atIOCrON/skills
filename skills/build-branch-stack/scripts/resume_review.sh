@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Resume a provider's original review session for closure or format repair.
+# Resume a provider's original review session for closure or substantive clarification.
 set -euo pipefail
 
 if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then
@@ -13,8 +13,8 @@ artifact_dir="$3"
 repo_root="$4"
 continuation_label="${5:-closure}"
 case "$continuation_label" in
-  closure|closure-round[0-9]*|format-repair-round[1-3]) ;;
-  *) echo "error: continuation-label must be closure, closure-round<N>, or format-repair-round<1-3>" >&2; exit 2 ;;
+  closure|closure-round[0-9]*|content-clarification-round[0-9]*) ;;
+  *) echo "error: continuation-label must be closure, closure-round<N>, or content-clarification-round<N>; formatting is repaired locally" >&2; exit 2 ;;
 esac
 session_file="$artifact_dir/$provider-session.md"
 output_file="$artifact_dir/$provider-$continuation_label.md"

@@ -81,22 +81,28 @@ done
 for provider in codex claude cursor; do
   repair_dir="$tmp_root/code-review-pass2/$provider"
   mkdir -p "$repair_dir"
-  printf 'REVIEW\n' > "$repair_dir/$provider-prompt.md"
+  printf 'REVIEW\nReview commit SHA: 0123456789abcdef0123456789abcdef01234567\n' > "$repair_dir/$provider-prompt.md"
   case "$provider" in
     codex) "$script_dir/launch_codex_review.sh" "$repair_dir/$provider-prompt.md" "$repair_dir" "$repo_root" ;;
     claude) "$script_dir/launch_claude_review.sh" "$repair_dir/$provider-prompt.md" "$repair_dir" ;;
     cursor) "$script_dir/launch_cursor_review.sh" "$repair_dir/$provider-prompt.md" "$repair_dir" "$repo_root" ;;
   esac
+  launch_lines="$(wc -l < "$STUB_ARGS_LOG")"
+  set +e
   "$script_dir/repair_code_review_output.sh" "$provider" "$repair_dir" "$repo_root" 2
+  repair_exit=$?
+  set -e
+  test "$repair_exit" -eq 10
+  test "$(wc -l < "$STUB_ARGS_LOG")" -eq "$launch_lines"
   test -s "$repair_dir/$provider-raw-attempt1.md"
-  test -s "$repair_dir/$provider-format-repair-round1-prompt.md"
-  test -s "$repair_dir/$provider-format-repair-round1.md"
-  grep -qF 'classification: valid' "$repair_dir/$provider-format-repair-round1-validation.md"
-  grep -qF 'Review pass clean' "$repair_dir/$provider.md"
+  test ! -e "$repair_dir/$provider-format-repair-round1-prompt.md"
+  test ! -e "$repair_dir/$provider.md"
+
 done
 
 validator="$script_dir/validate_code_review_output.py"
-valid_review="$tmp_root/code-review-pass2/cursor/cursor.md"
+valid_review="$tmp_root/valid-review.md"
+printf '%s\n' '## Blockers' '- None' '' '## Should-fix' '- None' '' '## Nits' '- None' '' '## Contradictions' '- None' '' '## Related Existing Issues' '- None' '' '## Proportionality' '- Proportionate - no material concerns' '' '## Skill Feedback' '- None' '' 'Review pass clean' > "$valid_review"
 python3 "$validator" "$valid_review" cursor 2 >/dev/null
 
 printf 'Preamble\n' > "$tmp_root/format-invalid.md"
@@ -113,8 +119,8 @@ set +e
 python3 "$validator" "$tmp_root/completion-invalid.md" cursor 2 > "$tmp_root/completion-invalid-validation.md"
 validation_exit=$?
 set -e
-test "$validation_exit" -eq 11
-grep -qF 'classification: completion-repairable' "$tmp_root/completion-invalid-validation.md"
+test "$validation_exit" -eq 10
+grep -qF 'classification: format-repairable' "$tmp_root/completion-invalid-validation.md"
 
 material_review="$tmp_root/material-review.md"
 printf '%s\n' \
@@ -184,16 +190,20 @@ grep -qF 'instead of review SHA' "$tmp_root/sha-invalid-validation.md"
 
 empty_dir="$tmp_root/code-review-pass3/claude"
 mkdir -p "$empty_dir"
-printf 'EMPTY_INITIAL\n' > "$empty_dir/claude-prompt.md"
+printf 'EMPTY_INITIAL\nReview commit SHA: 0123456789abcdef0123456789abcdef01234567\n' > "$empty_dir/claude-prompt.md"
 set +e
 "$script_dir/launch_claude_review.sh" "$empty_dir/claude-prompt.md" "$empty_dir"
 empty_launch_exit=$?
 set -e
 test "$empty_launch_exit" -eq 5
+launch_lines="$(wc -l < "$STUB_ARGS_LOG")"
+set +e
 "$script_dir/repair_code_review_output.sh" claude "$empty_dir" "$repo_root" 3
-empty_session_id="$(sed -nE 's/^- session_id: (.*)$/\1/p' "$empty_dir/claude-session.md")"
-grep -qF -- "--resume $empty_session_id" "$STUB_ARGS_LOG"
-grep -qF 'Review pass clean' "$empty_dir/claude.md"
+empty_repair_exit=$?
+set -e
+test "$empty_repair_exit" -eq 12
+test "$(wc -l < "$STUB_ARGS_LOG")" -eq "$launch_lines"
+test ! -e "$empty_dir/claude.md"
 
 "$script_dir/launch_codex_review.sh" "$artifact_dir/codex-prompt.md" "$artifact_dir" "$repo_root"
 "$script_dir/launch_claude_review.sh" "$artifact_dir/claude-prompt.md" "$artifact_dir"
@@ -207,7 +217,17 @@ for provider in codex claude cursor; do
   test -s "$artifact_dir/$provider-closure.md"
   "$script_dir/resume_review.sh" "$provider" "$artifact_dir/$provider-closure-prompt.md" "$artifact_dir" "$repo_root" closure-round2
   test -s "$artifact_dir/$provider-closure-round2.md"
+  "$script_dir/resume_review.sh" "$provider" "$artifact_dir/$provider-closure-prompt.md" "$artifact_dir" "$repo_root" content-clarification-round1
+  test -s "$artifact_dir/$provider-content-clarification-round1.md"
 done
+
+launch_lines="$(wc -l < "$STUB_ARGS_LOG")"
+set +e
+"$script_dir/resume_review.sh" codex "$artifact_dir/codex-closure-prompt.md" "$artifact_dir" "$repo_root" format-repair-round1
+format_resume_exit=$?
+set -e
+test "$format_resume_exit" -eq 2
+test "$(wc -l < "$STUB_ARGS_LOG")" -eq "$launch_lines"
 
 preflight_script="$script_dir/run_reviewer_preflight.sh"
 if [ ! -x "$preflight_script" ]; then

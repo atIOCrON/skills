@@ -459,6 +459,8 @@ separately from branch readiness.
 - Review immutable commits, not the index. The index is a candidate-tree gate.
 - Run fresh Claude, Codex, and Cursor reviewers in parallel for every discovery
   pass. All three must complete successfully.
+- Use complete, understandable reviews despite formatting failures; preserve raw responses and all findings,
+  repair headings/IDs locally under `multi-review-pass-runner`, then triage. Never retry/restart solely for formatting.
 - Do not amend a published commit. Preserve clean review evidence across only
   conflict-free restacks with valid mappings or eligible test-only remediations
   with the identity, verification, and closure evidence required by

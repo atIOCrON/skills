@@ -144,6 +144,7 @@ if [[ "$(cd "$target_dir" && pwd)" == "$repo_root/skills" ]]; then
   python3 "$repo_root/shared-components/release-manifest/scripts/test_build_schedule.py"
   "$target_dir/build-branch-stack/scripts/test_launch_reviewers.sh"
   "$target_dir/build-branch-stack/scripts/test_runtime_launchers.sh"
+  python3 "$target_dir/build-branch-stack/scripts/test_review_normalization.py"
 fi
 
 echo "skills OK: $target_dir"
