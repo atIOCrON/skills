@@ -23,8 +23,11 @@ hash-manifest.sha256
 
 `index.md` records the plan, dependency-parent branch and pinned base SHA,
 plan branch, review commit and tree SHAs, creation time, and evidence paths.
-For a provisional descendant, identify any unreviewed or moved ancestor
-and state that the pack covers only this branch's pinned parent-to-tip diff.
+For a prepared candidate, identify the pinned authoring parent, intended stack
+placement, and pending acceptance. For any provisional branch, identify unreviewed
+or moved ancestors and state that the pack covers its pinned parent-to-tip diff.
+Include relevant inherited code and interactions; conclusions apply to this
+snapshot until mapped onto the accepted stack parent.
 Link the slice's parent specification, slice map, and design checkpoint. Record
 whether the actual production surfaces stayed within the checkpoint and identify
 any new state owner, coordinator, lifecycle interception, whole-template

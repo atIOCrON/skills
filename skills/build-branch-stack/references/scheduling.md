@@ -11,9 +11,9 @@ controls stack placement, not functional dependency.
 | --- | --- |
 | Readiness passed; code prerequisites in a verified pinned base | Isolated implementation, including later specs |
 | Candidate committed | Exact-candidate verification |
-| Independent candidate verified but not next in order | Mark prepared; dispatch other work |
+| Candidate verified and pushed; authoring parent pinned | Mark prepared; start provisional trim |
 | Next candidate prepared; predecessor verified and pinned | Coordinator restacks, verifies, pushes, and accepts |
-| Accepted tip verified and pushed | Its trim; dependent implementation |
+| Accepted tip verified and pushed | Map provisional reviews or start trim; dependent implementation |
 | Its trim proportionate; tip verified and pushed | Correctness pass 1 |
 | Prior findings handled; trim valid; new tip verified and pushed | Next eligible pass or closure under `code-review-loop.md` |
 
@@ -34,10 +34,11 @@ Verified prerequisites unlock provisional descendants before ancestor reviews
 finish. Do not implement dependent behavior against empty branches or missing
 contracts; independent research/preparation may proceed.
 
-Overlap implementation, verification, trim, and correctness. Each accepted
-branch finishes its own trim before correctness; sibling/spec reviews impose
-no barrier. Review immutable, pinned parent-to-tip diffs. Later-spec results
-wait prepared for ordered acceptance without occupying idle workers.
+Overlap implementation, verification, trim, and correctness. Each prepared or
+accepted branch finishes its own trim before correctness. Review immutable,
+pinned parent-to-tip diffs with all code prerequisites present. Later-spec
+results may run provisional reviews while awaiting ordered acceptance; stack
+placement and unfinished sibling/ancestor reviews impose no review barrier.
 
 Reuse expensive checks only under capability equivalence rules for unchanged
 inputs and effective results. Otherwise rerun; re-verify after a base change.
@@ -61,6 +62,7 @@ and unrelated work. No build-wide implementation, review, or restack barrier
 applies; final release gates remain.
 
 For independent A1, A2, B1 in specs A then B: dispatch all three if capacity
-permits; accept A1, restack/verify/accept A2, then B1. A's reviews may continue.
+permits; start provisional trim as each candidate verifies and pushes. Accept
+A1, restack/verify/accept A2, then B1; map reviews or rerun invalidated passes.
 For A1 -> A2, start A2 once A1 is verified and pushed; independent B1 can start
 earlier from a verified base.

@@ -11,6 +11,9 @@ dependency-parent branch and pinned base SHA, plan branch, candidate commit,
 neutral pack, reviewer preflight status, verification evidence, and a completed
 trim result on the current tip or a valid restack mapping. Trim passes do not
 count toward this loop's discovery-pass limit or satisfy its review gate.
+Prepared linear candidates may run provisional passes against their pinned
+authoring parents before stack acceptance. All inputs and pass rules below apply;
+acceptance does not reset counts.
 
 The cross-pass material concern ledger is
 `<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`.
@@ -223,8 +226,9 @@ Return `Reviewed and pushed` only when:
   valid mappings from all three clean-reviewed logical changes; and
 - the pinned base remains an ancestor.
 
-If the parent head has moved, return `Reviewed provisionally` rather than
-`Reviewed and pushed`. Restack once upstream fixes settle and verify the new tip;
+If stack placement is pending or the parent head has moved, return
+`Reviewed provisionally` rather than `Reviewed and pushed`. Restack once the
+intended parent is available or upstream fixes settle and verify the new tip;
 keep an already completed slice in `review/`. A rewritten `in_release` source
 invalidates its pinned membership; reconcile it under the plans layout before
 release progression. Map prior reviews or run a fresh pass

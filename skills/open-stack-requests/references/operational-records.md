@@ -65,8 +65,14 @@ Accepted `branches` and `schedule.work` have explicit slice/spec IDs, source,
 parent/pins and implementation/review state. Work entries do not imply accepted
 branches. Scheduled implementation verification also requires every declared check on
 `prepared_sha`. Scheduled clean correctness refers to its matching qualified
-accepted branch; queue state alone cannot establish clean review. Keep scheduled work's phases current while workers run; import their
-validated receipts through the coordinator. Store supplementary selection,
+accepted branch; queue state alone cannot establish clean review. Prepared
+candidates may complete provisional passes: import receipts and counts, record
+proportionate trim on `prepared_sha`, and keep correctness `running` with null
+phase SHA and a ledger evidence link until acceptance and mapping. At the cap,
+record `review_cap_reached` on the verified prepared tip. Transfer receipts and
+counts unchanged at acceptance; direct or validly mapped current-tip results
+qualify as clean. Keep scheduled work's phases current through the coordinator.
+Store supplementary selection,
 coordinator, session, disposition and integration evidence in the
 record's documented extensions; preserve the existing workflow's gate checks.
 
