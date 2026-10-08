@@ -65,6 +65,8 @@ shared-components/multi-review-pass-runner/scripts/repair_code_review_output.sh|
 shared-components/multi-review-pass-runner/scripts/test_launch_reviewers.sh|scripts/test_launch_reviewers.sh
 shared-components/multi-review-pass-runner/scripts/test_runtime_launchers.sh|scripts/test_runtime_launchers.sh
 shared-components/multi-review-pass-runner/scripts/validate_code_review_output.py|scripts/validate_code_review_output.py
+shared-components/multi-review-pass-runner/scripts/normalize_code_review_output.py|scripts/normalize_code_review_output.py
+shared-components/multi-review-pass-runner/scripts/test_review_normalization.py|scripts/test_review_normalization.py
 shared-components/reviewer-preflight/scripts/run_reviewer_preflight.sh|scripts/run_reviewer_preflight.sh
 shared-components/release-manifest/release-manifest.md|references/release-manifest.md
 shared-components/release-manifest/scripts/validate_release_manifest.py|scripts/validate_release_manifest.py

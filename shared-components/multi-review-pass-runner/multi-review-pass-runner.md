@@ -63,16 +63,11 @@ If closure is later requested by the owning loop, it should persist:
 <artifact_dir>/<reviewer>-closure-round<N>.md
 ```
 
-For format repair, persist every prompt, response, and validation result:
-
-```text
-<artifact_dir>/<reviewer>-format-repair-round<N>-prompt.md
-<artifact_dir>/<reviewer>-format-repair-round<N>.md
-<artifact_dir>/<reviewer>-format-repair-round<N>-validation.md
-```
-
-`<reviewer>.md` is canonical only after validation succeeds. Never overwrite
-the raw response or a repair attempt.
+Keep raw responses and repair attempts unchanged. `<reviewer>.md` is the accepted
+normalized copy. Normalization writes `<source-stem>-normalization-round<N>.md`,
+`.json` (ID mappings, hashes, diagnostics and acceptance basis), and
+`-validation.md`. Coordinator repairs also save a draft and assessment JSON.
+Allowlist these exact files and link them from triage/pass evidence.
 
 Session metadata records provider, transport, session reference, phase, pass,
 redacted command or native operation, artifact paths, output bytes, and failure
@@ -119,24 +114,32 @@ For closure, resume the native reviewer through the host or run:
 "$orchestration_skill_root/scripts/resume_review.sh" <codex|claude|cursor> <closure-prompt> <artifact_dir> {repo_root} closure-round<N>
 ```
 
-After each code-review launch, validate and, when necessary, repair the output
-in the same session:
+For substantive clarification, use the same transport with a focused question
+and label `content-clarification-round<N>`. Save the question and response;
+preserve the original and reassess completeness. Clarification adds no pass.
+
+After code review, native and CLI hosts save the raw response and prompt metadata,
+then run this local helper, which never contacts a reviewer:
 
 ```bash
-"$orchestration_skill_root/scripts/repair_code_review_output.sh" <codex|claude|cursor> <artifact_dir> {repo_root} <pass-number>
+"$orchestration_skill_root/scripts/repair_code_review_output.sh" <reviewer> <artifact_dir> {repo_root} <pass-number> [--coordinator-assessment <assessment.json>]
 ```
 
-For a native host reviewer, preserve its raw response, run
-`validate_code_review_output.py <output> <reviewer> <pass-number> <review-sha>`,
-and send
-`code-review-format-repair-invocation.md` to that same native reviewer. Apply
-the same three-attempt limit and promote its response to `<reviewer>.md` only
-after validation succeeds.
+The helper repairs recognizable headings and unique legacy IDs. For other
+formatting, apply `code-review-format-repair-invocation.md` yourself. Complete,
+understandable reviews proceed to triage despite formatting failures; helper
+limits never authorize a formatting retry or restart.
 
-The validator returns `0` for valid output, `10` for `format-repairable`, `11`
-for `completion-repairable`, and `12` for `fresh-retry-required`. The repair
-runner returns `12` when a fresh reviewer is required after applying the rules
-below.
+Validator codes are diagnostics: `0` expected shape, `10` formatting,
+`11` possible content gaps, `12` missing/unusable output. Missing headings are
+formatting; missing fields may be established elsewhere. Assess the whole review
+and saved scope/identity evidence before deciding substance is missing.
+
+A pass counts after all three reviews are substantively complete on the pinned
+scope/SHA, triage finishes, and the mutation check passes. Receipt `validated: true`
+records that assessment and preserved findings, not perfect prose formatting.
+Link the repair/assessment evidence and retain diagnostics. Repairs add no pass;
+operational JSON still requires schema validation.
 
 ## Liveness And Failures
 
@@ -146,14 +149,10 @@ below.
 - Classify transport as `completed`, `failed`, `still-running`, or
   `liveness-lost`. Then classify output as `valid`, `format-repairable`,
   `completion-repairable`, or `fresh-retry-required`.
-- `format-repairable` means non-empty review analysis with malformed
-  presentation. `completion-repairable` means analysis exists but required
-  sections or evidence are missing. Resume the same reviewer with the standard
-  repair envelope for up to three attempts. Preserve its analysis and do not
-  repeat repository inspection or open new findings.
-- Use a fresh reviewer only when the original session cannot be resumed,
-  liveness is lost, the output shows no usable review, the reviewer abandons or
-  materially contradicts its analysis, or three same-session repairs fail.
+- Follow `code-review-format-repair-invocation.md` for local repair and substantive
+  clarification. Fresh discovery is needed only when coverage cannot be recovered,
+  output is unusable, or substantive contradictions cannot be resolved. A dead or
+  unresumable session does not invalidate a completed usable response.
 - When output is empty but a session ID was captured, try that session once
   before starting a fresh reviewer. With no captured session ID, use a fresh
   reviewer.
