@@ -10,10 +10,12 @@ metadata:
 
 Write one row per requested branch. For current builds, use the strict JSON
 contract in [references/operational-records.md](references/operational-records.md)
-and [its schema](references/operational-records.schema.json). Operator fields
-come only from the selected build/source/pin's `operator_handoff`; never redraft
-them independently from a Sheet or Markdown. Report missing/draft/stale data to
-the coordinator for reconciliation. Historical research below applies only to
+and [its schema](references/operational-records.schema.json). The selected
+build/source/pin's `operator_handoff` supplies the operator facts; rewrite its
+four texts for operators as the writing guide's "Operator wording" section
+requires, keeping every fact, limit and proof level. Never take facts from a
+Sheet or Markdown. Report missing/draft/stale data to the coordinator for
+reconciliation. Historical research below applies only to
 explicitly requested records without canonical handoff data.
 
 ## Destination and scope
@@ -77,9 +79,11 @@ python3 scripts/export_operator_rows.py <project> <build-manifest> \
 ```
 
 The exporter validates the contract and selected pin and rejects missing, draft
-or stale handoffs. It reads JSON only and preserves the four operator texts
-apart from flattening whitespace for CSV cells. Then validate/deliver those rows
-with the writer below. For explicit historical research, prepare the same exact
+or stale handoffs. It reads JSON only and copies the four operator texts
+apart from flattening whitespace for CSV cells. Then rewrite those four texts
+per the writing guide's "Operator wording" section, reading the branch diff,
+templates and layouts to name the real screens and the project's own terms.
+Then validate/deliver the rows with the writer below. For explicit historical research, prepare the same exact
 15-key array using the writing guide. Resolve scripts relative to `SKILL.md`:
 
 ```bash
@@ -98,7 +102,8 @@ sort/stack numbers, and parent ordering within the supplied rows. Confirm
 evidenced dependency relationships separately, including omitted ancestors.
 
 Read back the deliverable. Confirm the exact header, requested branch coverage,
-dependency order, classifications, status evidence, and preserved operator data.
+dependency order, classifications, status evidence, and that each operator text
+passes the writing guide's wording checklist.
 For CSV, also confirm UTF-8 BOM, CRLF records, and a final record terminator.
 For an existing Sheet, apply the full-table reconciliation rules in its reference.
 

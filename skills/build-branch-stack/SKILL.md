@@ -230,11 +230,11 @@ At each implementation, pass and review/restack handoff, import validated
 receipts and the worker's `operator_handoff`, derive counts, and run
 `scripts/validate_operational_records.py <manifest> --project-root <original-project> --require-operator-handoff`.
 Initialize handoffs as draft; after implementation verification, reconcile
-operator text and classifications against the branch-only diff and current
-pin, then mark ready. A suggested test and pass condition claim no acceptance
-result. Retain historical v1 tools only for historical records; never fabricate
-receipts to pass validation. Reconcile Sheet and prose trackers
-from the manifest.
+operator text and classifications against the branch-only diff, the current
+pin and the operator wording rules in `plan-implement.md`, then mark ready.
+A suggested test and pass condition claim no acceptance result. Retain
+historical v1 tools only for historical records; never fabricate receipts to
+pass validation. Reconcile Sheet and prose trackers from the manifest.
 
 Move only the selected reviewed feature directories from
 `backlog/` to `to_do/`. Accept selected features already in `to_do/`. Resolve

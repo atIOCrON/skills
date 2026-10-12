@@ -37,11 +37,12 @@ YYYY-MM-DDTHH-MM-SS+ZZZZ-branch-tracker.csv
 ## Canonical operator fields
 
 For current builds, `operator_handoff` in the selected canonical build/source/pin
-is authoritative. Use `export_operator_rows.py`; do not regenerate its wording
-from Markdown, Git or Sheets. Its arrays use the strict schema enums; the CSV
-export joins multiple values with `; `. Draft, absent or mismatched-pin handoffs
-require coordinator reconciliation before export. The research below is for
-explicitly requested historical records without canonical handoff data.
+is the only source of operator facts: scope, limits, proof levels and what the
+automated tests cover. Use `export_operator_rows.py` to fetch it, then rewrite
+the four texts under "Operator wording" below. Keep every fact; add none that
+the handoff or branch diff does not support. Draft, absent or mismatched-pin
+handoffs require coordinator reconciliation before export. The research below
+is for explicitly requested historical records without canonical handoff data.
 
 ## Research each row
 
@@ -174,47 +175,52 @@ changes or whose code is patched. Exclude unchanged consumers, inherited
 ancestor changes, and untouched transitive dependencies. Leave empty when no
 package is affected. Do not guess names from directory slugs.
 
-### Operator problem
+### Operator wording
 
-In one or two compact sentences, explain the concrete failure, risk, inconsistency, or operational gap that motivated the branch. Describe its observable consequence and affected workflow. Avoid code-level causes unless they are necessary to understand the operator impact.
+The reader is a store operator or tester with no code access who will run the
+check on staging or production. Handoff text is written by implementers and
+reads like code; translate it.
 
-Good characteristics:
+- Use the project's own names for things, taken from storefront labels, Admin
+  labels and code comments: for example taxonomy products reached through a
+  brand and part/model page (an `/s/...` address) versus ordinary products.
+  Never substitute a term from another domain.
+- Name the real screen for every step, verified in templates and layouts: which
+  storefront page triggers it, what the operator must do first (log in, use a
+  test customer), and where the result appears (Klaviyo profile activity feed,
+  an Admin grid, an order email). "Inspect the payload" is not a step.
+- Explain the first use of any internal term in brackets. Use a field name only
+  when the operator sees it in the destination, such as a Klaviyo event property.
+- Give the operator no commands, file paths or test names. Say "the automated
+  tests run during the build cover ..." and state what they cover.
+- Write short positive sentences, one idea each, with no sentence cap. Say what
+  covers a case; do not say what cannot be done and then who does it instead.
+- State honestly when a fresh staging setup may not reproduce the old problem,
+  and when a developer check or automated test is the only proof of a case.
+- Mention an internal refactor only as "an internal tidy-up with no visible
+  effect"; do not spend the operator's attention on it.
 
-- understandable by a release owner, store operator, or tester;
-- specific enough to distinguish the branch from neighboring work;
-- neutral and factual, without claiming the fix is already proven in production.
+Per column:
 
-### Solution
+- **Operator problem**: what the customer or operator saw go wrong, where, and
+  why it mattered. Start from the feature they know, not the code.
+- **Solution**: the new behaviour in the same terms, plus what deliberately stays
+  the same.
+- **Suggested operator test path**: numbered-in-prose steps from first screen to
+  the place the result is read, with a safe test account, sandbox payment or
+  disposable content where relevant. Cover the smallest meaningful set of cases.
+  No destructive fault injection in shared staging.
+- **Pass condition**: what the operator should see on the named screen, including
+  the things that must be unchanged (names, quantities, prices, links, counts).
+  Separate operator-visible proof from automated-test or third-party proof.
 
-In one or two compact sentences, explain the behavior the branch provides and the important boundary it preserves. Mention a prerequisite, configuration choice, or fallback only when it materially affects deployment or validation.
+Example rewrite of a handoff sentence:
 
-Prefer outcomes over file names and class-level mechanics. Technical precision is appropriate for an external contract such as a schema URL, event field, identifier format, stock state, timestamp basis, or export column.
-
-### Suggested operator test path
-
-Give an executable staging path in prose:
-
-- say where to start, such as storefront, Admin, a dedicated analytics destination, or an isolated export target;
-- name the representative actions and fixtures supported by evidence;
-- cover the smallest meaningful scenario matrix, including warm-cache, retry, store, state-transition, or partial-operation cases only when relevant;
-- use safe test accounts, sandbox payments, dedicated receivers, disposable content, and isolated export destinations where applicable;
-- assign payload inspection, cache internals, failure injection, patch application, or source/config verification to a developer when an operator cannot observe it directly;
-- explicitly say when a foundation has no new operator screen.
-
-Do not suggest destructive fault injection in shared staging. Do not imply that visiting a page proves an internal security, timestamp, patch-order, or delivery property.
-
-### Pass condition
-
-State observable, falsifiable results. Include exact fixture values only when the evidence supplies them. Cover preservation properties such as identities, quantities, totals, event counts, links, cached behavior, fallbacks, or unrelated output when those are central to the regression risk.
-
-Distinguish these levels of proof:
-
-- operator-visible behavior;
-- payload, source, configuration, or deployment verification by a developer;
-- third-party receiver ingestion or reporting;
-- unavailable checks that must remain pending.
-
-If another requested branch supersedes part of the expectation, state that relationship in the affected row. A successful deployment, HTTP request, page load, or order alone is not proof of properties it cannot reveal.
+- Handoff: "Suggested operator check: inspect checkout payload for an ordinary
+  item without a stored redirect."
+- Tracker: "Add an ordinary product (opened directly from its product page) to
+  the cart, open the checkout page, then in Klaviyo open the test customer's
+  newest 'Started Checkout' event and view its Items."
 
 ## Cross-row quality check
 
@@ -225,4 +231,4 @@ Before writing the file, confirm that:
 - rows agree on shared identity, pricing, availability, ETA, or event semantics;
 - prerequisites and configuration activation are not mistaken for code deployment;
 - unresolved or invalid context uses the evidenced fallback and never borrows another item, store, session, or branch's data;
-- the language is concise enough to scan in a spreadsheet but complete enough to run a staging check.
+- every operator text passes the "Operator wording" rules: a non-developer can name the screen, the action and the expected result for each step.
