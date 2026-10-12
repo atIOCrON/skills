@@ -46,8 +46,12 @@ Work read-only. Do not edit files, refs, plans, or the manifest.
    - If counts conflict or cannot be verified, show "Unclear" and explain.
 4. Assign one status using this precedence:
    - Exhausted: correctness review reached its cap without a clean result.
-   - Complete: this branch's own correctness reviews are clean and finished.
+   - Complete: this branch's correctness is qualified clean on its accepted tip.
      An unfinished ancestor or external release check does not change that.
+   - Provisionally Complete: implementation, trim and correctness are finished
+     on the prepared tip; final stack acceptance and review mapping remain.
+     Require explicit `review_progress.status: "provisionally_complete"`;
+     completed loop counts alone do not establish completion.
    - Code Review Started: correctness discovery has begun but is not finished.
    - Trim Finished: trim is proportionate on the current tip, or formally
      inapplicable to a zero-diff branch, and correctness has not begun.
@@ -61,7 +65,7 @@ Work read-only. Do not edit files, refs, plans, or the manifest.
    Branch | Plan file | Status | Trim Loops | Code Loops
 
 Use clickable absolute links for plan files. Briefly explain missing plans,
-zero-diff branches, exhausted caps, and any provisional Complete branches.
+zero-diff branches, exhausted caps, and Provisionally Complete branches.
 Do not equate individual branch completion with release readiness or plan
 fulfillment. `Complete` in this table means correctness review is complete;
 `in_release` means included in a recorded assembled candidate; report its

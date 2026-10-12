@@ -82,7 +82,7 @@ def schema_errors(data, schema, at='$'):
 
 def phase_errors(phase, kind, tip, at):
     errors = []
-    terminal = {'clean','proportionate','review_cap_reached','waived'}
+    terminal = {'clean','provisionally_complete','proportionate','review_cap_reached','waived'}
     if phase['status'] in terminal and (phase['sha'] != tip or not phase['evidence']):
         errors.append(at + ' terminal result requires current tip sha and evidence')
     if phase['status'] in {'not_started','running','unknown'} and phase['sha'] is not None:
@@ -118,7 +118,7 @@ def phase_errors(phase, kind, tip, at):
     if kind == 'code':
         if total > phase['pass_limit'] or (phase['status'] == 'review_cap_reached' and total != phase['pass_limit']):
             errors.append(at + ' completed receipts conflict with pass_limit')
-    if phase['status'] in {'clean','proportionate','review_cap_reached'} and not total:
+    if phase['status'] in {'clean','provisionally_complete','proportionate','review_cap_reached'} and not total:
         if kind != 'trim' or phase['applicability'] != 'zero_diff':
             errors.append(at + ' requires completed receipts')
     if phase['status'] == 'not_started' and total:
@@ -209,6 +209,8 @@ def validate_record(data, expected_kind=None, path=None, root=None):
             errors.append('$.branches contains duplicate source identities')
         for index, branch in enumerate(data['branches']):
             at = f'$.branches[{index}]'
+            if branch['review_progress']['status'] == 'provisionally_complete':
+                errors.append(at + ' provisional correctness belongs in schedule.work; accepted branches require current-tip qualification')
             errors.extend(operator_handoff_errors(branch,branch['tip_sha'],at+'.operator_handoff'))
             if branch['target'] != branch['parent']['branch']:
                 errors.append(at + '.target must equal its stack parent; PR destinations belong in change_request')
@@ -268,6 +270,17 @@ def validate_record(data, expected_kind=None, path=None, root=None):
                     accepted_branch = next((b for b in data['branches'] if b['slice_slug']==item['slice_slug'] and b['source']==item['source'] and b['tip_sha']==item['prepared_sha']),None)
                     if not accepted_branch or accepted_branch['review_progress']['status']!='clean':
                         errors.append(at + ' clean scheduled correctness requires the matching qualified accepted branch')
+                if item['review_progress']['status'] == 'provisionally_complete':
+                    if (item['status'] not in {'prepared','blocked'} or not item['prepared_sha'] or not item['parent']
+                            or implementation['status'] != 'verified' or item['trim_review']['status'] != 'proportionate'):
+                        errors.append(at + ' provisional correctness requires prepared or blocked work, a pinned parent, verified implementation and proportionate trim')
+                    reviews = item.get('reviews', [])
+                    complete_reviews = (len(reviews) == 3 and {r['reviewer'] for r in reviews} == REVIEWERS
+                        and all(r['status'] == 'clean' and r['sha'] == item['prepared_sha']
+                            and r['evidence'] and r['method'] and r['origin_sha']
+                            and (r['method'] != 'direct' or r['origin_sha'] == r['sha']) for r in reviews))
+                    if not complete_reviews:
+                        errors.append(at + ' provisional correctness requires three distinct current-tip clean reviews with evidence and direct or mapped origins')
                 for field, phase in [('trim_review','trim'),('review_progress','code')]:
                     errors.extend(phase_errors(item[field],phase,item['prepared_sha'],f'$.schedule.work[{index}].'+field))
                 if item['status']=='prepared' and not item['prepared_sha']:
@@ -354,6 +367,8 @@ def validate_evidence(data,root):
             handoff(entry)
             phase(entry['trim_review']);phase(entry['review_progress'])
             references.extend(c['evidence'] for c in entry['checks'] if c['evidence'])
+            if entry['review_progress']['status'] == 'provisionally_complete':
+                references.extend(r['evidence'] for r in entry.get('reviews', []) if r['evidence'])
     elif data['kind']=='deployment' and data['evidence']:
         references.append(data['evidence'])
     elif data['kind']=='release' and data['acceptance']['evidence']:

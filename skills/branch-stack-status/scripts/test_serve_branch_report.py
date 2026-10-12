@@ -49,6 +49,19 @@ def receipt(pass_id='one',period='current',state='completed'):
             'reason':'Disqualified output' if state=='disqualified' else None}
 
 
+def prepared_work(slug='one'):
+    b=branch(slug)
+    work={k:copy.deepcopy(b[k]) for k in ('slice_slug','spec_slug','plan','source','parent','implementation','trim_review','review_progress','checks','extensions')}
+    work.update(status='prepared',prepared_sha=A,waiting_on=[])
+    work['implementation'].update(status='verified',sha=A,required_check_ids=['check'])
+    work['checks']=[{'id':'check','kind':'agent','status':'passed','sha':A,'evidence':'plans/evidence/check.md','extensions':{}}]
+    for key,status in [('trim_review','proportionate'),('review_progress','provisionally_complete')]:
+        work[key].update(status=status,sha=A,evidence='plans/evidence/result.json',completed_passes=1,passes=[receipt()])
+    work['reviews']=[{'reviewer':r,'status':'clean','sha':A,'evidence':'plans/evidence/clean-'+r+'.json',
+                      'method':'direct','origin_sha':A} for r in sorted(records.REVIEWERS)]
+    return work
+
+
 class ContractTests(unittest.TestCase):
     def test_missing_unknown_fields_types_and_versions_rejected(self):
         for mutation in [lambda d:d.pop('base'),lambda d:d.update(extra='alias'),lambda d:d.update(schema_version=True),
@@ -98,6 +111,46 @@ class ContractTests(unittest.TestCase):
         self.assertFalse(records.validate_record(data))
         p['passes'][0]['reviewers'][1]=copy.deepcopy(p['passes'][0]['reviewers'][0]);self.assertTrue(records.validate_record(data))
         p['passes']=[receipt(),receipt()];p['completed_passes']=2;self.assertTrue(records.validate_record(data))
+
+    def test_provisional_completion_requires_prepared_tip_qualification(self):
+        work=prepared_work();data=build([]);data['schedule']={'work':[work],'extensions':{}}
+        self.assertFalse(records.validate_record(data))
+        for mutate in [lambda w:w.update(prepared_sha=None),lambda w:w.update(parent=None),lambda w:w.update(status='implementing'),
+                       lambda w:w['implementation'].update(status='running'),lambda w:w['checks'][0].update(sha=B),
+                       lambda w:w['trim_review'].update(status='running',sha=None),lambda w:w['trim_review'].update(sha=B),
+                       lambda w:w['review_progress'].update(sha=None),lambda w:w['review_progress'].update(sha=B),
+                       lambda w:w['review_progress'].update(evidence=None),
+                       lambda w:w['review_progress'].update(completed_passes=0,passes=[]),lambda w:w.pop('reviews'),
+                       lambda w:w['reviews'].pop(),lambda w:w['reviews'][0].update(reviewer=w['reviews'][1]['reviewer']),
+                       lambda w:w['reviews'][0].update(status='changes_required'),lambda w:w['reviews'][0].update(sha=B),
+                       lambda w:w['reviews'][0].update(evidence=None),lambda w:w['reviews'][0].update(method=None),
+                       lambda w:w['reviews'][0].update(origin_sha=None),lambda w:w['reviews'][0].update(origin_sha=B)]:
+            changed=copy.deepcopy(data);mutate(changed['schedule']['work'][0])
+            self.assertTrue(records.validate_record(changed),changed['schedule']['work'][0])
+        work['status']='blocked';self.assertFalse(records.validate_record(data))
+        for review in work['reviews']:review.update(method='equal_range_diff',origin_sha=B)
+        self.assertFalse(records.validate_record(data))
+
+    def test_provisional_completion_is_not_accepted_or_frozen_qualification(self):
+        work=prepared_work();b=branch('one')
+        for key in ('implementation','checks','trim_review','review_progress','reviews'):b[key]=copy.deepcopy(work[key])
+        data=build([b]);self.assertTrue(any('belongs in schedule.work' in e for e in records.validate_record(data)))
+        data.update(state='frozen',freeze={'frozen_at':'2026-10-04T09:00:00Z','authorized_by':'user','scope_digest':records.scope_digest(data)})
+        self.assertTrue(any('before freezing' in e for e in records.validate_record(data)))
+
+    def test_provisional_review_evidence_is_checked_by_producers(self):
+        work=prepared_work();data=build([]);data['schedule']={'work':[work],'extensions':{}}
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            evidence=['plans/evidence/check.md','plans/evidence/result.json','plans/evidence/triage.md']
+            evidence.extend('plans/evidence/'+r+'.md' for r in records.REVIEWERS)
+            evidence.extend(r['evidence'] for r in work['reviews'])
+            for value in evidence:
+                path=root/value
+                path.parent.mkdir(parents=True,exist_ok=True);path.write_text('Evidence')
+            self.assertFalse(records.validate_evidence(data,root))
+            path=root/work['reviews'][0]['evidence'];path.unlink()
+            self.assertEqual(records.validate_evidence(data,root),['Missing or empty evidence: '+work['reviews'][0]['evidence']])
 
     def test_historical_and_disqualified_receipts_are_counted_once(self):
         data=build([branch('one')]);p=data['branches'][0]['review_progress']
@@ -176,6 +229,31 @@ class ReportTests(unittest.TestCase):
             rows=self.rows()
         self.assertEqual((rows[0]['source'],rows[0]['code_loops']),('feature/one',0))
         plan.write_text('Different Markdown with invented clean reviews');self.assertEqual(self.rows(),rows)
+
+    def test_provisional_reviews_display_separately_until_stack_qualification(self):
+        work=prepared_work();data=build([]);data['schedule']={'work':[work],'extensions':{}}
+        self.write('plans/builds/build/manifest.json',data)
+        row=self.rows()[0]
+        self.assertEqual((row['status'],row['trim_loops'],row['code_loops']),('Provisionally Complete',1,1))
+        self.assertTrue(any('final stack acceptance' in note for note in row['notes']))
+        work['review_progress'].update(status='running',sha=None)
+        self.write('plans/builds/build/manifest.json',data)
+        self.assertEqual(self.rows()[0]['status'],'Code Review Started')
+        work['review_progress'].update(status='provisionally_complete',sha=A)
+        self.write('plans/builds/build/manifest.json',data)
+        self.write('plans/slices/review/one/record.json',slice_record('one',sha=B))
+        self.assertEqual(self.rows()[0]['status'],'Unclear')
+        # Restack qualification changes applicability, not completed loop counts.
+        b=branch('one',sha=B)
+        for key in ('implementation','checks','trim_review','review_progress','reviews'):b[key]=copy.deepcopy(work[key])
+        b['implementation']['sha']=B;b['checks'][0]['sha']=B
+        b['trim_review']['sha']=B;b['review_progress'].update(status='clean',sha=B)
+        for review in b['reviews']:review.update(sha=B,method='equal_range_diff')
+        work.update(status='complete',prepared_sha=B)
+        for key in ('implementation','checks','trim_review','review_progress','reviews'):work[key]=copy.deepcopy(b[key])
+        data['branches']=[b];self.write('plans/builds/build/manifest.json',data)
+        self.assertFalse(records.validate_record(data))
+        row=self.rows()[0];self.assertEqual((row['status'],row['trim_loops'],row['code_loops']),('Complete',1,1))
 
     def test_operator_text_comes_only_from_selected_json_and_marks_pin_conflict(self):
         self.b['operator_handoff']={'state':'ready','sha':A,'problem':'JSON problem','solution':'JSON solution',
