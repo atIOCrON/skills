@@ -289,10 +289,10 @@ For each eligible implementation, dispatch these branch-local steps:
 Record parallel authoring results as `prepared` in `schedule.work`. The
 coordinator restacks onto the tail in spec order, re-verifies, pushes, and
 records accepted pins/checks in `branches` before advancing `schedule.tail`.
-Prepared candidates may run provisional trim/correctness on their verified,
-pushed tips and pinned authoring parents. Record receipts in `schedule.work`;
-carry conclusions onto accepted tips only through valid identity/mapping proof.
-Follow `queue-build.md` for acceptance, evidence transfer, and publication handoffs.
+Prepared candidates may review verified, pushed tips with pinned authoring parents.
+Record receipts and `provisionally_complete` results in `schedule.work` using
+`queue-build.md` for recording, acceptance, evidence transfer and publication.
+Carry conclusions onto accepted tips only through valid identity/mapping proof.
 
 Start each prepared or accepted branch's trim once its tip is verified and pushed
 and its review parent SHA is pinned. Run eligible passes up to reviewer capacity.

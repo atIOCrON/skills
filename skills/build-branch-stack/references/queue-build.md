@@ -76,6 +76,9 @@ the result SHA separately from the final pin; candidates remain `prepared`
 until accepted in order. Provisional reviews follow `scheduling.md`; import
 receipts and link packs and ledgers in `schedule.work`. Update `prepared_sha`,
 checks, and handoffs after verified fixes.
+When implementation, trim and correctness finish on the prepared tip, record
+`provisionally_complete` and its evidence plus three clean `reviews` under
+`schedule.work`, as defined in `operational-records.md`.
 Do not advance the tail or move prepared slices to `review/`.
 
 Under `git-branch-commit.md`, the coordinator backs up each candidate, transfers
@@ -86,8 +89,10 @@ Transfer receipts, counts, and valid current-tip results into the accepted branc
 record without resetting pass numbers or the cap. Retain conclusions through
 `code-review-loop.md` mappings and `trim-review.md` carry-forward rules; those
 references govern invalidated results. Review coverage may remain pending at
-acceptance. Add the verified, pushed branch to `branches` and advance
-`schedule.tail`. Prepared candidates are neither accepted tails nor releasable
+acceptance. Replace `provisionally_complete` with `clean` after valid current-tip
+mapping, or `running` with null phase SHA while coverage is incomplete. Never
+copy it into accepted `branches`. Add the verified, pushed branch to `branches`
+and advance `schedule.tail`. Prepared candidates are neither accepted tails nor releasable
 slices. Reviews and final candidate checks remain separate gates.
 
 ## Ownership and Concurrent Release Work

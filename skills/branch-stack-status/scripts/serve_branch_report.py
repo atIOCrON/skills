@@ -49,6 +49,9 @@ def review_summary(branch: dict, current_sha: str) -> dict:
         status = 'Exhausted'
     elif code['status'] == 'clean':
         status = 'Complete'
+    elif code['status'] == 'provisionally_complete':
+        status = 'Provisionally Complete'
+        notes.append('Branch reviews are complete on the prepared tip; final stack acceptance and review mapping remain.')
     elif code['status'] == 'running':
         status = 'Code Review Started'
     elif code['status'] in {'unknown','waived'}:

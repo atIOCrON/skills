@@ -67,11 +67,24 @@ branches. Scheduled implementation verification also requires every declared che
 `prepared_sha`. Scheduled clean correctness refers to its matching qualified
 accepted branch; queue state alone cannot establish clean review. Prepared
 candidates may complete provisional passes: import receipts and counts, record
-proportionate trim on `prepared_sha`, and keep correctness `running` with null
-phase SHA and a ledger evidence link until acceptance and mapping. At the cap,
-record `review_cap_reached` on the verified prepared tip. Transfer receipts and
-counts unchanged at acceptance; direct or validly mapped current-tip results
-qualify as clean. Keep scheduled work's phases current through the coordinator.
+proportionate trim on `prepared_sha`, and keep unfinished correctness `running`
+with null phase SHA and a ledger evidence link. When implementation, trim and
+correctness finish, set scheduled correctness to `provisionally_complete`,
+pinned to `prepared_sha` with ledger evidence and three clean current-tip
+`reviews` using the accepted-branch reviewer-result shape. Each result requires
+evidence, a direct or valid mapping method, and its original reviewed SHA.
+This state requires a pinned parent, verified implementation and proportionate
+trim; work remains `prepared` (or `blocked` awaiting acceptance).
+Reports display **Provisionally Complete**; pass counts alone do not establish it.
+On a rewrite, clear the result to `running` with null phase SHA unless verified
+mapping re-establishes completion on the new prepared tip. At the cap without a
+clean result, record `review_cap_reached` on the verified prepared tip. Transfer
+receipts and counts unchanged at acceptance; direct or validly mapped current-tip
+results qualify as clean. Replace `provisionally_complete` with `clean` after
+qualification or `running` with null phase SHA while coverage is incomplete;
+never retain it in accepted `branches`.
+Keep scheduled work's phases current through the coordinator. Existing `running`
+records require evidence reconciliation before claiming provisional completion.
 Store supplementary selection,
 coordinator, session, disposition and integration evidence in the
 record's documented extensions; preserve the existing workflow's gate checks.
@@ -92,7 +105,9 @@ every listed agent check must have passed at that tip. Do not infer completion
 from one arbitrary passed check or a commit existing.
 
 Phase states distinguish `not_started` from `running`; trim ends at
-`proportionate`, correctness at `clean` or `review_cap_reached`. `waived` and
+`proportionate`. Correctness distinguishes provisional completion
+(`provisionally_complete`), qualified completion (`clean`) and exhaustion
+(`review_cap_reached`). `waived` and
 `unknown` require reasons and never display as clean completion. Terminal
 results require the current tip and an evidence path. Clean correctness also
 requires three clean current-tip reviewer results and proportionate trim.

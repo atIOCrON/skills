@@ -686,6 +686,7 @@
           "enum": [
             "not_started",
             "running",
+            "provisionally_complete",
             "clean",
             "review_cap_reached",
             "waived",
@@ -980,6 +981,12 @@
         },
         "operator_handoff": {
           "$ref": "#/$defs/operator_handoff"
+        },
+        "reviews": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/review_result"
+          }
         }
       },
       "required": [
