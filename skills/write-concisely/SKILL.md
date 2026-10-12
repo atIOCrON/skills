@@ -21,7 +21,9 @@ Communicate the complete meaning in the fewest words or lines that remain clear 
 - Combine overlapping points. Delete a point only when the remaining text still carries its full meaning.
 - Keep necessary context, evidence, warnings, examples, and qualifications.
 - Match the audience's knowledge and the user's requested tone. Concise does not mean abrupt, vague, or impersonal.
-- Favor easy comprehension over the smallest possible word or line count.
+- Use the reader's vocabulary, not the code's. Explain a necessary internal term in brackets on first use, and never coin a domain term the project does not use.
+- Prefer several short positive sentences to one dense one. State what does or covers something; do not state what cannot happen and then who handles it instead.
+- Favor easy comprehension over the smallest possible word or line count. Compression that forces jargon or packed clauses is not concision.
 
 Correctness, safety, explicit user instructions, and required formats outrank brevity.
 
@@ -58,6 +60,6 @@ Correctness, safety, explicit user instructions, and required formats outrank br
 Before delivering:
 
 1. Remove every word, sentence, code path, comment, or section that contributes no distinct value.
-2. Replace indirect phrasing with direct phrasing.
+2. Replace indirect, negative-first, or code-flavoured phrasing with direct phrasing in the reader's terms.
 3. Compare the result with the source or request and restore anything whose removal changed meaning, behavior, scope, or tone.
 4. Stop editing when further compression would reduce clarity, accuracy, maintainability, or usefulness.
