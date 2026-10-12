@@ -157,7 +157,8 @@ modules from registration; exclude inherited and untouched packages.
 Draft before implementation. Workers return the object with their evidence;
 only the coordinator writes canonical state. Describe the actual branch-owned
 outcome, supported staging actions, prerequisites, observable pass conditions,
-and developer/third-party checks that the operator cannot establish. Suggested
+and developer/third-party checks that the operator cannot establish, in the
+project's own terms and named screens for a reader with no code access. Suggested
 checks are not execution or acceptance results. Reconcile after scope changes,
 fixes or restacks; refresh the SHA only after checking applicability. Keep
 superseded wording in immutable audit evidence. Verified implementation

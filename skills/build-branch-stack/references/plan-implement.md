@@ -150,6 +150,25 @@ against the branch-only diff after implementation or fixes. Suggested checks do
 not claim executed acceptance. Workers return draft or ready data for the pinned
 candidate; the coordinator owns canonical writes and validation.
 
+Write the four descriptions for a store operator or tester with no code access
+who will run the check on staging or production:
+
+- Use the project's own names from storefront labels, Admin labels and code
+  comments (for example taxonomy products versus ordinary products). Never
+  substitute a term from another domain.
+- Name the real screen for every step, verified in templates and layouts: the
+  page that triggers the behaviour, what the operator must do first, and where
+  the result is read. "Inspect the payload" is not a step.
+- Explain an internal term in brackets on first use. Use a field name only when
+  the operator sees it at the destination.
+- Give the operator no commands, file paths or test names; say what the
+  automated tests cover instead.
+- Write short positive sentences with no sentence cap. Say what covers a case
+  rather than what cannot be done and who does it instead.
+- Say when a fresh staging setup may not reproduce the old problem, and when an
+  automated test is the only proof of a case.
+- Describe an internal refactor as "an internal tidy-up with no visible effect".
+
 ## Output
 
 ```markdown
