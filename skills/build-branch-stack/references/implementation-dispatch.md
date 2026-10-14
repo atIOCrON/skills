@@ -1,93 +1,65 @@
 # Implementation Dispatch
 
-Send implementation and accepted-fix requests to a worker using the bundled
-instructions in `references/plan-implement.md`.
+Assign each independent plan to one persistent implementation chat, or assign
+an approved dependency chain to one owner. Use `orchestration-runtime.md` for
+creation, messaging, progress and pause/resume. Reuse this owner for every
+amendment, verification failure and accepted finding.
 
-## Inputs
+## Assignment
 
-Require:
+Require repository and plan paths, provider, coordinator identity and return
+route, owner name/ID, isolated checkout, owned files/modules, authoring branch
+and verified base SHA, real code prerequisites, canonical manifest path,
+assigned evidence directories, and candidate role. Name the chat
+`<branch name without feature/> - Implementing`.
 
-- repository root;
-- host provider: `codex`, `claude`, or `cursor`;
-- plan path;
-- dispatch type: `initial-implementation`, `verification-fix`, or
-  `code-review-fix`;
-- owned files or modules;
-- isolated worktree, owned authoring branch and pinned base SHA;
-- canonical build manifest's absolute path, spec/slice identity, and whether
-  the result is a prepared candidate or the next stack candidate;
-- fix requests or verification failures for non-initial dispatches;
-- relevant artifact paths.
-- reviewed or failed commit SHA for fix dispatches.
+Render `implementation-dispatch-plan-invocation.md`. Supply absolute paths to
+bundled `plan-implement.md`, `from-reviewed-plan-to-git-handoff.md`,
+`implementation-readiness.md`, `orchestration-plans-layout.md`, and `operational-records.md`; have the owner
+read those instructions. Include only unavailable essential content inline.
+For a complex change, require the implementation analysis and design checkpoint
+before editing. Give the owner the complete branch-local route: implementation,
+checks, trim, fresh correctness reviews, closure, and fixes, preserving caps.
 
-For every dispatch, include the contents of
-`references/orchestration-plans-layout.md` in the worker prompt and assign
-execution and evidence subdirectories within its ownership scope.
-Workers edit assigned checkouts/evidence and return SHAs, changes, and waiting
-reasons. The coordinator owns canonical plan moves, manifest writes, and accepted
-refs. Workers cannot restack others' branches or accept later specs out of order.
+The coordinator registers the persistent ID and execution lease before
+substantial work. Owners edit their checkouts/evidence, commit new revisions,
+and return receipts; the coordinator owns canonical state, plan moves,
+accepted refs, final order, restacks, and publication. Authoring pushes occur
+only through an explicit coordinator lease naming the source, expected remote
+SHA (or absence), allowed operation, and return condition. Owners never rewrite
+accepted refs or restack others' branches. Hand back the lease before acceptance.
+After acceptance, assign fixes to an isolated authoring checkout at the new pin;
+the owner returns commits for coordinator installation and publication, then
+continues reviews once the coordinator confirms verified remote-tip equality.
 
-## Initial Implementation
+## Follow-up and Fixes
 
-For initial implementation:
+Send follow-ups to the same owner ID after checking execution ownership.
+Batch accepted findings for that owner. Include current branch and parent pins,
+reviewed/failed SHA, owned scope, accepted findings or concrete verification
+failures, focused check, and relevant evidence paths. For each correctness
+finding include family ID, `reproduced` or `binding-proof` class, supported path,
+and evidence. Require the owner to independently reproduce it or confirm the
+binding proof before editing; return unconfirmed findings to triage.
 
-1. Read `references/plan-implement.md` and include its operational instructions
-   in the worker prompt; do not send the worker a path to load.
-2. Render
-   `references/implementation-dispatch-plan-invocation.md`.
-3. Assign owned files or modules as a newline bullet list.
-4. For a complex or cross-cutting change, require the worker to create the
-   implementation analysis defined in `references/plan-implement.md` before
-   editing. Pass its artifact path to later fix requests.
-5. Send the prompt to a fresh native implementation sub-agent of the host.
-6. Register its session in the build manifest's `sessions` history under
-   `references/orchestration-runtime.md`; preserve the parent ID and worker ref.
+The owner makes new commits, checks, trim updates and fresh reviews when
+required. Provisional edits use an isolated checkout at the reviewed SHA and
+remain uncommitted until all three responses are triaged. Reconcile accepted
+changes before committing; never amend a reviewed/published commit. Preserve
+review counts and original-session closure. Send restack-invalidated review
+work and user testing feedback to this owner with the coordinator's applicability
+decision and new pins. Replacement is only for a genuinely unavailable session
+under the runtime recovery rules, with history and evidence preserved.
 
-## Fix Dispatch
+## Guardrails and Return
 
-For verification or code-review fixes:
+Send accepted fixes only; prohibit speculative refactors, compatibility shims,
+fallbacks and unrelated cleanup. Return exact paths/reasons when scope needs
+expansion; the coordinator may adjust it within existing build authority.
 
-1. Resume the original implementation sub-agent.
-2. If it cannot be resumed, preserve its history and register a replacement worker
-   with the plan, design checkpoint, current SHA, accepted findings, ownership,
-   and evidence. Do not rely on missing conversation state.
-3. Read `references/plan-implement.md`, include its operational instructions in
-   the worker prompt, then render
-   `references/implementation-dispatch-fix-request.md`.
-4. Include only accepted fixes or concrete verification failures. For each code
-   review fix, include its family ID, `reproduced` or `binding-proof` class,
-   pinned SHA, supported path, and evidence. Batch accepted findings for the
-   same worker into one request.
-5. Include relevant artifact paths, not long copied transcripts unless needed.
-6. Preserve owned-file boundaries.
-7. Normally require edits on the current plan branch; the orchestrator creates
-   a new commit after the worker returns. For a provisional code-review fix,
-   assign a separate checkout at the reviewed SHA and identify the request as
-   provisional. Keep edits uncommitted until all three responses are triaged.
-   Then reconcile the worker's edits with every accepted finding, transfer only
-   triaged changes to the plan branch, and follow normal staging, commit,
-   verification, and push rules.
-
-## Guardrails
-
-- Do not send rejected findings as work.
-- Before editing for a code-review finding, independently confirm its pinned
-  SHA and either reproduce it through the cited supported path with existing
-  facilities or confirm its binding proof. Return an unconfirmed finding to
-  triage without changing production code or tests.
-- Do not request speculative refactors, compatibility shims, fallback defaults,
-  or unrelated cleanup.
-- If a fix needs files outside ownership, return the exact paths and reason. The
-  runner may expand ownership or split the fix within the approved outcome.
-
-## Output
-
-Report:
-
-- dispatch type;
-- host provider and native transport;
-- worker reference, persistent session ID, and parent ID when available;
-- owned files or modules;
-- requested changes;
-- artifact paths supplied;
-- expected verification command or focused check.
+Require an early verified-candidate handoff and a worker-completion handoff:
+owner/coordinator identity, branch, commit, pinned authoring parent, checks,
+trim/correctness outcomes and receipts, remaining dependencies/blockers,
+operator handoff, and evidence paths. The coordinator promptly imports each
+result and reports worker completion separately from accepted/restacked and
+release-ready state. A completed handoff does not authorize release publication.

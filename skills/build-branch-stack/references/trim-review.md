@@ -5,6 +5,7 @@ parents before stack acceptance. Keep receipts in `schedule.work` and the slice
 in `in_progress/` until acceptance under `queue-build.md`. Apply the same review
 and fix rules as accepted branches.
 
+The persistent implementation owner runs its trim loop and fixes.
 Start a branch's trim as soon as its own tip is verified and pushed and its
 review parent SHA is pinned. Launch all eligible branches concurrently, subject only
 to reviewer capacity. Review each pinned parent-to-tip diff. An unfinished or
@@ -75,9 +76,10 @@ test-count target alone is insufficient. If the implementation is already
 proportionate, leave it unchanged. Correctness observations do not count as
 trim findings or correctness approval.
 
-Fix accepted findings from the earliest affected branch forward. Use the
-normal selective stage, new commit, exact-tip verification, and leased push
-rules. Within one branch, triage pass N, apply accepted reductions, verify and
+Route accepted findings to existing owner chats from the earliest affected
+branch forward. Each owner uses the normal selective stage, new commit and exact-tip verification rules. The
+coordinator publishes, or leases an explicit authoring push; confirm remote
+pin equality before continuing reviews. Within one branch, triage pass N, apply accepted reductions, verify and
 push the new tip, refresh its pack, then start pass N+1 immediately. Do not wait
 solely for an ancestor restack. Passes on different branches may overlap.
 Continue until no accepted reduction remains. If the same concern recurs after
@@ -99,8 +101,8 @@ JSON, then runs `scripts/validate_operational_records.py <manifest> --project-ro
 Historical v1 records retain their `release-manifest.md` receipt and validator;
 never publish v1 state under an adopted canonical path.
 
-Once upstream fixes settle, restack only affected descendants
-in dependency order and verify each changed tip. Retain an already proportionate
+Once upstream fixes settle, the coordinator restacks only affected descendants
+in dependency order and verifies each changed tip. Retain an already proportionate
 trim result through a valid restack mapping under `code-review-loop.md`. For a
 manual resolution, inspect every resolved hunk and the complete new
 parent-to-tip diff against the old proportionate diff. Carry the trim result

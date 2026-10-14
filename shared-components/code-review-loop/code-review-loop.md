@@ -173,7 +173,7 @@ For each pass:
    removing or simplifying new machinery is the smaller resolution. After all
    three reviews are substantively complete and the mutation check passes,
    triage them together. Batch accepted blocker and should-fix findings for the
-   original worker, including any needed changes to provisional edits. Do not
+   existing implementation owner chat, including changes to provisional edits. Do not
    routinely fix nits. Skill feedback and closure observations cannot trigger
    a fix, ledger entry, or another pass.
 6. If one failure family or branch-introduced coordinator, state machine, retry
@@ -186,16 +186,17 @@ For each pass:
    select the smallest viable design. Amend the plan and design checkpoint,
    start a new architecture epoch, and continue. Require the user only when
    every viable option crosses the calling skill's authority boundary.
-7. For accepted fixes, keep the feature in `in_progress/` and resume that
-   worker, then:
+7. For accepted fixes, request canonical `in_progress/` state from the
+   coordinator and continue in the same implementation owner chat, then:
    - prepare an exact tree through `staged-diff-scope`;
    - create a new commit through `git-branch-commit`;
    - verify the new SHA through `verification-runner` in a clean worktree;
-   - push it through `git-sync-branch` and check remote SHA equality;
+   - publish through the coordinator (or an explicit authoring push lease) under
+     `git-sync-branch` and check remote SHA equality;
    - refresh the neutral pack at the current feature path.
 8. Resume each originating reviewer once with its findings, original and
    current review SHAs, applied changes, and verification evidence. Apply
-   proposed ledger transitions through the orchestrator; never share another
+   proposed ledger transitions through the implementation owner; never share another
    reviewer's findings. Use artefact paths from the feature's current stage.
 9. Repeat fixes and targeted closure until those findings close or reach an
    architecture or authority boundary. Use targeted closure for a rejected

@@ -9,9 +9,12 @@ Require an approved `<feature_dir>/<slug>.md` in `in_progress/`, implementation
 ownership, plan branch, dependency-parent branch, and pinned parent SHA. The
 caller creates or validates and checks out the plan branch first.
 For parallel linear builds, start from the assigned verified authoring base.
-Under `queue-build.md`, return a prepared result after step 6. Steps 7-9 may run
-provisionally before stack acceptance under `scheduling.md`. Prepared SHAs and
-receipts stay in `schedule.work`; the coordinator owns acceptance, moves, and writes.
+The existing implementation chat owns this entire route, including trim,
+correctness loops, closure and fixes. Report a prepared candidate after step 6,
+then continue steps 7-9 against its pinned authoring base before acceptance
+under `scheduling.md`. Report worker completion promptly. Prepared SHAs and
+receipts stay in `schedule.work`; the coordinator owns acceptance, moves,
+manifest writes and publication. An authoring push needs its explicit lease.
 
 ## Route
 
@@ -19,21 +22,22 @@ receipts stay in `schedule.work`; the coordinator owns acceptance, moves, and wr
    present, and applicable repository standards and contracts. Reject a parent
    specification as an executable plan. Require the specification and slice map
    to be `approved` and the plan's slice slug and acceptance ownership to match.
-2. Select the host mapping through `orchestration-runtime.md`. Have the initial
-   implementation worker assess any adopted branch tip against the plan and
-   complete remaining implementation.
+2. Select the persistent owner transport through `orchestration-runtime.md`.
+   In that owner chat, assess any adopted branch tip against the plan and
+   complete remaining implementation; do not dispatch another implementer.
 3. For new edits, use `staged-diff-scope.md` for selective staging and
    self-review. Block staged/unstaged overlap on candidate files.
 4. Use `git-branch-commit.md` to commit an approved new candidate tree. If
    the adopted tip already satisfies the plan, use that commit as candidate.
 5. Use `verification-runner.md` to verify the exact commit in a clean detached
    worktree. Fix failures through new commits and verify each new SHA.
-6. Use `git-sync-branch.md` to create or update the remote branch at the
-   verified SHA.
-7. Keep the feature in `in_progress/`. Build the neutral commit-pinned review
+6. Use `git-sync-branch.md` under the explicit authoring lease, or hand the
+   verified commit to the coordinator for publication. Await its verified
+   remote-tip confirmation before any review requiring a pushed candidate.
+7. Leave canonical plan state with the coordinator in `in_progress/`. Build the neutral commit-pinned review
    pack and preflight the two non-host providers. Return the verified, pushed
-   candidate immediately so the caller can dispatch this branch's trim and
-   eligible descendant implementation concurrently. Each branch starts
+   candidate immediately so the coordinator can unlock eligible descendant implementation while
+   this owner continues its trim and correctness work concurrently. Each branch starts
    correctness after its own trim; no cross-branch trim barrier applies. An unfinished
    descendant is not release-ready.
 8. Require a proportionate trim result on the current tip or a valid restack
@@ -67,7 +71,8 @@ settle, not reviews.
 Continue independent branches. Require a human decision only at the
 authority boundary defined by the calling skill.
 
-Report the plan, branch and pinned parent, changed files, candidate and final
+Report the coordinator and owner identities, plan, branch and authoring parent,
+remaining dependencies, changed files, candidate and final
 SHAs, upstream SHA, verification, review passes, ledger, artefact paths, and
 one of a blocker, `Review cap reached`, `Reviewed provisionally`, or
 `Reviewed and pushed`.

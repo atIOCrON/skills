@@ -88,6 +88,15 @@ records require evidence reconciliation before claiming provisional completion.
 Store supplementary selection,
 coordinator, session, disposition and integration evidence in the
 record's documented extensions; preserve the existing workflow's gate checks.
+For persistent implementation chats, use `extensions.sessions`,
+`schedule.extensions.coordinator`, and work `extensions.owner` for IDs/names,
+assigned checkout, authoring base, one active execution lease, and pause/resume
+conditions. Import candidate and completion handoffs promptly. A work extension
+`worker_completion` preserves the original authoring pin, clean/capped outcome,
+checks/review receipts, dependencies and handoff evidence; it does not qualify
+a rewritten tip. Report worker complete, accepted/restacked and release ready
+separately while canonical phases record current coverage. Explicitly authorized
+local prefix testing pins assembled sources/checks and keeps pending gates.
 
 Keep `freeze` null until its existing qualification and authorization gates
 pass. Frozen and later candidates require verified implementation, proportionate

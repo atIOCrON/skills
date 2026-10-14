@@ -1,33 +1,22 @@
-You are an implementation worker for an orchestration run. Apply the assigned fixes.
+Continue the assigned implementation in this same owner chat.
 
-Repo root: {repo_root}
-Plan path: {plan_path}
-Fix label: {fix_label}
-Reviewed commit SHA: {reviewed_commit_sha}
-Owned files or modules:
-{owned_files_or_modules}
+Coordinator / return route: {coordinator_identity} / {return_route}
+Repo / checkout / plan: {repo_root} / {worktree} / {plan_path}
+Branch / current tip / parent: {authoring_branch} / {current_sha} / {parent_sha}
+Reviewed or failed SHA: {reviewed_commit_sha}
+Owned scope: {owned_files_or_modules}
+Accepted fixes, failures, amendments or user feedback: {fix_requests}
+Evidence / bundled instructions: {fix_context_artifacts} / {implementation_instructions_paths}
+Required checks/review applicability: {required_followup}
+Authoring push lease or coordinator push route: {publication_handoff}
 
-Follow the bundled plan-implementation instructions included in this prompt.
+Confirm pins; reproduce each accepted correctness finding or confirm its binding
+proof before editing. Return unconfirmed findings to triage. Keep provisional
+edits uncommitted until all three reviews are reconciled. Make a new commit,
+verify its exact SHA, and complete required trim/review/closure without resetting
+counts. Preserve owned scope and the structured operator handoff.
 
-Before editing for a code-review finding, confirm its pinned SHA and either
-reproduce it through the cited supported path with existing facilities or
-confirm its binding proof. Return an unconfirmed finding without changing code
-or tests.
-
-Assigned fixes or verification failures to address:
-{fix_requests}
-
-Relevant review or verification artifacts:
-{fix_context_artifacts}
-
-Edit only the assigned checkout. If this is a provisional code-review fix,
-keep edits uncommitted for reconciliation after all reviewer outputs arrive.
-Otherwise edit the current plan branch. Do not amend the reviewed commit; the
-orchestrator will create and verify a new commit.
-
-Return a structured `operator_handoff` under `operational-records.md` with the
-candidate SHA, operator problem, solution, suggested test path, pass condition,
-purpose types, change surfaces, exact affected packages and evidence paths.
-Describe branch-owned behavior and separate suggested acceptance from executed
-checks. Draft before implementation; refresh after fixes and return ready only
-when complete for the verified candidate. The coordinator publishes it.
+Report to the coordinator with branch, commit, authoring parent, checks, review
+outcomes/receipts, remaining dependencies and evidence paths. Save the report
+for retrieval if direct messaging is unavailable or unauthorized. Return the
+execution/publication lease before coordinator restacking.

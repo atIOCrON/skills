@@ -51,6 +51,7 @@ shared-components/orchestration-conventions/orchestration-plans-layout.md|refere
 shared-components/orchestration-conventions/orchestration-triage-ledger-protocol.md|references/orchestration-triage-ledger-protocol.md
 shared-components/orchestration-final-handoff/orchestration-final-handoff.md|references/orchestration-final-handoff.md
 shared-components/orchestration-runtime/orchestration-runtime.md|references/orchestration-runtime.md
+shared-components/orchestration-runtime/provider-transport-validation.md|references/provider-transport-validation.md
 shared-components/plan-implement/plan-implement.md|references/plan-implement.md
 shared-components/reviewer-preflight/reviewer-preflight.md|references/reviewer-preflight.md
 shared-components/staged-diff-scope/staged-diff-scope.md|references/staged-diff-scope.md

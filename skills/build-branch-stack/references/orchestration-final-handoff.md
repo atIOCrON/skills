@@ -34,7 +34,10 @@ Include:
 
 Include:
 
-- plan path and files changed;
+- owner/coordinator identities, plan path and files changed;
+- branch, authoring parent, remaining dependencies and worker-completion receipt;
+- worker complete, accepted/restacked, and release ready as separate results;
+  worker completion may precede final placement or current-tip review mapping;
 - pinned parent and final verified, local, and remote branch SHAs, plus the
   three clean-review SHAs or valid review mappings;
 - clean-worktree verification commands and status;
