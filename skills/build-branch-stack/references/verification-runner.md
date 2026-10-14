@@ -1,7 +1,7 @@
 # Verification Runner
 
 Verify one committed revision in a clean detached worktree with fresh checks,
-deterministic evidence reuse, or both. Hand bounded failures to its worker.
+deterministic evidence reuse, or both. Return bounded failures to its existing implementation owner chat.
 
 ## Inputs
 
@@ -73,7 +73,7 @@ tree content into the verification worktree.
 
 ## Failure Repair
 
-On failure, send the original worker the command, concise failure, expected
+On failure, send the existing owner chat the command, concise failure, expected
 behavior, owned scope, and rerun command. The worker must create a new candidate
 commit through `staged-diff-scope` and `git-branch-commit`; verify the new SHA
 from a new clean worktree, rerunning only affected checks. After two failed fix

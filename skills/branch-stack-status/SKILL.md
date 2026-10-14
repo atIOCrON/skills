@@ -18,7 +18,10 @@ Work read-only. Do not edit files, refs, plans, or the manifest.
 1. Read the current build manifest (or supplied legacy release manifest).
    Report `schedule` selection, spec order/current spec, coordinator, verified
    tail, and queued/implementing/prepared/blocked work with assignments and
-   waiting reasons. Check accepted refs for tail drift; report without repair.
+   waiting reasons, owner IDs/names, pauses and exclusions from extensions.
+   Report worker complete, accepted/restacked and release ready separately;
+   a completion receipt remains visible while restack coverage is pending.
+   Check accepted refs for tail drift; report without repair.
    For manifest-only input, tabulate accepted `branches` in manifest order and
    summarize planned/prepared work separately; neither counts as accepted.
    Resolve each requested branch's plan from the manifest. If absent or moved, search `plans/slices/` by
@@ -52,6 +55,10 @@ Work read-only. Do not edit files, refs, plans, or the manifest.
      on the prepared tip; final stack acceptance and review mapping remain.
      Require explicit `review_progress.status: "provisionally_complete"`;
      completed loop counts alone do not establish completion.
+   - Worker Complete (acceptance or restack evidence pending): a completion
+     receipt pins finished authoring work and only placement/mapping remains.
+     Use this before started statuses; newly assigned implementation fixes
+     reopen owner work and must be reported as such.
    - Code Review Started: correctness discovery has begun but is not finished.
    - Trim Finished: trim is proportionate on the current tip, or formally
      inapplicable to a zero-diff branch, and correctness has not begun.

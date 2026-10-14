@@ -19,7 +19,15 @@ gates; they do not authorize schema aliases or inferred reporting values.
 
 Build and push reviewed slices from explicit scope or, when none is supplied,
 the approved `plans/specs/to_do/` queue and slice maps. Specs group work; slices
-are implementation units. One coordinator owns the linear stack and manifest.
+are implementation units. One coordinating chat owns the linear stack and manifest. Each independent
+plan has a persistent implementation chat, or shares one for an approved
+dependency chain, named `<branch name without feature/> - Implementing`.
+Each owner completes implementation, checks, trim, correctness loops and fixes;
+reuse that chat for later amendments and findings. The coordinator owns
+scheduling, canonical state, order, restacks, publication and evidence transfer.
+After restacking, it assesses evidence applicability and returns necessary
+fixes or fresh reviews to the same owner. Use the provider transports in
+`orchestration-runtime.md`; native sub-agents do not own implementation.
 Prioritize parallel implementation within and across specs; accept each spec
 as a contiguous block. Use `open-stack-requests` in draft mode as branches stabilize when CR
 publication is authorized; do not wait for release assembly.
@@ -86,16 +94,23 @@ Keep one compact table and update it on state, review, commit, restack, or
 verification changes:
 
 ```text
-| Plan | Status | Reviews | Branch | Commit | Next action | Waiting on |
+| Plan | Owner | Worker complete | Accepted/restacked | Release ready | Reviews | Branch / Commit | Next action / Waiting on |
 ```
 
 The coordinator records selection, spec order/current spec, prepared candidates,
-assignments, and accepted tail in `schedule`, with contributor history in
-`sessions`. Give each waiting task a concrete reason under `scheduling.md`;
+assignments, pauses/exclusions, and accepted tail in `schedule.extensions`,
+with owner assignments in work extensions and history in `extensions.sessions`
+under schema-v2. Preserve historical fields on legacy records. Give each waiting task a concrete reason under `scheduling.md`;
 routine conflict risk or later spec placement cannot justify idle capacity.
 
-Use `Queued`, `In progress`, `Review cap reached`, `In review`, `Release ready`,
-or `Blocked`. `In review` means this slice's implementation, trim, and
+Report **worker complete**, **accepted/restacked**, and **release ready**
+separately. Import each completed handoff promptly; a finished authoring result
+must not remain labelled implementation started while awaiting placement.
+Worker complete includes verified implementation, trim and correctness loops
+finished cleanly or at the cap on its authoring tip. Accepted/restacked pins the
+coordinator's verified, pushed placement; release ready also satisfies current
+coverage, qualified ancestors, dispositions and release checks.
+Keep existing slice stages and `Review cap reached`, `In review`, or `Blocked`. `In review` means this slice's implementation, trim, and
 correctness passes finished or reached the cap; it does not depend on ancestor
 review decisions or descendants. Record the transition SHA in `review_handoff`.
 `Release ready` requires current-tip checks, clean reviews or accepted capped
@@ -178,45 +193,9 @@ approved outcome and release scope. Stop only when decomposition would change
 product scope, acceptance ownership, or exclusions. An explicitly classified
 legacy plan must meet the same standard.
 
-Before implementation, classify each owned acceptance group by its
-candidate-owned mechanism; whether the candidate introduces or modifies its
-lifecycle implementation or only changes routing, selection, configuration, or
-reachability; its runtime owner; and its branch-local, inherited, and external
-evidence. A candidate can change the observable product outcome without
-changing the dependency-owned lifecycle implementation.
-
-Identify required verification for each touched surface, its prerequisites
-(such as locked dependencies, services,
-fixtures, or disabled components), and whether CI runs on the target branches.
-Detect and select every applicable capability skill for specialized changed surfaces.
-Require each selected capability to define fast authoring checks, exact
-candidate verification, final integration verification, and the immutable
-input identities and equivalence rules that permit safe reuse. A reusable check
-must account for every determining input, including source, configuration,
-locked dependencies and fixtures, toolchain, runtime binding, and effective
-result; otherwise rerun it. The capability must also identify the source
-representation and the effective generated or runtime result reviewers need.
-Copy any review-required source or effective result from outside the reviewer
-repository workspace into the neutral review pack; a path, hash, or replay log
-alone is insufficient.
-Record those commands and evidence here without copying ecosystem-specific
-procedures into this orchestration skill.
-Prepare reproducible local checks for requirements CI cannot run. If a required
-agent-run gate or prerequisite is missing, resolve its scope and ownership before
-implementation; do not silently add unrelated CI or tooling work. Distinguish
-checks the agent can run from human or external acceptance (such as a sandbox
-wallet test). Record intended commands, any agreed gate gap, and each external
-check's procedure, owner, and pending result in plan evidence. Runtime lifecycle
-logic introduced or modified by the candidate requires executable local
-behavioural proof at the highest practical seam; source-shape assertions may
-supplement but not replace proof of that owned runtime behaviour. Merely making
-an unchanged dependency-owned lifecycle reachable does not require
-reconstructing it locally when exact effective-code identity, applicable
-inherited test evidence, and explicit external acceptance establish the
-contract. Lightweight test doubles may prove candidate-owned routing or
-binding, but transitions implemented by a fake provider, server, persistence
-layer, account store, or order lifecycle are not evidence of production
-behaviour owned elsewhere.
+Before dispatch, read `references/implementation-readiness.md` for acceptance
+ownership, capability checks, evidence identity and local/external proof.
+Include that reference in each owner's instruction paths.
 
 ## Workflow
 
@@ -254,14 +233,18 @@ Keep prepared slices in `in_progress/` until stack acceptance and review mapping
 accepted slices stay there until their own trim and correctness finish. Draft
 CRs require accepted, verified pinned branches; ready CRs need a qualified chain.
 
-For each eligible implementation, dispatch these branch-local steps:
+For each eligible plan, create or resume its implementation owner under
+`implementation-dispatch.md`. Give it the coordinator's identity and report
+route. Assign an isolated checkout and a pinned authoring base, with one active
+execution owner per session. The coordinator prepares canonical state and
+branch leases; the owner completes these branch-local steps:
 
 1. Record real code prerequisites and the assigned authoring base. Fetch and
    pin that base; in linear mode it may be a shared verified baseline rather
    than the future stack predecessor.
 2. Create its local plan branch from the assigned authoring base, or validate the selected
-   existing plan branch with `git-branch-commit.md`, then move its feature from
-   `to_do/` to `in_progress/` before implementation. On a repair run, verify
+   existing plan branch with `git-branch-commit.md`. The coordinator moves its
+   feature from `to_do/` to `in_progress/` before implementation. On a repair run, verify
    the existing branch and manifest instead of recreating it; move only
    affected features to `in_progress/` only when implementation work is needed;
    restack descendants in their current stage.
@@ -274,7 +257,9 @@ For each eligible implementation, dispatch these branch-local steps:
    review, commit, and verify the exact SHA in a clean worktree under
    `verification-runner.md`. Final integration checks do not replace candidate
    verification.
-   Create or update the remote branch at the first verified commit. A provisional
+   Return the first verified candidate immediately. Create or update its
+   authoring remote only through an explicit coordinator publication lease;
+   otherwise return it for the coordinator to push. A provisional
    descendant may push provisionally on its recorded parent SHA after the
    ancestor ref advances: require that SHA to remain the tip's ancestor, pass
    integrity checks, and use an explicit lease for the expected remote branch
@@ -287,12 +272,15 @@ For each eligible implementation, dispatch these branch-local steps:
    its first-push plain refspec also needs the explicit lease.
 
 Record parallel authoring results as `prepared` in `schedule.work`. The
-coordinator restacks onto the tail in spec order, re-verifies, pushes, and
-records accepted pins/checks in `branches` before advancing `schedule.tail`.
+coordinator assembles completed owner results onto the tail in spec order, verifies, pushes, and
+records accepted pins/checks in `branches` before advancing `schedule.extensions.tail`.
 Prepared candidates may review verified, pushed tips with pinned authoring parents.
 Record receipts and `provisionally_complete` results in `schedule.work` using
 `queue-build.md` for recording, acceptance, evidence transfer and publication.
 Carry conclusions onto accepted tips only through valid identity/mapping proof.
+At each restack, the coordinator records applicable checks/reviews and pending
+work; it sends implementation fixes or necessary fresh review work to the
+existing owner, preserving pass counts and original reviewer contexts.
 
 Start each prepared or accepted branch's trim once its tip is verified and pushed
 and its review parent SHA is pinned. Run eligible passes up to reviewer capacity.
@@ -303,8 +291,8 @@ numbered correctness passes concurrently across branches on pinned parent-to-tip
 Eligibility requires handled prior findings and a verified, pushed tip, not
 clean ancestors. Assess validated findings as they arrive; start provisional
 fixes in an isolated checkout under `code-review-loop.md`. Reconcile all three
-before changing the tip. Fix accepted findings from the earliest affected
-branch forward. Defer descendant restacks until upstream fixes settle; they
+before changing the tip. Route accepted findings to the existing owners from the earliest affected
+branch forward. Owners complete fixes, checks and required review work. Defer descendant restacks until upstream fixes settle; they
 may keep reviewing pinned diffs provisionally. Do not hold trim for a restack.
 Once upstream fixes settle, restack affected descendants, verify tips, and
 update pins, packs, and manifests. Retain reviews only through `code-review-loop.md` mappings;
@@ -353,6 +341,13 @@ When an otherwise-clean discovery pass has one accepted finding resolved only
 by an eligible test-only remediation, follow `code-review-loop.md`: verify the
 new SHA, obtain same-session closure from each originating reviewer, and record
 `test_only_closure` mappings instead of running another discovery pass.
+
+Support explicitly authorized local testing of an assembled prefix. The
+coordinator pins its ancestry-closed snapshot, scope and applicable checks;
+record unfinished review/external gates as pending, without claiming release
+readiness or advancing freeze/publication gates. Route user feedback and any
+implementation work to the existing owners. Local prefix testing does not
+require the full queue to finish and does not authorize staging or deployment.
 
 A qualified prefix needs its own candidate-wide checks; pending checks for the
 larger build do not block it. After all plans, run full-stack checks without a
@@ -491,7 +486,8 @@ Save and validate the canonical manifest at
 path. It records the base, ordered branches, dependencies, targets, tips,
 surfaces, checks, all three review mappings, CRs, exclusions, freeze, integration,
 acceptance, and deployment state; link detailed evidence instead of duplicating
-it. Report child and parent stages, `review_handoff`, current-tip evidence,
+it. Report owner IDs/names and individual pause/exclusion reasons, worker complete,
+accepted/restacked, release ready, child and parent stages, `review_handoff`, current-tip evidence,
 release readiness, and pending dispositions, restacks, and checks with prerequisites.
 Report selection, spec order/current spec, tail, prepared work, assignments,
 waiting reasons, and audit decisions, specs/maps, draft/backlog plans, and

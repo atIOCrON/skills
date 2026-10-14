@@ -23,9 +23,10 @@ Require:
 ## Reviewers
 
 Run `claude`, `codex`, and `cursor` for every pass in fresh parallel contexts.
-Use the implementing host's native sub-agent for its matching reviewer (for
+Use the implementation owner's host native sub-agent for its matching reviewer (for
 example, a Codex sub-agent when Codex is the host). Launch the other two through
-the bundled CLI scripts below and preflight those CLIs. Reviewer slugs are
+the bundled CLI scripts below and preflight those CLIs. These are review-only
+contexts; the persistent owner chat runs the loop, triage and fixes. Reviewer slugs are
 defined in `references/orchestration-finding-ids.md`.
 
 Combine the supplied bundled reviewer instructions with the same rendered
@@ -71,8 +72,8 @@ Allowlist these exact files and link them from triage/pass evidence.
 
 Session metadata records provider, transport, session reference, phase, pass,
 redacted command or native operation, artifact paths, output bytes, and failure
-path when applicable. The build orchestrator registers every reviewer context,
-including replacement and repair contexts, in the manifest's `sessions` history
+path when applicable. The owner returns reviewer metadata; the coordinator registers every context,
+including replacement and repair contexts, in the manifest's `extensions.sessions` history (legacy `sessions`)
 under `references/orchestration-runtime.md`; retain persistent and parent IDs
 when available and link the saved session metadata.
 

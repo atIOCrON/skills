@@ -6,7 +6,7 @@ Load only the reference file needed for the current task.
 ## References
 
 - `references/orchestration-runtime.md`:
-  host selection, native sub-agent use, CLI reviewer mapping, and skill-root
+  persistent implementation chats, execution ownership, reviewer mapping, and skill-root
   resolution.
 - `references/orchestration-plans-layout.md`:
   plans directory layout and plan slug format.

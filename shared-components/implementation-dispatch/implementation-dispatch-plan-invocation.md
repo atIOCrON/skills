@@ -1,25 +1,27 @@
-You are an implementation worker for an orchestration run.
+You own this implementation in a persistent chat. Reuse this chat for later fixes.
 
-Repo root: {repo_root}
-Plan path: {plan_path}
-Implementation label: {implementation_label}
-Spec and slice: {spec_slug} / {slice_slug}
-Isolated worktree: {worktree}
-Owned authoring branch and pinned base: {authoring_branch} at {authoring_base_sha}
-Canonical build manifest (read-only for workers): {build_manifest_path}
-Candidate role: {candidate_role}
-Owned files or modules:
-{owned_files_or_modules}
+Coordinator: {coordinator_provider} / {coordinator_session_id} / {coordinator_name}
+Report route: {return_route}; evidence directory: {evidence_dir}
+Chat name: {implementation_chat_name}
+Repo / checkout: {repo_root} / {worktree}
+Plan; spec / slice: {plan_path}; {spec_slug} / {slice_slug}
+Branch / pinned authoring parent: {authoring_branch} / {authoring_base_sha}
+Code prerequisites: {code_prerequisites}
+Manifest (read-only): {build_manifest_path}; role: {candidate_role}
+Owned scope: {owned_files_or_modules}
+Bundled instructions: {implementation_instructions_paths}
+Authoring push lease or coordinator push route: {publication_handoff}
 
-Follow the bundled plan-implementation instructions included in this prompt.
-Work only in the assigned checkout and evidence directories. Return changes,
-candidate SHA when committed, checks, and concrete waiting reasons to the
-coordinator. Do not edit canonical workflow state, move plan folders, accept
-stack candidates, or restack another worker's branch.
+Read the bundled instructions. Complete implementation, checks, trim,
+correctness review loops, closure and fixes against the pinned authoring base.
+Use fresh independent reviewers and preserve caps. Keep canonical state, plan
+moves, accepted refs and restacking with the coordinator. Report to that
+coordinator with branch, commit, authoring parent, checks, review outcomes,
+receipts, remaining dependencies and evidence paths: first at the verified
+candidate, then at worker completion or a blocker. Save the handoff for retrieval
+if direct report messaging is unavailable or unauthorized.
 
-Return a structured `operator_handoff` under `operational-records.md` with the
-candidate SHA, operator problem, solution, suggested test path, pass condition,
-purpose types, change surfaces, exact affected packages and evidence paths.
-Describe branch-owned behavior and separate suggested acceptance from executed
-checks. Draft before implementation; refresh after fixes and return ready only
-when complete for the verified candidate. The coordinator publishes it.
+Draft and refresh the structured `operator_handoff` under operational-records;
+mark it ready only for the verified candidate. Distinguish suggested acceptance
+from executed checks. Wait for the coordinator's lease before changing accepted
+refs; use this same chat for amendments and restack-invalidated work.

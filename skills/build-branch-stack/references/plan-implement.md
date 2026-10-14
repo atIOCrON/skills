@@ -115,7 +115,10 @@ Use repository instructions or indexes to choose relevant docs when available.
   production footprint materially exceeds the design checkpoint. The runner may
   amend the design within its recorded authority. Line counts are warning
   evidence, not absolute limits.
-- Do not stage files, commit, branch, push, or open a pull request.
+- During this edit phase, do not stage, commit, branch, push, or open a request.
+  The persistent owner then continues the assigned handoff route through
+  selective staging, new commits, exact verification and independent reviews;
+  publication remains with the coordinator or its explicit authoring lease.
 
 ## Verification
 
@@ -199,5 +202,5 @@ who will run the check on staging or production:
 
 End with exactly one:
 
-- `Ready for orchestrator integration`
+- `Ready for owner commit, verification and reviews`
 - `Partial - blocker encountered`

@@ -18,73 +18,59 @@ acceptance, exclusions, change requests, candidate state, and deployment.
 Spreadsheets and prose summaries are projections: generate or reconcile them
 from the manifest, never use them to override it silently.
 
-Build runs also maintain a `sessions` array under the build runner's runtime
+Build runs also maintain `extensions.sessions` (legacy `sessions`) under the build runner's runtime
 guidance. Preserve every contributing context and its handoff evidence across
 resumption; session provenance does not replace SHA-pinned checks or reviews.
 
 ## Build Schedule
 
-Add `schedule` for coordinated builds. Legacy manifests remain valid; infer and
-preserve their layout on resume. The coordinator writes canonical state in the
-original workspace; other agents return evidence/release links for import.
+Schema-v2 keeps planned/authoring work in `schedule.work` and accepted verified,
+pushed placements in `branches`. The coordinator writes canonical state in the
+original workspace; persistent owners return receipts and handoffs for import.
 
-```json
-{
-  "schedule": {
-    "selection": "queue",
-    "layout": "linear",
-    "coordinator": {"session_id": null, "worker_ref": "/root", "workspace": "<absolute-original-workspace>"},
-    "spec_order": ["example"],
-    "ordering_reason": "Prerequisites first, then quick eligible specs",
-    "current_spec": "example",
-    "tail": {"branch": "master", "sha": "<full-base-sha>"},
-    "work": [
-      {
-        "slice_slug": "example_slice",
-        "spec_slug": "example",
-        "plan": "plans/slices/to_do/example_slice/example_slice.md",
-        "source": "feature/example-slice",
-        "status": "queued",
-        "worker_ref": null,
-        "worktree": null,
-        "authoring_base": null,
-        "prepared_sha": null,
-        "waiting_on": []
-      }
-    ]
-  },
-  "branches": []
-}
-```
+Use the schema's extensions for scheduling/session metadata:
 
-Extend the existing manifest; do not create another tracker. Selection is
-`queue` or `explicit`; layout is `linear` or `dependency`. Work statuses are
-`queued`, `implementing`, `prepared`, `stacked`, `complete`, or `blocked`:
-`prepared` has a verified authoring candidate; `stacked` is accepted, verified,
-and pushed; `complete` also has its own review handoff. Blocked fixes preserve
-accepted branch history.
+- `extensions.sessions`: persistent coordinator, owner and reviewer history;
+- `schedule.extensions`: selection, layout, coordinator identity, spec order,
+  rationale, current spec, accepted tail, capacity, pauses and exclusions;
+- `schedule.work[].extensions`: owner provider/ID/name and checkout,
+  `authoring_base: {branch, sha}`, execution/publication lease, pause reason and
+  resume condition, evidence links, `worker_completion`, and accepted pin.
 
-Keep `spec_order` and work in acceptance order, grouped by spec; use a standalone
-legacy slice's slug as its group. Record workers, worktrees, authoring base
-`{branch, sha}`, prepared SHA, and waiting reasons. `current_spec` may be null
-before start or after implementation drains, without waiting for review/release.
-The tail is the last accepted tip, or pinned base before acceptance. Update it
-when that tip changes, and update schedule paths when plans move.
+`worker_completion` records outcome (`clean` or `review_cap_reached`), original
+branch/commit/authoring parent, completion time, checks/review receipts, handoff
+path and remaining dependencies. It is historical evidence of completed owner
+work, not a replacement for canonical phase fields or current-tip coverage.
+Record accepted/restacked pins separately and derive release readiness from
+existing release gates. Preserve the completion receipt through later rewrites.
 
-Only accepted branches enter `branches`; planned names/authoring tips remain in
-`work`. Empty `branches` is allowed only for a `building` scheduled build with
-selected work. Accepted branches record `slice_slug`, `spec_slug`,
-`stacking_reason`, and `code_prerequisites` (required slice slugs). `parent`/
-`target` describe Git placement; `dependency_reason` describes code needs or is
-`none`. In linear mode each parent is the preceding accepted branch, starting
-at `base`, regardless of functional independence. Provisional parent SHA pins
-may lag upstream tips; reconcile before release.
+Work statuses remain `queued`, `implementing`, `prepared`, `stacked`, `complete`,
+or `blocked`: `prepared` pins a verified authoring candidate; `stacked` pins an
+accepted verified pushed placement; `complete` also has its own qualified review
+handoff or capped outcome. A pause uses the existing status plus an explicit
+pause in extensions and a waiting reason; it is never evidence of completion.
+Worker completion can occur while work remains prepared. Promptly import its
+implementation, trim, correctness and operator receipts so reporting reflects
+finished work. A cap remains exhausted, even after its worker completes.
 
-Exclude scheduling state from the freeze digest; include accepted stacking and
-prerequisite fields when present, preserving legacy digests. Separate release
-records pin qualified prefixes and link build evidence without freezing
-unfinished work. Publication handoffs pin stable sources and ownership. Read
-the build skill's `queue-build.md` and `scheduling.md` for dispatch.
+Keep spec blocks contiguous in acceptance order; scope and real prerequisites
+remain separate from placement. Under schema-v2 `work.parent` pins the review
+base and `prepared_sha` pins authoring results; do not introduce top-level
+`authoring_base`, owner or session aliases. After acceptance, transfer receipts
+and counts without resetting caps. Map evidence under `code-review-loop.md`;
+otherwise return necessary checks/reviews to the same owner and record coverage
+pending. Prepared work cannot advance the accepted tail or qualify a release.
+
+Preserve historical v1 scheduling and session fields when reading legacy
+records; write adopted canonical schema-v2 metadata in extensions. The
+historical `Shape` below documents v1 qualification gates only. Exclude
+scheduling metadata from the release scope digest and retain pinned accepted
+lineage, prerequisites and evidence in the canonical freeze inputs.
+
+Before publication, record stable source pins and ownership handoffs. Separate
+release preparation records pin qualified prefixes and link build evidence;
+local prefix testing authorization neither freezes unfinished work nor waives
+release gates. Read `queue-build.md` and `scheduling.md` for dispatch and import.
 
 ## Shape
 
