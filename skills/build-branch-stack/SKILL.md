@@ -22,6 +22,11 @@ the approved `plans/specs/to_do/` queue and slice maps. Specs group work; slices
 are implementation units. One coordinating chat owns the linear stack and manifest. Each independent
 plan has a persistent implementation chat, or shares one for an approved
 dependency chain, named `<branch name without feature/> - Implementing`.
+Create new implementation owners with the coordinator's agent product/provider
+by default: ChatGPT with ChatGPT, Codex with Codex, Claude with Claude, and
+Cursor with Cursor. A different provider requires explicit user authorization;
+an unavailable matching transport requires a provider decision, not automatic
+fallback. For ChatGPT/Codex, owners are separate GUI-visible project chats.
 Each owner completes implementation, checks, trim, correctness loops and fixes;
 reuse that chat for later amendments and findings. The coordinator owns
 scheduling, canonical state, order, restacks, publication and evidence transfer.
