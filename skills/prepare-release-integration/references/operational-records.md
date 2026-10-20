@@ -62,8 +62,36 @@ build's qualification together; preserve the prior receipt identities.
 Reports display **Superseded** for a valid slice with stage `superseded`, even
 with no current build/source. Preserve history, recorded counts and record or
 reference errors; unknown counts stay **Unclear**. Other stages, including
-`hold`, `merged` and `fulfilled`, retain their implementation/review status.
+`hold`, `merged` and `fulfilled`, retain their implementation/review status
+unless validated completion acceptance establishes **Complete** below.
+Use `hold` and notes for an explicit pause; preserve its source and review history.
 Unselected `draft`, `backlog` and `to_do` slices display **Not Started**.
+
+## Completion acceptance
+
+Fulfilled slices may record an optional `completion` with `status: accepted`,
+`kind` (`code`, `no_change_audit`, `operation` or `workflow`), accepting person,
+UTC acceptance time and a nonempty JSON `evidence` file inside `plans/`.
+The evidence records the same status, `accepted_by`, `accepted_at`, and exactly
+one matching entry in `accepted_slices`. That entry binds `slice_slug`, `kind`,
+`source`, `tip_sha`, `parent` and `release_id` to the acceptance.
+
+Code completion pins an exact merged member of a merged, released, accepted
+canonical release. Source, full tip, original parent and release ID are required.
+It can retain `current`; the selected build and source qualification must match
+the accepted provenance. Existing build references and reviews stay intact.
+Non-code completion has null source, tip, parent, release ID and `current`.
+
+The report displays **Complete** for all accepted kinds. Preserve a selected
+build's known loop counts; missing code-review history displays **Not recorded**.
+Non-code work displays **N/A**. Acceptance changes no review outcome or count
+and does not qualify an unfinished build for freeze or release. Stage alone
+does not establish acceptance. On reopening, preserve completion in history
+and remove the active object before changing stage or source.
+
+Keep bulky immutable snapshots in referenced audit files, with hashes and
+source provenance. Keep current operational fields directly readable within
+the report's 16 MiB record limit.
 
 ## Builds and review phases
 

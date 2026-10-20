@@ -1314,6 +1314,9 @@
         },
         "extensions": {
           "type": "object"
+        },
+        "completion": {
+          "$ref": "#/$defs/completion"
         }
       },
       "required": [
@@ -1767,6 +1770,91 @@
         "packages",
         "evidence",
         "reason"
+      ],
+      "additionalProperties": false
+    },
+    "completion": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "accepted"
+          ]
+        },
+        "kind": {
+          "enum": [
+            "code",
+            "no_change_audit",
+            "operation",
+            "workflow"
+          ]
+        },
+        "accepted_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accepted_at": {
+          "type": "string",
+          "format": "utc-timestamp"
+        },
+        "evidence": {
+          "type": "string",
+          "pattern": "^plans/(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tip_sha": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40,64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/pin"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "release_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "kind",
+        "accepted_by",
+        "accepted_at",
+        "evidence",
+        "source",
+        "tip_sha",
+        "parent",
+        "release_id"
       ],
       "additionalProperties": false
     }

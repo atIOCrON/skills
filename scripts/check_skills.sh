@@ -137,6 +137,7 @@ done < <(find "$target_dir" -path '*/scripts/*.sh' -type f | sort)
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [[ "$(cd "$target_dir" && pwd)" == "$repo_root/skills" ]]; then
   "$repo_root/scripts/sync_bundled_skill.sh" --check
+  python3 -m unittest discover -s "$target_dir/branch-stack-status/scripts" -p 'test_*.py'
   "$target_dir/merge-stack/scripts/test_merge_stack.sh"
   "$target_dir/merge-stack/scripts/test_release_assembly.sh"
   python3 "$repo_root/shared-components/change-request-lifecycle/scripts/test_bitbucket_cloud.py"
