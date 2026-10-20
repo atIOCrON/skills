@@ -158,6 +158,7 @@ class Report:
         for slug in sorted(slugs):
             entry = slices.get(slug)
             data = entry['data'] if entry else None
+            superseded = data is not None and data['stage'] == 'superseded'
             notes = list(invalid.get(slug, []))
             if not data:
                 notes.append('Missing or invalid canonical slice record.json; no Markdown fallback is used.')
@@ -196,7 +197,7 @@ class Report:
                     summary['notes'].append('Current build/source does not resolve to a valid JSON branch or scheduled work item.')
                     summary['notes'].extend(invalid_builds.get(current['build_id'], []))
                     self.issues.append(slug+': current build/source does not resolve')
-            else:
+            elif not superseded:
                 summary['notes'].append('No current build/source is recorded.')
             if branch or scheduled:
                 waiver_errors = self.waiver_errors(branch or scheduled)
@@ -204,6 +205,8 @@ class Report:
                     summary['status'] = 'Unclear'
                     summary['notes'].extend(waiver_errors)
                     self.issues.extend(slug+': '+error for error in waiver_errors)
+            if superseded:
+                summary['status'] = 'Superseded'
             spec_links = []
             if data and data['spec_slug']:
                 spec = specs.get(data['spec_slug'])
@@ -284,6 +287,7 @@ class Report:
         return {'project':self.root.name,'refreshed_at':datetime.now(timezone.utc).isoformat(),'headers':HEADERS,'columns':COLUMNS,'groups':groups,
                 'issues':list(dict.fromkeys(self.issues)),
                 'notes':['Stages describe delivery; statuses describe recorded implementation and review progress.',
+                         'Superseded is a plan disposition requiring no current build; recorded history and errors remain visible.',
                          'Only schema-v2 JSON is consumed. Markdown evidence and Git state are not parsed.',
                          'Review waived and Review status unknown are not clean completion. Row details show the phase and reason.',
                          'Unclear means missing, invalid or conflicting qualification, or unknown loop counts. Row details explain the problem.',
