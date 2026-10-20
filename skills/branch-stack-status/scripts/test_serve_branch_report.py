@@ -237,6 +237,64 @@ class ReportTests(unittest.TestCase):
         file=self.root/path;file.parent.mkdir(parents=True,exist_ok=True);file.write_text(json.dumps(data));return file
     def rows(self):return [r for g in report.Report(self.root).snapshot()['groups'] for r in g['rows']]
 
+    def test_all_plan_stages_preserve_review_status_except_superseded(self):
+        (self.root/'plans/slices/review/one/record.json').unlink()
+        stages=records.SCHEMA['$defs']['slice']['properties']['stage']['enum']
+        for stage in stages:
+            for selected in (False,True):
+                with self.subTest(stage=stage,selected=selected):
+                    data=slice_record('one',stage=stage)
+                    if not selected:data['current']=None
+                    path=self.write(f'plans/slices/{stage}/one/record.json',data)
+                    self.assertFalse(records.validate_record(data,'slice',path,self.root))
+                    original=path.read_bytes()
+                    row=self.rows()[0]
+                    if stage=='superseded':
+                        expected='Superseded'
+                    elif selected:
+                        expected='Implementation Started'
+                    elif stage in {'draft','backlog','to_do'}:
+                        expected='Not Started'
+                    else:
+                        expected='Unclear'
+                    self.assertEqual((row['stage'],row['status']),(stage,expected))
+                    self.assertEqual(path.read_bytes(),original)
+                    path.unlink()
+
+    def test_superseded_without_build_needs_no_current_qualification(self):
+        (self.root/'plans/slices/review/one/record.json').unlink()
+        (self.root/'plans/builds/build/manifest.json').unlink()
+        data=slice_record('one',stage='superseded');data['current']=None
+        self.write('plans/slices/superseded/one/record.json',data)
+        snapshot=report.Report(self.root).snapshot();row=snapshot['groups'][0]['rows'][0]
+        self.assertEqual(row['status'],'Superseded')
+        self.assertEqual((row['trim_loops'],row['code_loops']),('Unclear','Unclear'))
+        self.assertFalse(row['notes']);self.assertFalse(snapshot['issues'])
+
+    def test_superseded_preserves_recorded_review_counts_and_history(self):
+        (self.root/'plans/slices/review/one/record.json').unlink()
+        self.write('plans/slices/superseded/one/record.json',slice_record('one',stage='superseded'))
+        for field in ('trim_review','review_progress'):
+            self.b[field].update(status='running',completed_passes=1,passes=[receipt()])
+        manifest=self.write('plans/builds/build/manifest.json',build([self.b]))
+        original=manifest.read_bytes()
+        row=self.rows()[0]
+        self.assertEqual((row['status'],row['trim_loops'],row['code_loops']),('Superseded',1,1))
+        self.assertEqual(row['build_history'][0]['review_progress'],self.b['review_progress'])
+        self.assertEqual(manifest.read_bytes(),original)
+
+    def test_superseded_preserves_reference_errors_and_rejects_invalid_slice(self):
+        (self.root/'plans/slices/review/one/record.json').unlink()
+        data=slice_record('one',stage='superseded',bid='missing')
+        path=self.write('plans/slices/superseded/one/record.json',data)
+        snapshot=report.Report(self.root).snapshot();row=snapshot['groups'][0]['rows'][0]
+        self.assertEqual(row['status'],'Superseded')
+        self.assertTrue(any('current build/source does not resolve' in e for e in snapshot['issues']))
+        data['approval']='invalid';self.write(str(path.relative_to(self.root)),data)
+        snapshot=report.Report(self.root).snapshot();row=snapshot['groups'][0]['rows'][0]
+        self.assertEqual((row['stage'],row['status']),('Unclear','Unclear'))
+        self.assertTrue(any('approval' in e for e in snapshot['issues']))
+
     def test_current_waivers_check_files_without_reading_or_rewriting_evidence(self):
         evidence=self.root/'plans/evidence/waiver.md'
         evidence.parent.mkdir(parents=True)

@@ -59,6 +59,12 @@ parent matches its spec. Superseded maps remain historical and do not reassign
 current ownership. On a source rewrite, update the slice current pin and the
 build's qualification together; preserve the prior receipt identities.
 
+Reports display **Superseded** for a valid slice with stage `superseded`, even
+with no current build/source. Preserve history, recorded counts and record or
+reference errors; unknown counts stay **Unclear**. Other stages, including
+`hold`, `merged` and `fulfilled`, retain their implementation/review status.
+Unselected `draft`, `backlog` and `to_do` slices display **Not Started**.
+
 ## Builds and review phases
 
 Accepted `branches` and `schedule.work` have explicit slice/spec IDs, source,

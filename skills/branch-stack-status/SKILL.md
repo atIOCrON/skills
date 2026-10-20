@@ -48,6 +48,9 @@ Work read-only. Do not edit files, refs, plans, or the manifest.
    - A documented zero-diff trim applicability decision counts as zero loops.
    - If counts conflict or cannot be verified, show "Unclear" and explain.
 4. Assign one status using this precedence:
+   - Superseded: the canonical slice stage is `superseded`. No current build,
+     source, or review qualification is required. Preserve history and counts;
+     unknown counts stay Unclear. This disposition means replaced, not fulfilled.
    - Unclear: current qualification is missing, invalid or conflicting. Explain
      the specific problem. A waiver requires a matching current tip, a reason
      and a safe, nonempty evidence file inside `plans/`.
@@ -132,6 +135,11 @@ The browser consumes only schema-v2 JSON, validates every record, and shows
 field-specific contract errors. It never parses Markdown, legacy field aliases,
 or Git state. Slice JSON selects the current build/source/pin explicitly.
 Counts come from JSON receipts; unknown historical accounting stays Unclear.
+Valid superseded slices display Superseded before review statuses, including
+when `current` is null. Record and reference errors remain visible separately;
+invalid slice JSON stays Unclear. Other stages, including hold, merged and
+fulfilled, retain the recorded implementation/review status. Unselected draft,
+backlog and to_do slices display Not Started.
 The browser checks selected waiver evidence files as required above without
 reading their contents.
 Use `scripts/validate_operational_records.py <original-project>` for a read-only
