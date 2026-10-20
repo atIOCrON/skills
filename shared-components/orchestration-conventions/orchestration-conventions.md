@@ -16,8 +16,8 @@ Load only the reference file needed for the current task.
 - `references/orchestration-definitions.md`:
   material finding and root cause definitions.
 - `references/orchestration-finding-ids.md`:
-  plan-review and code-review finding ID formats, reviewer slugs, and canonical
-  finding line format.
+  code-review finding IDs, historical plan-review IDs, reviewer slugs, and
+  canonical finding line format.
 - `references/orchestration-change-requests.md`:
   dependency-parent, chained, and base-targeted change-request layouts.
 

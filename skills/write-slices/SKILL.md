@@ -188,5 +188,6 @@ ownership, justified blockers, sibling exclusions, and the slice test. Report
 absolute paths; leave unapproved children in `draft/`.
 
 After approval, verify parent, map, and child metadata, moved paths, and repaired
-references. Reconcile and report the parent stage. Backlog children still need
-plan review before `build-branch-stack` selects them.
+references. Reconcile and report the parent stage. Human selection into `to_do`
+means the approved plans have been reviewed and are ready for implementation.
+Do not add an agent-led plan-review phase or require separate review evidence.

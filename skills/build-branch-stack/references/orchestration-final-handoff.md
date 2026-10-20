@@ -16,20 +16,6 @@ Require:
 - rejected, deferred, or user-decided findings;
 - skill feedback entries.
 
-## Output For Reviewed Plan
-
-Include:
-
-- plan path and whether it was created or loaded;
-- plan-review pass count and one-line outcome per pass;
-- rejected/deferred findings with evidence or recorded reason;
-- reviewer artifact paths, including failures;
-- confirmation all required plan-review passes closed, or blocker;
-- `## Skill Feedback For User Review` with entries or `- None`;
-- final state: blocker or `Ready for implementation`;
-- next recommended bundled component:
-  `references/from-reviewed-plan-to-git-handoff.md`.
-
 ## Output For Branch Handoff
 
 Include:

@@ -1,7 +1,8 @@
-# From Reviewed Plan To Git Handoff
+# From Approved Plan To Git Handoff
 
-Implement one reviewed vertical-slice plan, push verified revisions, and finish
-trim and correctness reviews or reach the correctness cap. Do not create a CR.
+Implement one approved, human-selected vertical-slice plan, push verified
+revisions, and finish trim and correctness reviews or reach the correctness cap.
+Do not create a CR.
 
 ## Inputs
 

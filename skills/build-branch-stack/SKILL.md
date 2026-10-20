@@ -17,7 +17,7 @@ Keep historical extensions and existing authorization, verification and review
 gates; they do not authorize schema aliases or inferred reporting values.
 # Build Branch Stack
 
-Build and push reviewed slices from explicit scope or, when none is supplied,
+Build and push approved slices from explicit scope or, when none is supplied,
 the approved `plans/specs/to_do/` queue and slice maps. Specs group work; slices
 are implementation units. One coordinating chat owns the linear stack and manifest. Each independent
 plan has a persistent implementation chat, or shares one for an approved
@@ -65,7 +65,7 @@ Read `references/trim-review.md` before launching the first trim pass.
 
 - Optional explicit specs, slices, branches, or repair/resume manifest.
   Otherwise discover the queue under `references/queue-build.md`.
-- Executable reviewed slices at `plans/slices/<stage>/<slug>/<slug>.md`,
+- Executable approved slices at `plans/slices/<stage>/<slug>/<slug>.md`,
   each linked to its approved parent and map, or explicitly classified legacy
   cohesive slices. Missing readiness is recorded before dispatch.
 - Base branch: the remote default unless the user names another.
@@ -178,10 +178,10 @@ inputs; executable slices own implementation. Resolve specs and slices by slug
 in their stage folders. Require
 `Approval Status: approved` on both, an approved map, and parent stage `backlog`,
 `to_do`, `in_progress`, or `review`. Reject draft, in_release, merged, fulfilled, superseded, or
-stale inputs. Require plan review before implementation dispatch; record
-unreviewed selected slices as waiting and complete the required review when
-authorized. Migrate legacy folders under the shared layout. Before creating or
-adopting a branch, answer:
+stale inputs. Human selection into `to_do` records review and readiness;
+do not launch a plan-review phase, require its artefacts, or seek approval again
+for unchanged approved plans. Migrate legacy folders under the shared layout.
+Before creating or adopting a branch, answer:
 
 - What single actor-visible or integration-visible outcome does it deliver?
 - Can any acceptance group ship, fail, or roll back independently?
@@ -219,7 +219,7 @@ A suggested test and pass condition claim no acceptance result. Retain
 historical v1 tools only for historical records; never fabricate receipts to
 pass validation. Reconcile Sheet and prose trackers from the manifest.
 
-Move only the selected reviewed feature directories from
+Move only the human-selected approved feature directories from
 `backlog/` to `to_do/`. Accept selected features already in `to_do/`. Resolve
 their new plan paths before starting; leave unrelated backlog features alone.
 At every child transition, including repairs, update `Slice Status` and

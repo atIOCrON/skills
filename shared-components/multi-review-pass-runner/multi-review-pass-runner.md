@@ -8,7 +8,7 @@ Require:
 
 - repository root;
 - host provider: `codex`, `claude`, or `cursor`;
-- phase: `plan-review` or `code-review`;
+- phase: `code-review`;
 - pass number;
 - reviewer label;
 - plan path;
