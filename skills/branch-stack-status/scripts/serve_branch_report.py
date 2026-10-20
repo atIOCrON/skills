@@ -74,6 +74,17 @@ def review_summary(branch: dict, current_sha: str) -> dict:
     return {'status':status, **counts, 'notes':notes, 'review_sha':branch['tip_sha']}
 
 
+def completion_summary(completion: dict, summary: dict) -> dict:
+    code = completion['kind'] == 'code'
+    counts = {name: ('Not recorded' if summary[name] == 'Unclear' else summary[name]) if code else 'N/A'
+              for name in ('trim_loops', 'code_loops')}
+    note = ('Delivery is explicitly accepted; recorded review results and counts are unchanged.'
+            if code else 'Non-code work is explicitly accepted; code-review loops do not apply.')
+    if code and summary['review_sha']:
+        note += ' Recorded review status: ' + summary['status'] + '.'
+    return {**summary, **counts, 'status':'Complete', 'notes':summary['notes'] + [note]}
+
+
 class Report:
     def __init__(self, root: Path):
         self.root = root.resolve()
@@ -164,6 +175,7 @@ class Report:
                 notes.append('Missing or invalid canonical slice record.json; no Markdown fallback is used.')
                 self.issues.append(slug+': missing or invalid slice JSON')
             current = data['current'] if data else None
+            completion = data.get('completion') if data else None
             branch = None
             scheduled = None
             build_history, build_links = [], []
@@ -178,9 +190,9 @@ class Report:
                     if current and current['build_id']==bid:
                         branch = next((b for b in members if b['source']==current['source']),None)
                         scheduled = next((w for w in work if w['source']==current['source']),None)
-            source = current['source'] if current else ''
-            tip = current['tip_sha'] if current else ''
-            target = branch['parent']['branch'] if branch else ''
+            source = current['source'] if current else (completion['source'] or '') if completion else ''
+            tip = current['tip_sha'] if current else (completion['tip_sha'] or '') if completion else ''
+            target = branch['parent']['branch'] if branch else completion['parent']['branch'] if completion and completion['parent'] else ''
             summary = {'status':'Not Started' if data and not current and data['stage'] in {'draft','backlog','to_do'} else 'Unclear',
                        'trim_loops':'Unclear','code_loops':'Unclear','notes':[],'review_sha':''}
             if branch:
@@ -197,8 +209,10 @@ class Report:
                     summary['notes'].append('Current build/source does not resolve to a valid JSON branch or scheduled work item.')
                     summary['notes'].extend(invalid_builds.get(current['build_id'], []))
                     self.issues.append(slug+': current build/source does not resolve')
-            elif not superseded:
+            elif not superseded and not completion:
                 summary['notes'].append('No current build/source is recorded.')
+            if completion:
+                summary = completion_summary(completion, summary)
             if branch or scheduled:
                 waiver_errors = self.waiver_errors(branch or scheduled)
                 if waiver_errors:
@@ -286,7 +300,7 @@ class Report:
                 remaining.pop(slug)
         return {'project':self.root.name,'refreshed_at':datetime.now(timezone.utc).isoformat(),'headers':HEADERS,'columns':COLUMNS,'groups':groups,
                 'issues':list(dict.fromkeys(self.issues)),
-                'notes':['Stages describe delivery; statuses describe recorded implementation and review progress.',
+                'notes':['Stages describe delivery; Complete may also reflect explicit accepted fulfillment. Review details and counts retain their recorded meaning.',
                          'Superseded is a plan disposition requiring no current build; recorded history and errors remain visible.',
                          'Only schema-v2 JSON is consumed. Markdown evidence and Git state are not parsed.',
                          'Review waived and Review status unknown are not clean completion. Row details show the phase and reason.',

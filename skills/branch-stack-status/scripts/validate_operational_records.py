@@ -171,6 +171,80 @@ def scope_digest(data):
     return 'sha256:'+hashlib.sha256(encoded).hexdigest()
 
 
+def completion_path(root, value, errors):
+    path = (Path(root) / value).resolve()
+    if not path.is_relative_to(Path(root).resolve() / 'plans'):
+        errors.append('$.completion unsafe evidence/reference path: ' + value)
+        return None
+    if not path.is_file() or not path.stat().st_size or path.stat().st_size > 16 * 1024 * 1024:
+        errors.append('$.completion missing, empty or oversized evidence/reference: ' + value)
+        return None
+    return path
+
+
+def completion_errors(data, root=None):
+    completion = data.get('completion')
+    if completion is None:
+        return []
+    errors = []
+    if data['stage'] != 'fulfilled':
+        errors.append('$.completion requires fulfilled delivery')
+    code = completion['kind'] == 'code'
+    provenance = ('source', 'tip_sha', 'parent', 'release_id')
+    if code:
+        if any(completion[k] is None for k in provenance):
+            errors.append('$.completion code requires exact released source provenance')
+        current = data['current']
+        if current and any(current[k] != completion[k] for k in ('source', 'tip_sha')):
+            errors.append('$.completion must match the current source and tip')
+    elif data['current'] is not None or any(completion[k] is not None for k in provenance):
+        errors.append('$.completion non-code work requires null code provenance and no selected code build')
+    if root is None:
+        return errors
+    try:
+        path = completion_path(root, completion['evidence'], errors)
+        if path:
+            evidence = load_record(path)
+            entries = [e for e in evidence.get('accepted_slices', []) if e.get('slice_slug') == data['slice_slug']]
+            if (evidence.get('status') != 'accepted' or evidence.get('accepted_by') != completion['accepted_by']
+                    or evidence.get('accepted_at') != completion['accepted_at'] or len(entries) != 1
+                    or any(entries[0].get(k) != completion[k] for k in ('kind', *provenance))):
+                errors.append('$.completion must match explicit acceptance evidence and its exact scope')
+        if code and completion['release_id']:
+            paths = list(Path(root).glob('plans/releases/*/' + completion['release_id'] + '/preparation.json'))
+            if len(paths) != 1:
+                errors.append('$.completion release_id must resolve to one canonical release')
+            else:
+                path = completion_path(root, str(paths[0].relative_to(root)), errors)
+                release = load_record(path) if path else None
+                if release:
+                    if (validate_record(release, 'release', path, root) or release['state'] != 'merged'
+                            or release['lifecycle'] != 'released' or release['acceptance']['status'] not in {'accepted', 'passed'}):
+                        errors.append('$.completion requires a merged, released and accepted release')
+                    elif not any(c['slice_slug'] == data['slice_slug'] and c['source'] == completion['source']
+                                 and c['head_sha'] == completion['tip_sha'] and c['original_parent'] == completion['parent']
+                                 and c['state'] == 'merged' for c in release['changes']):
+                        errors.append('$.completion must identify an exact merged release member')
+                    elif release['acceptance']['evidence'] is None:
+                        errors.append('$.completion accepted release requires evidence')
+                    else:
+                        completion_path(root, release['acceptance']['evidence'], errors)
+        if code and data['current']:
+            current = data['current']
+            path = completion_path(root, 'plans/builds/' + current['build_id'] + '/manifest.json', errors)
+            if path:
+                build = load_record(path)
+                failures = validate_record(build, 'build', path, root)
+                entries = build.get('branches', []) + ((build.get('schedule') or {}).get('work', []))
+                matching = [e for e in entries if e['slice_slug'] == data['slice_slug'] and e['source'] == current['source']]
+                if (failures or not matching or any(e.get('tip_sha', e.get('prepared_sha')) != completion['tip_sha']
+                                                   or e['parent'] != completion['parent'] for e in matching)):
+                    errors.append('$.completion selected build must retain matching valid source qualification')
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
+        errors.append('$.completion invalid evidence/reference: ' + str(exc))
+    return errors
+
+
 def validate_record(data, expected_kind=None, path=None, root=None):
     if not isinstance(data, dict) or data.get('kind') not in KINDS:
         return ['$: kind must identify spec, slice, build, release, or deployment']
@@ -192,7 +266,9 @@ def validate_record(data, expected_kind=None, path=None, root=None):
                 errors.append('$.lifecycle must match the release folder')
         except ValueError:
             errors.append('$: record must be inside the project')
-    if kind == 'spec':
+    if kind == 'slice':
+        errors.extend(completion_errors(data, root))
+    elif kind == 'spec':
         ids = [o['acceptance_id'] for o in data['slice_map']['owners']]
         if len(ids) != len(set(ids)):
             errors.append('$.slice_map.owners must give each acceptance ID one owner')
@@ -369,6 +445,8 @@ def validate_evidence(data,root):
             references.extend(c['evidence'] for c in entry['checks'] if c['evidence'])
             if entry['review_progress']['status'] == 'provisionally_complete':
                 references.extend(r['evidence'] for r in entry.get('reviews', []) if r['evidence'])
+    elif data['kind']=='slice' and data.get('completion'):
+        references.append(data['completion']['evidence'])
     elif data['kind']=='deployment' and data['evidence']:
         references.append(data['evidence'])
     elif data['kind']=='release' and data['acceptance']['evidence']:

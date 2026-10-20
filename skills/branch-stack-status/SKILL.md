@@ -51,12 +51,16 @@ Work read-only. Do not edit files, refs, plans, or the manifest.
    - Superseded: the canonical slice stage is `superseded`. No current build,
      source, or review qualification is required. Preserve history and counts;
      unknown counts stay Unclear. This disposition means replaced, not fulfilled.
-   - Unclear: current qualification is missing, invalid or conflicting. Explain
-     the specific problem. A waiver requires a matching current tip, a reason
-     and a safe, nonempty evidence file inside `plans/`.
-   - Exhausted: correctness review reached its cap without a clean result.
+   - Unclear: required records, source qualification or evidence are invalid or
+     conflicting. Explain the problem. A waiver requires a matching current
+     tip, a reason and a safe, nonempty evidence file inside `plans/`.
    - Complete: this branch's correctness is qualified clean on its accepted tip.
-     An unfinished ancestor or external release check does not change that.
+     Also use Complete for fulfilled work with validated canonical completion
+     acceptance. Preserve recorded review results and counts; acceptance does
+     not establish clean reviews. An unfinished ancestor or external release
+     check does not change a branch's own clean review result.
+   - Exhausted: correctness review reached its cap without a clean result and
+     no validated fulfilled-delivery acceptance applies.
    - Provisionally Complete: implementation, trim and correctness are finished
      on the prepared tip; final stack acceptance and review mapping remain.
      Require explicit `review_progress.status: "provisionally_complete"`;
@@ -87,9 +91,11 @@ Work read-only. Do not edit files, refs, plans, or the manifest.
 
 Use clickable absolute links for plan files. Briefly explain missing plans,
 zero-diff branches, exhausted caps, and Provisionally Complete branches.
-Unknown loop counts stay `Unclear`; they do not change the review status.
+Unknown loop counts stay `Unclear`, or `Not recorded` for accepted fulfillment;
+they do not establish or change a review result.
 Do not equate individual branch completion with release readiness or plan
-fulfillment. `Complete` in this table means correctness review is complete;
+fulfillment. `Complete` means clean correctness or explicit validated acceptance
+of fulfilled delivery; identify the basis in the explanation.
 `in_release` means included in a recorded assembled candidate; report its
 release ID and outstanding release checks separately from incoming review work.
 `merged` means final merge confirmed with acceptance outstanding; `fulfilled`
@@ -138,7 +144,11 @@ Counts come from JSON receipts; unknown historical accounting stays Unclear.
 Valid superseded slices display Superseded before review statuses, including
 when `current` is null. Record and reference errors remain visible separately;
 invalid slice JSON stays Unclear. Other stages, including hold, merged and
-fulfilled, retain the recorded implementation/review status. Unselected draft,
+fulfilled, retain the recorded implementation/review status unless canonical
+completion acceptance establishes Complete. Code with missing review history
+shows Not recorded counts; accepted non-code work shows N/A. A selected build's
+known counts and review evidence stay unchanged. Hold uses the existing stage
+and a reason in notes, retaining review qualification. Unselected draft,
 backlog and to_do slices display Not Started.
 The browser checks selected waiver evidence files as required above without
 reading their contents.
