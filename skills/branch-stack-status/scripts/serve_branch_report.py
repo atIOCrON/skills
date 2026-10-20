@@ -54,14 +54,18 @@ def review_summary(branch: dict, current_sha: str) -> dict:
         notes.append('Branch reviews are complete on the prepared tip; final stack acceptance and review mapping remain.')
     elif code['status'] == 'running':
         status = 'Code Review Started'
-    elif code['status'] in {'unknown','waived'}:
-        status = 'Unclear'
+    elif code['status'] == 'waived':
+        status = 'Review waived'
+    elif code['status'] == 'unknown':
+        status = 'Review status unknown'
     elif trim['status'] == 'proportionate':
         status = 'Trim Finished'
     elif trim['status'] == 'running':
         status = 'Trim Started'
-    elif trim['status'] in {'unknown','waived'}:
-        status = 'Unclear'
+    elif trim['status'] == 'waived':
+        status = 'Review waived'
+    elif trim['status'] == 'unknown':
+        status = 'Review status unknown'
     else:
         status = {'verified':'Implementation Finished','running':'Implementation Started',
                   'not_started':'Not Started','unknown':'Unclear'}[branch['implementation']['status']]
@@ -94,10 +98,28 @@ class Report:
         except (OSError, UnicodeError):
             return ''
 
+    def waiver_errors(self, item: dict) -> list[str]:
+        """Check selected waiver files without reading their contents."""
+        errors = []
+        for field, name in [('trim_review','Trim review'), ('review_progress','Code review')]:
+            phase = item[field]
+            if phase['status'] != 'waived':
+                continue
+            try:
+                path = self.safe_path(phase['evidence'])
+                if path is None:
+                    errors.append(f'{name}: Unsafe waiver evidence path: {phase["evidence"]}')
+                elif not path.is_file() or not path.stat().st_size:
+                    errors.append(f'{name}: Missing or empty waiver evidence: {phase["evidence"]}')
+            except (OSError, RuntimeError):
+                errors.append(f'{name}: Cannot access waiver evidence: {phase["evidence"]}')
+        return errors
+
     def snapshot(self):
         self.issues = []
         records = {kind:{} for kind in ('spec','slice','build','release','deployment')}
         invalid = {}
+        invalid_builds = {}
         for kind,path in record_paths(self.root):
             rel = str(path.relative_to(self.root))
             safe = self.safe_path(rel)
@@ -112,6 +134,8 @@ class Report:
                 self.issues.extend(rel + ': ' + error for error in errors)
                 if kind == 'slice':
                     invalid[path.parent.name] = errors
+                elif kind == 'build':
+                    invalid_builds[path.parent.name] = errors
                 continue
             self.issues.extend(rel+': '+issue for issue in data['unresolved'])
             key = data[kind+'_slug'] if kind in {'spec','slice'} else data[kind+'_id']
@@ -170,9 +194,16 @@ class Report:
                         summary['notes'].append('Work status has no accepted review record.')
                 else:
                     summary['notes'].append('Current build/source does not resolve to a valid JSON branch or scheduled work item.')
+                    summary['notes'].extend(invalid_builds.get(current['build_id'], []))
                     self.issues.append(slug+': current build/source does not resolve')
             else:
                 summary['notes'].append('No current build/source is recorded.')
+            if branch or scheduled:
+                waiver_errors = self.waiver_errors(branch or scheduled)
+                if waiver_errors:
+                    summary['status'] = 'Unclear'
+                    summary['notes'].extend(waiver_errors)
+                    self.issues.extend(slug+': '+error for error in waiver_errors)
             spec_links = []
             if data and data['spec_slug']:
                 spec = specs.get(data['spec_slug'])
@@ -254,7 +285,8 @@ class Report:
                 'issues':list(dict.fromkeys(self.issues)),
                 'notes':['Stages describe delivery; statuses describe recorded implementation and review progress.',
                          'Only schema-v2 JSON is consumed. Markdown evidence and Git state are not parsed.',
-                         'Unclear means missing, invalid or explicitly unknown JSON information; inspect row details.',
+                         'Review waived and Review status unknown are not clean completion. Row details show the phase and reason.',
+                         'Unclear means missing, invalid or conflicting qualification, or unknown loop counts. Row details explain the problem.',
                          'Deployment membership and source versions are recorded by the producing skill.']}
 
 
