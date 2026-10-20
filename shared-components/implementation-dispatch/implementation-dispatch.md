@@ -7,6 +7,13 @@ amendment, verification failure and accepted finding.
 
 ## Assignment
 
+Before creating an owner, apply the implementation-provider selection rules in
+`orchestration-runtime.md`. Record the coordinator provider, selected worker
+provider, and any explicit user override with its source in session history.
+Default to the coordinator's agent product/provider; transport availability
+does not authorize a different provider. Resume existing owners in their
+original chats and providers.
+
 Require repository and plan paths, provider, coordinator identity and return
 route, owner name/ID, isolated checkout, owned files/modules, authoring branch
 and verified base SHA, real code prerequisites, canonical manifest path,

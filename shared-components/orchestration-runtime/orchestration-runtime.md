@@ -1,7 +1,8 @@
 # Orchestrator Runtime
 
-Use one coordinating chat and persistent, independent implementation chats on
-ChatGPT/Codex, Claude, and Cursor. This is the standard implementation workflow.
+Use one coordinating chat and persistent, independent implementation chats.
+New implementation owners use the coordinator's agent product/provider by
+default under the selection rules below.
 Create one owner chat per independent plan, or one for an approved dependency
 chain. Name it `<branch name without feature/> - Implementing`; for a chain,
 use its first branch and record every assigned plan. Reuse it for amendments,
@@ -42,6 +43,28 @@ On resume, reuse the ID and reconcile branch/remote pins before assigning work.
 If a session is genuinely unavailable, preserve history and evidence, diagnose
 the transport, and register an explicit replacement linked to its predecessor.
 Do not start a replacement merely because work is slow or needs fixes.
+
+## Implementation Provider Selection
+
+Select the implementation provider before discovering or choosing its transport.
+Match the coordinator's agent product/provider: ChatGPT → ChatGPT, Codex → Codex,
+Claude → Claude, Cursor → Cursor. Inherit the coordinator's model/settings where
+supported; do not introduce overrides unless the user requests them. The shared
+ChatGPT/Codex transport section does not make those products interchangeable.
+
+Use another implementation provider only when the user explicitly requests or
+authorizes it. CLI availability, authentication, convenience, and additional
+capacity do not authorize a provider change. If the matching provider cannot
+create a persistent implementation chat, report the limitation and request a
+provider choice; do not silently fall back to another provider or a native
+sub-agent. Continue unrelated eligible work while that decision is pending.
+
+Resume existing owners in their original chats and providers; a coordinator
+change does not migrate them. Apply these selection rules to replacement owners
+as well. Record the coordinator provider, selected owner provider, and any
+explicit user override with its source in session history before creation.
+These rules govern implementation owners; the multi-provider reviewer
+requirements below remain separate.
 
 ## Provider Transports
 
