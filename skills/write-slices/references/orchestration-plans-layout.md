@@ -72,8 +72,12 @@ Save specs and slices in `draft/` with both statuses `draft`. Revise and trim
 the files, then present their absolute paths for explicit approval. Approval
 sets `Approval Status: approved` and moves the whole folder to `backlog/`;
 there is no `approved/` delivery stage. Approve saved children with their
-decomposition; parent approval alone does not approve them. Required plan
-review precedes implementation selection and does not use delivery `review/`.
+decomposition; parent approval alone does not approve them. Human selection of
+approved plans into `to_do` records that they have been reviewed and are ready
+for implementation. Explicit build selection may authorize that move. Do not
+add an agent-led plan-review phase, separate review artefacts, or another
+approval request for unchanged approved plans. Any separately requested plan
+critique is outside this workflow. Delivery `review/` follows implementation.
 
 A spec defines the complete outcome and stable acceptance IDs. Decompose or
 build only approved specs in `backlog`, `to_do`, `in_progress`, or `review`.
@@ -221,9 +225,10 @@ integration, and deployment state; spreadsheets and prose are reconciled views.
 - `draft`: saved specification or slice awaiting scope/decomposition approval.
 - `backlog`: approved scope, not yet selected for implementation. A slice's
   parent and map must also be approved before it is considered for `to_do`.
-  Required child-plan review and implementation prerequisites may remain pending.
-- `to_do`: a reviewed slice selected for the implementation batch; the parent
-  reflects selection across its approved map. Move only selected children.
+  Implementation prerequisites may remain pending.
+- `to_do`: an approved slice reviewed by a human and selected for implementation;
+  the parent reflects selection across its approved map. Move only selected
+  children; no separate agent review or plan-review evidence is required.
 - `in_progress`: implementation, fixes, CLI code review loops, commits, and
   required branch checks are underway, or a defect needs implementation work.
   Keep a slice here through proportionate trim and clean correctness reviews
@@ -289,11 +294,12 @@ they also need implementation work, then reconcile affected parents.
 
 ## Artefacts
 
-- `<feature_dir>/<slug>.reviews/` contains `plan-review-pass<N>/`,
+- `<feature_dir>/<slug>.reviews/` contains
   `code-review-pass<N>/`, `code-review-pack/`, and
   `code-review-triage-ledger.md`. After the branch handoff audit it also
   contains `artefact-audit-ledger.md`, which records follow-up planning
-  decisions for that feature.
+  decisions for that feature. Preserve any historical plan-review artefacts;
+  they are not required for implementation selection or dispatch.
 - `<feature_dir>/<slug>.execution/` contains one-off scripts and execution
   helpers. Keep permanent tests and tooling in their normal repo locations.
 - `<feature_dir>/<slug>.evidence/` contains small test outputs, measurements,

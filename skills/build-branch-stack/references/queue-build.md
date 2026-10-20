@@ -24,10 +24,11 @@ from folder dates or branch names.
 Discover approved specs in `plans/specs/to_do/`. Resolve approved maps by slug;
 select their `to_do` slices and unfinished slices owned by the resumed build.
 Group explicitly classified standalone legacy slices by their own slug; report
-other unmapped slices. Record missing/stale maps, unapproved children, pending
-plan reviews, or inconsistent selection as blockers. Do not invent scope or
-silently implement backlog children. Complete required plan review when
-build authority permits; continue eligible specs meanwhile.
+other unmapped slices. Record missing/stale maps, unapproved children, or
+inconsistent selection as blockers. Approved `to_do` plans have already been
+reviewed and selected by a human; missing agent plan-review artefacts are not a
+blocker. Do not launch a plan-review phase, invent scope, or silently implement
+backlog children; continue eligible specs meanwhile.
 
 Record scope before dispatch. At scheduling checkpoints, append newly selected
 approved `to_do` specs and record the additions. Preserve started blocks and
