@@ -162,7 +162,7 @@ class ContractTests(unittest.TestCase):
         data=build([branch('one')]);p=data['branches'][0]['review_progress']
         p.update(status='unknown',accounting='unknown',completed_passes=None,historical_completed_passes=None,reason='No historical receipts')
         self.assertFalse(records.validate_record(data));summary=report.review_summary(data['branches'][0],A)
-        self.assertEqual((summary['status'],summary['code_loops']),('Unclear','Unclear'))
+        self.assertEqual((summary['status'],summary['code_loops']),('Review status unknown','Unclear'))
         p['completed_passes']=0;self.assertTrue(records.validate_record(data))
 
     def test_all_declared_checks_must_pass_before_implementation_verified(self):
@@ -200,8 +200,25 @@ class ContractTests(unittest.TestCase):
         b['reviews'][0]['sha']=B;self.assertTrue(records.validate_record(data))
 
     def test_waivers_are_not_clean_completion(self):
-        b=branch('one');b['review_progress'].update(status='waived',sha=A,evidence='plans/evidence/waiver.json',reason='User waiver')
-        self.assertFalse(records.validate_record(build([b])));self.assertEqual(report.review_summary(b,A)['status'],'Unclear')
+        b=branch('one')
+        b['review_progress'].update(status='waived',sha=A,evidence='plans/evidence/waiver.json',reason='User waiver')
+        self.assertFalse(records.validate_record(build([b])))
+        self.assertEqual(report.review_summary(b,A)['status'],'Review waived')
+        self.assertEqual(report.review_summary(b,B)['status'],'Unclear')
+
+    def test_trim_waivers_and_unknowns_do_not_override_later_code_progress(self):
+        for trim_status in ('waived','unknown'):
+            b=branch('one')
+            b['trim_review'].update(status=trim_status,reason='Trim decision',
+                sha=A if trim_status=='waived' else None,
+                evidence='plans/evidence/waiver.json' if trim_status=='waived' else None)
+            self.assertFalse(records.validate_record(build([b])))
+            expected='Review waived' if trim_status=='waived' else 'Review status unknown'
+            self.assertEqual(report.review_summary(b,A)['status'],expected)
+            b['review_progress']['status']='running'
+            self.assertEqual(report.review_summary(b,A)['status'],'Code Review Started')
+            b['review_progress'].update(status='unknown',reason='Code evidence unavailable')
+            self.assertEqual(report.review_summary(b,A)['status'],'Review status unknown')
 
     def test_duplicate_keys_and_nonfinite_json_are_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -219,6 +236,88 @@ class ReportTests(unittest.TestCase):
     def write(self,path,data):
         file=self.root/path;file.parent.mkdir(parents=True,exist_ok=True);file.write_text(json.dumps(data));return file
     def rows(self):return [r for g in report.Report(self.root).snapshot()['groups'] for r in g['rows']]
+
+    def test_current_waivers_check_files_without_reading_or_rewriting_evidence(self):
+        evidence=self.root/'plans/evidence/waiver.md'
+        evidence.parent.mkdir(parents=True)
+        evidence.write_text('Explicit user waiver')
+        for field,name in [('review_progress','Code review'),('trim_review','Trim review')]:
+            with self.subTest(field=field):
+                b=branch('one')
+                b[field].update(status='waived',sha=A,evidence='plans/evidence/waiver.md',reason='User waiver',
+                    accounting='unknown',completed_passes=None,historical_completed_passes=None)
+                manifest=self.write('plans/builds/build/manifest.json',build([b]))
+                original=manifest.read_bytes()
+                read_text=Path.read_text
+
+                def guarded(path,*args,**kwargs):
+                    self.assertEqual(path.suffix,'.json')
+                    return read_text(path,*args,**kwargs)
+
+                with patch.object(Path,'read_text',guarded):
+                    row=self.rows()[0]
+                count_field='code_loops' if field=='review_progress' else 'trim_loops'
+                self.assertEqual(row['status'],'Review waived')
+                self.assertEqual(row[count_field],'Unclear')
+                self.assertIn(name+': User waiver',row['notes'])
+                self.assertEqual(manifest.read_bytes(),original)
+                self.assertEqual(evidence.read_text(),'Explicit user waiver')
+
+    def test_waiver_evidence_file_failures_are_specific_and_never_waived(self):
+        for field,name in [('review_progress','Code review'),('trim_review','Trim review')]:
+            for case in ('missing','empty','directory','unsafe','symlink_loop'):
+                with self.subTest(field=field,case=case):
+                    value=f'plans/evidence/{field}-{case}.json'
+                    path=self.root/value
+                    path.parent.mkdir(parents=True,exist_ok=True)
+                    if case=='empty':
+                        path.touch()
+                    elif case=='directory':
+                        path.mkdir()
+                    elif case=='unsafe':
+                        outside=self.root/'outside.json'
+                        outside.write_text('{}')
+                        path.symlink_to(outside)
+                    elif case=='symlink_loop':
+                        path.symlink_to(path)
+                    b=branch('one')
+                    b[field].update(status='waived',sha=A,evidence=value,reason='User waiver')
+                    self.write('plans/builds/build/manifest.json',build([b]))
+                    snapshot=report.Report(self.root).snapshot()
+                    row=snapshot['groups'][0]['rows'][0]
+                    self.assertEqual(row['status'],'Unclear')
+                    self.assertTrue(any(name in note and value in note for note in row['notes']))
+                    self.assertTrue(any(value in issue for issue in snapshot['issues']))
+
+    def test_invalid_waiver_qualification_explains_the_contract_error(self):
+        cases=[('sha',B,'current tip sha'),('evidence',None,'evidence'),('reason',None,'reason')]
+        for field,value,problem in cases:
+            with self.subTest(field=field):
+                b=branch('one')
+                b['review_progress'].update(status='waived',sha=A,evidence='plans/evidence/waiver.json',reason='User waiver')
+                b['review_progress'][field]=value
+                self.write('plans/builds/build/manifest.json',build([b]))
+                row=self.rows()[0]
+                self.assertEqual(row['status'],'Unclear')
+                self.assertTrue(any(problem in note for note in row['notes']))
+
+    def test_scheduled_waiver_and_unknown_status_use_the_same_rules(self):
+        work=prepared_work()
+        work['review_progress'].update(status='waived',reason='User waiver')
+        data=build([])
+        data['schedule']={'work':[work],'extensions':{}}
+        self.write('plans/builds/build/manifest.json',data)
+        self.assertEqual(self.rows()[0]['status'],'Unclear')
+        self.write('plans/evidence/result.json',{'waiver':'User waiver'})
+        self.assertEqual(self.rows()[0]['status'],'Review waived')
+        self.write('plans/slices/review/one/record.json',slice_record('one',sha=B))
+        self.assertEqual(self.rows()[0]['status'],'Unclear')
+        self.write('plans/slices/review/one/record.json',slice_record('one'))
+        work['review_progress'].update(status='unknown',sha=None,reason='Current review unavailable')
+        self.write('plans/builds/build/manifest.json',data)
+        row=self.rows()[0]
+        self.assertEqual((row['status'],row['code_loops']),('Review status unknown',1))
+        self.assertIn('Code review: Current review unavailable',row['notes'])
 
     def test_snapshot_reads_only_json_and_never_queries_git(self):
         plan=self.root/'plans/slices/review/one/one.md';plan.write_text('Branch: feature/wrong\nCompleted discovery passes: 99')

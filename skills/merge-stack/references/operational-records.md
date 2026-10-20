@@ -116,10 +116,19 @@ from one arbitrary passed check or a commit existing.
 Phase states distinguish `not_started` from `running`; trim ends at
 `proportionate`. Correctness distinguishes provisional completion
 (`provisionally_complete`), qualified completion (`clean`) and exhaustion
-(`review_cap_reached`). `waived` and
-`unknown` require reasons and never display as clean completion. Terminal
-results require the current tip and an evidence path. Clean correctness also
+(`review_cap_reached`). Terminal results require the current tip and an
+evidence path. Clean correctness also
 requires three clean current-tip reviewer results and proportionate trim.
+
+`waived` and `unknown` require reasons. Display **Review waived** for a
+current-tip waiver and **Review status unknown** for an unknown review,
+identifying the phase and reason. Neither means clean completion. Waivers add
+no passes and do not qualify a release. Missing, invalid or conflicting
+qualification displays **Unclear** with the specific problem. The browser
+checks waiver evidence files are safe, present and nonempty inside `plans/`
+without reading their contents. Correctness takes precedence over trim: use
+the trim status only while correctness is `not_started`. Unknown loop counts
+remain **Unclear** independently of review status. Reporting is read-only.
 
 `accounting: "receipts"` requires integer `completed_passes` and
 `historical_completed_passes`, equal to the immutable imported baseline plus completed receipts in each

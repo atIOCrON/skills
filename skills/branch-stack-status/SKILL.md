@@ -48,6 +48,9 @@ Work read-only. Do not edit files, refs, plans, or the manifest.
    - A documented zero-diff trim applicability decision counts as zero loops.
    - If counts conflict or cannot be verified, show "Unclear" and explain.
 4. Assign one status using this precedence:
+   - Unclear: current qualification is missing, invalid or conflicting. Explain
+     the specific problem. A waiver requires a matching current tip, a reason
+     and a safe, nonempty evidence file inside `plans/`.
    - Exhausted: correctness review reached its cap without a clean result.
    - Complete: this branch's correctness is qualified clean on its accepted tip.
      An unfinished ancestor or external release check does not change that.
@@ -60,9 +63,17 @@ Work read-only. Do not edit files, refs, plans, or the manifest.
      Use this before started statuses; newly assigned implementation fixes
      reopen owner work and must be reported as such.
    - Code Review Started: correctness discovery has begun but is not finished.
+   - Review waived: correctness is explicitly waived on the current tip.
+     Identify the phase and reason; this is neither clean review nor release
+     qualification and adds no completed loops.
+   - Review status unknown: correctness is explicitly `unknown`; identify
+     the phase and recorded reason.
    - Trim Finished: trim is proportionate on the current tip, or formally
      inapplicable to a zero-diff branch, and correctness has not begun.
    - Trim Started: trim has begun but has no proportionate current-tip result.
+   - Review waived / Review status unknown: when correctness has not started,
+     use the corresponding explicit trim state and identify trim in the
+     explanation. A trim waiver does not waive or complete correctness.
    - Implementation Finished: a candidate is committed and verified, with no
      trim review begun.
    - Implementation Started: implementation or required branch verification
@@ -73,6 +84,7 @@ Work read-only. Do not edit files, refs, plans, or the manifest.
 
 Use clickable absolute links for plan files. Briefly explain missing plans,
 zero-diff branches, exhausted caps, and Provisionally Complete branches.
+Unknown loop counts stay `Unclear`; they do not change the review status.
 Do not equate individual branch completion with release readiness or plan
 fulfillment. `Complete` in this table means correctness review is complete;
 `in_release` means included in a recorded assembled candidate; report its
@@ -120,6 +132,8 @@ The browser consumes only schema-v2 JSON, validates every record, and shows
 field-specific contract errors. It never parses Markdown, legacy field aliases,
 or Git state. Slice JSON selects the current build/source/pin explicitly.
 Counts come from JSON receipts; unknown historical accounting stays Unclear.
+The browser checks selected waiver evidence files as required above without
+reading their contents.
 Use `scripts/validate_operational_records.py <original-project>` for a read-only
 project check. Historical reconciliation is a separate explicit import with
 `scripts/migrate_operational_records.py`; it is never part of page refresh.
