@@ -128,10 +128,8 @@ snapshots.
 Assign review ownership to avoid duplicate passes. The coordinator imports
 evidence and CR state; other agents own separate outputs/preparation records.
 For release progression, default to a qualified, ancestry-closed prefix.
-Explicitly authorized local testing may use an assembled ancestry-closed
-prefix with pending review gates: pin its sources and checks, retain those
-gates, and route feedback to existing owners. Testing alone grants no release,
-staging or deployment authority. Pin commits and evidence links
+The release workflow owns candidate-wide checks and acceptance. Pin branch
+commits and evidence links
 in `plans/releases/active/<release-id>/preparation.json`; never freeze unfinished
 queue work or omit inherited unfinished ancestors.
 

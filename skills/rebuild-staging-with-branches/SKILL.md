@@ -238,7 +238,7 @@ absence, previous and live releases, pipeline result, checks, and unresolved
 failures. Distinguish fresh and reused checks, deferred CI gates and any
 necessary duplicate build. Record assembly, local verification and pipeline
 timings when available. Report "deployed and ready for user testing" after
-verification; full staging acceptance belongs to `integrate-and-test-staging`
+verification; full staging acceptance belongs to `verify-staging-acceptance`
 when requested, and is not implied by deployment.
 
 Also report the exact leased revert command without running it. When staging

@@ -20,10 +20,10 @@ than writing the live build manifest yourself.
 Select a qualified, ancestry-closed prefix of an ongoing linear build. Pin its
 build ID/path, source/parent SHAs, and verification/review links here; do not copy
 or freeze the unfinished manifest. Planned names and prepared candidates are
-not release inputs. Selected branches, inherited unmerged work, and
-candidate-wide checks must meet applicable build/repository gates. Later
-unselected work does not block a complete prefix; ready status requires exact
-pinned evidence.
+not release inputs. Selected branches and inherited unmerged work must meet
+branch verification, review and repository gates. Candidate-wide checks belong
+to release assembly and staging verification; build completion does not imply
+they ran. Later unselected work does not block a complete prefix.
 
 Before ready publication or release mutation, obtain a coordinator handoff
 pinning source heads and a return condition. Source rewrites wait; other work
@@ -56,6 +56,8 @@ Record:
   author UUID, current destination, state, and landed SHA;
 - an append-only merge journal path outside the repository;
 - candidate commit and tree SHA, staging receipt and acceptance evidence;
+- acceptance owners, assigned requirements, candidate/environment pins and
+  evidence links in `extensions.sessions`;
 - final PR identity and current state.
 
 Pin all inputs before publication. A source change invalidates its recorded
@@ -128,8 +130,11 @@ preserves stages; do not move already merged or fulfilled slices backwards.
 Merging into integration means assembled, not released. Do not move plans to
 slice or spec `merged/` or `fulfilled/` folders, delete sources, or
 mark the build manifest released. Freeze the assembled candidate's commit and
-tree, deploy that exact commit, and record acceptance separately from
-deployment success.
+tree, verify its combination and deploy that exact commit through
+`rebuild-staging-with-branches`. Delegate acceptance of the deployed candidate
+to persistent ` - Acceptance` chats running `verify-staging-acceptance` under
+`prepare-release-integration`. Aggregate every requirement separately from
+deployment success; an individual owner's pass does not accept the release.
 
 The final PR contains the scope, individual PR links and merge order,
 integration resolutions, candidate identity, test and staging evidence,

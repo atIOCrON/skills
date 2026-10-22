@@ -22,7 +22,7 @@ Include:
 
 - owner/coordinator identities, plan path and files changed;
 - branch, authoring parent, remaining dependencies and worker-completion receipt;
-- worker complete, accepted/restacked, and release ready as separate results;
+- worker complete and accepted/restacked as separate results;
   worker completion may precede final placement or current-tip review mapping;
 - pinned parent and final verified, local, and remote branch SHAs, plus the
   three clean-review SHAs or valid review mappings;
@@ -34,20 +34,18 @@ Include:
 - reviewer artifact paths, including failures;
 - triage ledger path and terminal-status counts;
 - confirmation no non-terminal ledger entries remain;
-- canonical release-manifest path, validation result, freeze state, and final
-  stack-check status, including passed evidence or the prerequisites for checks
-  that remain pending until a complete release candidate exists;
+- canonical build-manifest path, validation result and current branch checks;
+- linked release handoff when selected; candidate-wide checks, acceptance and
+  freeze belong to that workflow and do not block build completion;
 - pending human or external acceptance checks, their procedures and owners,
   and any authorized limitation decisions;
-- release-progression status and each pending release-candidate check with its
-  prerequisite;
 - `## Skill Feedback For User Review` with entries or `- None`;
 - final branch state: branch-level blocker, `Review cap reached`, or `In
   review`. After accepted fixes, closure, proportionate trim, and exact-tip
   verification, both completed states enter `review/`. A capped slice awaits
   human disposition for release readiness. Its verified pinned tip may parent
-  dependent work while review or disposition remains pending. Report pending
-  release-candidate checks separately; they do not change the slice stage.
+  dependent work while review or disposition remains pending. Release handoffs
+  do not change the slice stage until candidate membership is recorded.
 
 Keep the handoff concise and cite artifact paths rather than copying large
 review outputs.

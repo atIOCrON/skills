@@ -36,7 +36,7 @@ Prioritize parallel implementation within and across specs; accept each spec
 as a contiguous block. Use `open-stack-requests` in draft mode as branches stabilize when CR
 publication is authorized; do not wait for release assembly.
 
-Minimize elapsed time to verified release handoff without weakening any gate.
+Minimize elapsed time to verified branch handoff without weakening branch gates.
 Dispatch all eligible work up to actual worker, reviewer, and resource capacity.
 Impose no branch-count or wave-size limit; reuse proven equivalent evidence.
 Follow `references/scheduling.md` throughout execution.
@@ -52,8 +52,8 @@ assembly, and concurrent release ownership. For each plan, use
 `references/git-sync-branch.md` for verified pushes, then
 `references/from-reviewed-plan-to-git-handoff.md`. Read other references when
 their step requires them. Read `references/artefact-audit.md` after a feature
-reaches `review/`; revisit only its pending cross-branch questions after a tested
-stack snapshot exists. Read `references/release-manifest.md` before creating or
+reaches `review/`; hand pending cross-branch questions to the release workflow
+for a tested candidate snapshot. Read `references/release-manifest.md` before creating or
 changing the manifest.
 For concurrent prefix preparation, read sibling
 `prepare-release-integration/references/release-preparation.md` for snapshots
@@ -98,7 +98,7 @@ Keep one compact table and update it on state, review, commit, restack, or
 verification changes:
 
 ```text
-| Plan | Owner | Worker complete | Accepted/restacked | Release ready | Reviews | Branch / Commit | Next action / Waiting on |
+| Plan | Owner | Worker complete | Accepted/restacked | Checks / Reviews | Branch / Commit | Next action / Waiting on |
 ```
 
 The coordinator records selection, spec order/current spec, prepared candidates,
@@ -107,19 +107,22 @@ with owner assignments in work extensions and history in `extensions.sessions`
 under schema-v2. Preserve historical fields on legacy records. Give each waiting task a concrete reason under `scheduling.md`;
 routine conflict risk or later spec placement cannot justify idle capacity.
 
-Report **worker complete**, **accepted/restacked**, and **release ready**
-separately. Import each completed handoff promptly; a finished authoring result
-must not remain labelled implementation started while awaiting placement.
-Worker complete includes verified implementation, trim and correctness loops
-finished cleanly or at the cap on its authoring tip. Accepted/restacked pins the
-coordinator's verified, pushed placement; release ready also satisfies current
-coverage, qualified ancestors, dispositions and release checks.
-Keep existing slice stages and `Review cap reached`, `In review`, or `Blocked`. `In review` means this slice's implementation, trim, and
-correctness passes finished or reached the cap; it does not depend on ancestor
-review decisions or descendants. Record the transition SHA in `review_handoff`.
-`Release ready` requires current-tip checks, clean reviews or accepted capped
-disposition, qualified pinned ancestors, and final stack checks. A routine
-restack makes current-tip evidence pending without changing `In review`.
+Report **worker complete** and **accepted/restacked** separately. Import each
+completed handoff promptly. Worker complete means implementation, branch checks,
+trim and correctness loops finished cleanly or at the cap on the authoring tip.
+Accepted/restacked pins the coordinator's verified, pushed placement; track
+current-tip review coverage separately.
+
+Keep existing slice stages and `Review cap reached`, `In review`, or `Blocked`.
+`In review` requires stack acceptance and this slice's own checks, trim and
+correctness completion or cap; ancestor decisions and descendants do not block
+it. Record the transition SHA in `review_handoff`. A routine restack makes
+current-tip evidence pending without changing `In review`.
+
+Build completion produces individually verified branches, not a selected
+release candidate. Release preparation owns candidate-wide verification,
+acceptance, freeze and release readiness across contributing builds. Import
+its membership and stage handoffs when needed; do not run those gates here.
 Number review passes. Call an ongoing pass “pass N” or “next fresh pass”; use
 “final,” “last,” or “closing” only after all completion conditions are satisfied.
 
@@ -346,70 +349,21 @@ by an eligible test-only remediation, follow `code-review-loop.md`: verify the
 new SHA, obtain same-session closure from each originating reviewer, and record
 `test_only_closure` mappings instead of running another discovery pass.
 
-Support explicitly authorized local testing of an assembled prefix. The
-coordinator pins its ancestry-closed snapshot, scope and applicable checks;
-record unfinished review/external gates as pending, without claiming release
-readiness or advancing freeze/publication gates. Route user feedback and any
-implementation work to the existing owners. Local prefix testing does not
-require the full queue to finish and does not authorize staging or deployment.
+Finish when selected branches have verified pushed tips, current branch-check
+coverage, proportionate trim, and completed correctness loops or cap records.
+Verify stack placement and evidence applicability after restacks using the
+smallest sufficient checks. Preserve repository-required branch checks; do not
+add candidate-wide integration, pipeline or acceptance runs at build completion.
 
-A qualified prefix needs its own candidate-wide checks; pending checks for the
-larger build do not block it. After all plans, run full-stack checks without a
-blanket review. Review again only where restacks or integration fixes changed
-behavior or invalidated mappings:
-
-1. When every branch in the selected release candidate exists, run deterministic
-   pre-handoff checks on every chain head and independent branch. For an ordered
-   independent batch, build an unpushed temporary integration commit from the
-   pinned base in merge order and test it. Check the applicable capabilities'
-   final integration verification against each exact chain head or temporary
-   integration commit. Check
-   that CI required by the plan, user, or repository policy runs on the target
-   branches and covers applicable behavior tests and risk-based lint, type,
-   dependency, secret, and static checks. Run required agent-run checks locally
-   where CI is optional or cannot cover them. If later planned branches do not
-   yet exist, record these release-candidate checks as pending with their exact
-   prerequisites; checks on the current partial stack are not conclusive evidence
-   for the eventual candidate. Pending release-candidate checks do not move a
-   completed feature out of `review/`, but they block freeze, ready CRs, staging,
-   and merge. If a required final stack check is absent or cannot run for a
-   complete candidate, block release progression. If it fails, return the
-   owning slice to `in_progress/` when a fix is needed; restack and re-verify
-   affected descendants in their current stage. Record human or external acceptance as
-   pending with its procedure and owner when it cannot yet be performed.
-2. For a complete candidate, when
-   `scripts/codex/protected_full_pipeline.py` exists, run it with the committed
-   lock-selected seed and baseline. If the candidate is incomplete, record this
-   check and its required branches as pending instead of running it on a partial
-   stack:
-
-   ```bash
-   python -m scripts.codex.protected_full_pipeline \
-     --data-root <absolute-protected-data-root> \
-     --commit "<verified-chain-head-or-temporary-integration-sha>" \
-     --output-dir <verification-artifact-directory>
-   ```
-
-Keep bulk output outside artefact folders and index concise evidence under
-the last plan. Never publish or refresh protected seed or baseline data here.
-Treat a lock mismatch or unexpected output as a blocker.
-
-Leave completed features in `review/` until a recorded, fully assembled release
-candidate covers their pinned tips; then use `in_release` under the shared layout.
-Keep that stage through pending release-candidate, human, or external checks.
-Import release-coordinator membership handoffs and reconcile parents before
-shared stage moves and manifest repairs. Build completion alone does not qualify. If a later check reveals a defect, return its
-owner to `in_progress/` for a fix; restack affected descendants without
-changing their stage unless they need implementation work. Refresh the canonical manifest at its
-stable release path and check every recorded plan and artefact path. Freeze only
-when the user selects a complete candidate, final stack checks pass, and all
-included branch tips, automation-clean reviews or SHA-pinned accepted capped
-dispositions, and required agent
-checks agree. Record the freeze authorization and scope digest, then validate
-the manifest. Do not add scope after freeze. A critical addition requires an
-authorized thaw, a new digest, and invalidation of affected integration,
-pipeline, and acceptance evidence; noncritical additions go to a later release
-unless the user changes the frozen scope.
+Leave completed slices in `review/`. Hand their pinned tips, ancestry, real
+prerequisites, branch evidence, capped dispositions and declared acceptance
+requirements to `prepare-release-integration` when a release is selected.
+That workflow combines branches across builds and owns candidate qualification.
+Import its membership and stage handoffs before shared moves or manifest repair.
+If a later check reveals a defect, return its implementation owner to
+`in_progress/` for a fix; restack descendants in their current stage unless they
+also need implementation work. Keep build and release records linked without
+freezing a build merely because its selected work finished.
 
 Audit the selected features' preserved artefacts using
 `references/artefact-audit.md`. Verify candidate follow-ups against the tested
@@ -474,8 +428,7 @@ separately from branch readiness.
   needing implementation fixes to `in_progress/`,
   correct the implementation or recorded design, and verify and review a new
   immutable candidate. Integrity failures block the affected chain until safely
-  reconciled; continue independent work. When the full-pipeline export test
-  exists, do not skip it for a complete candidate unless the user cancels it.
+  reconciled; continue independent work.
 - Do not mark a feature `fulfilled/` while external acceptance is pending or a
   failure remains unresolved. Record passed checks or an authorized decision
   explicitly accepting each limitation before `fulfilled/`; retain the confirmed
@@ -488,11 +441,13 @@ separately from branch readiness.
 Save and validate the canonical manifest at
 `plans/builds/<build-id>/manifest.json` or the repository-defined stable
 path. It records the base, ordered branches, dependencies, targets, tips,
-surfaces, checks, all three review mappings, CRs, exclusions, freeze, integration,
-acceptance, and deployment state; link detailed evidence instead of duplicating
-it. Report owner IDs/names and individual pause/exclusion reasons, worker complete,
-accepted/restacked, release ready, child and parent stages, `review_handoff`, current-tip evidence,
-release readiness, and pending dispositions, restacks, and checks with prerequisites.
+surfaces, branch checks, all three review mappings, CRs, exclusions, and linked
+release/deployment handoffs; preserve historical release state and link evidence
+instead of duplicating it. Report owner IDs/names and individual pause/exclusion reasons, worker complete,
+accepted/restacked, child and parent stages, `review_handoff`, current-tip branch
+evidence, and pending dispositions, restacks and branch checks with prerequisites.
+Report release selection and candidate-wide verification as owned by the release
+workflow, not conditions of build completion.
 Report selection, spec order/current spec, tail, prepared work, assignments,
 waiting reasons, and audit decisions, specs/maps, draft/backlog plans, and
 incomplete work. Link the manifest and pinned release preparation. State whether

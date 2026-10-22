@@ -74,7 +74,8 @@ applies; final release gates remain.
 
 Retrieve completed owner handoffs and import candidate/check/review receipts at
 every checkpoint before waiting. Report worker complete on its authoring tip,
-accepted/restacked on its final placement, and release ready separately. Owner
+accepted/restacked on its final placement separately. Release readiness belongs
+to the release workflow and does not block build completion. Owner
 completion may be capped; it does not imply clean reviews or release authority.
 After a restack the coordinator classifies evidence applicability and sends
 invalidated work back to the same owner. Preserve original completion evidence.
