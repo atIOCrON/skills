@@ -45,8 +45,8 @@ current stage. At the review cap, record
 unresolved findings as pending human disposition; do not demote a completed
 slice solely because that decision is pending. Repeat affected checks and audit
 after a fix.
-Repeat release-candidate checks when their evidence was invalidated. Do not move
-that gap to the backlog. A pending external or not-yet-runnable release-candidate
+Return invalidated release-candidate evidence to the release owner for applicable
+checks. Do not move that gap to the backlog. A pending external or release-candidate
 check alone is not a current-plan fix.
 
 ## Decision ledger and plans

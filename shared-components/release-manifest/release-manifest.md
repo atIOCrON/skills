@@ -18,6 +18,13 @@ acceptance, exclusions, change requests, candidate state, and deployment.
 Spreadsheets and prose summaries are projections: generate or reconcile them
 from the manifest, never use them to override it silently.
 
+Build completion requires branch verification, trim, correctness and safe
+placement. It neither selects a release nor requires candidate-wide checks or
+freeze. Release preparation owns the selected combination, staging verification,
+acceptance and release qualification; keep its evidence linked to contributing
+builds. Historical release fields and gates below apply only when that release
+workflow is invoked.
+
 Build runs also maintain `extensions.sessions` (legacy `sessions`) under the build runner's runtime
 guidance. Preserve every contributing context and its handoff evidence across
 resumption; session provenance does not replace SHA-pinned checks or reviews.

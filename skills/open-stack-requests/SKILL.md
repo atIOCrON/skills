@@ -89,7 +89,8 @@ After repairs, reload the canonical manifest to resolve moved plan paths.
    If none apply, record `none applicable`; a skipped or absent expected
    pipeline cannot count as a pass. If a check requires a code fix, return
    affected CRs and ready descendants to draft, then send their branches for
-   verification, review, and final stack checks. Resume at step 1, then
+   branch verification and review. Obtain candidate-wide verification from the
+   release workflow before resuming ready publication. Resume at step 1, then
    refresh the CRs.
 5. Refetch parents and CRs. Require local, upstream, verified, and CR source
    SHAs to match; require automation-clean reviews or an accepted capped

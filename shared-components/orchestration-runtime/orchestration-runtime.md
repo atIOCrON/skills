@@ -1,6 +1,11 @@
 # Orchestrator Runtime
 
 Use one coordinating chat and persistent, independent implementation chats.
+Release acceptance owners use the same provider transports, execution ownership,
+progress retrieval, pause/resume and recovery rules. Their caller assigns testing
+scope and names chats `<branch name without feature/> - Acceptance`; it does not
+assign the implementation or review route below. Keep acceptance and implementation
+owners separate. Native sub-agents do not own acceptance.
 New implementation owners use the coordinator's agent product/provider by
 default under the selection rules below.
 Create one owner chat per independent plan, or one for an approved dependency
@@ -63,7 +68,7 @@ Resume existing owners in their original chats and providers; a coordinator
 change does not migrate them. Apply these selection rules to replacement owners
 as well. Record the coordinator provider, selected owner provider, and any
 explicit user override with its source in session history before creation.
-These rules govern implementation owners; the multi-provider reviewer
+These rules also govern acceptance owners; the multi-provider reviewer
 requirements below remain separate.
 
 ## Provider Transports
@@ -204,10 +209,12 @@ an independent new build gets a new ID. Preserve all existing build IDs.
 
 ## Session History
 
-Register every contributing coordinator, implementation owner and reviewer
+Register every contributing coordinator, implementation/acceptance owner and reviewer
 when it starts; update its handoff when it completes, pauses or stops. Under
 schema-v2, use `extensions.sessions`, `schedule.extensions.coordinator`, and
-`schedule.work[].extensions.owner`; preserve legacy top-level `sessions` when
+`schedule.work[].extensions.owner` for builds. Releases use `extensions.sessions`
+for acceptance owners, assigned requirements, candidate/environment pins and
+evidence links. Preserve legacy top-level `sessions` when
 resuming historical records. Do not add fields outside the canonical schema.
 
 Record each session's `provider`, `role`, `transport` (`project-chat`,

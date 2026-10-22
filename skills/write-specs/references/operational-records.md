@@ -128,9 +128,9 @@ assigned checkout, authoring base, one active execution lease, and pause/resume
 conditions. Import candidate and completion handoffs promptly. A work extension
 `worker_completion` preserves the original authoring pin, clean/capped outcome,
 checks/review receipts, dependencies and handoff evidence; it does not qualify
-a rewritten tip. Report worker complete, accepted/restacked and release ready
-separately while canonical phases record current coverage. Explicitly authorized
-local prefix testing pins assembled sources/checks and keeps pending gates.
+a rewritten tip. Report worker complete and accepted/restacked separately while
+canonical phases record current coverage. Release readiness is owned by the
+release workflow; it is not a build completion gate.
 
 Keep `freeze` null until its existing qualification and authorization gates
 pass. Frozen and later candidates require verified implementation, proportionate
@@ -228,6 +228,9 @@ Release `changes` contain explicit slice/build identities, source heads,
 original parents and PRs. Current PR destinations live in the PR record, separate
 from stack parents. Store the candidate commit/tree, final PR, lifecycle,
 assembly state, acceptance and staging receipt in their defined fields.
+Acceptance owners use release `extensions.sessions` for chat history, assigned
+requirements, candidate/environment pins and evidence links. Owners return evidence; the
+release coordinator aggregates it into canonical `acceptance`.
 Lifecycle is `active`, `released`, `superseded` or `cancelled`; it is distinct
 from assembly state. Preserve publication authorization and merge journals in
 extensions; existing mutation gates still apply.
