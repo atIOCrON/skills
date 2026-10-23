@@ -5,6 +5,18 @@ or adopted `preparation.json` files. Validate with
 `scripts/validate_operational_records.py`; narrative historical field lists
 below are context, not alternate JSON formats.
 
+## Upfront Choices
+
+Resolve the user's strategy (`merge-commit` or `squash`) and approval preference
+(`pause` or `proceed`) before release work. Ask for missing answers together and
+wait; neither has a default. Reuse explicit answers for this release on resume.
+Store `strategy`, `approval`, and direct user `evidence` in
+`extensions.merge_options`. A legacy default does not establish a user choice.
+`pause` requires one confirmation after PR publication; `proceed` authorizes
+assembly of the selected scope without that pause. Both cover verified squash
+restacks under the authorization below. Staging and the final base merge retain
+their own authorization boundaries.
+
 Use `plans/releases/active/<release-id>/preparation.json` for PR assembly state. This
 operational record does not replace a build manifest or change its dependency
 pins or review evidence. Confirmed assembly advances selected plans to
@@ -26,8 +38,9 @@ to release assembly and staging verification; build completion does not imply
 they ran. Later unselected work does not block a complete prefix.
 
 Before ready publication or release mutation, obtain a coordinator handoff
-pinning source heads and a return condition. Source rewrites wait; other work
-continues. The release agent owns this record and its isolated integration
+pinning source heads, permitted verified squash restacks and a return condition.
+Other source rewrites wait; other work continues. The release agent owns this
+record and its isolated integration
 branch, not build sources or review evidence. Return candidate membership and
 stage results to the active coordinator for shared moves and manifest repair.
 Return source repairs to the coordinator. Source drift invalidates affected snapshots/approvals under existing
@@ -60,7 +73,9 @@ Record:
   evidence links in `extensions.sessions`;
 - final PR identity and current state.
 
-Pin all inputs before publication. A source change invalidates its recorded
+Pin all inputs before publication. Preserve original source/parent pins and
+record verified squash mappings separately in `extensions.restacks`, including
+old/new heads, parent, target and proof. Other source changes invalidate recorded
 verification and merge authorization; stop for disposition without launching
 reviewers or editing code. A target change requires refreshing its diff and
 configured checks, not automatically rebasing the source.
@@ -84,10 +99,11 @@ Never retry a mutation with an unknown outcome before reconciliation.
 ## Merge Authorization
 
 Create all individual PRs and present their links, descriptions, pinned heads,
-and merge order before merging. Pause for direct user confirmation unless the
-user explicitly authorized this release's merges upfront. Creating PRs or
-invoking preparation alone is not merge authorization. Do not invent a second
-human approval gate; satisfy only checks and approvals required by the forge.
+order and proposed squash messages before merging. With `approval: pause`, obtain
+one confirmation covering assembly and verified squash restacks. With `proceed`,
+use the user's upfront instruction. Bind that permission to the resolved scope
+before mutation; creation or invocation alone gives no merge permission. Satisfy
+configured forge checks and approvals without adding a separate review gate.
 
 Record that confirmation with `merge-stack/scripts/journal_event.sh`:
 
@@ -95,25 +111,39 @@ Record that confirmation with `merge-stack/scripts/journal_event.sh`:
 {
   "event": "merge-authorized",
   "authorized_by": "user",
-  "merge_method": "merge-commit",
+  "merge_method": "squash",
+  "integration_start_sha": "<full initial integration SHA>",
+  "allow_verified_restacks": true,
   "evidence": "<direct user instruction or confirmation>",
   "changes": [
     {
       "change_id": "<PR ID>",
+      "source_branch": "<branch>",
       "head_sha": "<full source SHA>",
-      "target_branch": "<integration branch>"
+      "parent_sha": "<full original parent SHA>",
+      "target_branch": "<integration branch>",
+      "message_sha256": "<canonical squash message hash>"
     }
   ]
 }
 ```
 
-The eventual integration destination is recorded even while a stacked PR
-temporarily targets its predecessor. Authorization survives an unchanged run
-resumption; it does not cover new changes, rewritten heads, another release,
-or the final integration-to-base merge. Source changes need new authorization.
-Squash requires an explicit override and authorization recorded with
-`merge_method: "squash"`; omitted methods in existing authorization events mean
-`merge-commit`.
+List all changes in merge order. Use `merge_method: "merge-commit"` and
+`allow_verified_restacks: false` for merge commits; omit their message hashes
+unless supplying custom messages. The destination is integration even while a
+stacked PR temporarily targets its predecessor. Record message files and hashes
+in preparation extensions; reuse their exact text on resume.
+
+Authorization survives resumption and verified squash restacks in the same
+release. A restack must start at the authorized source/parent, target the last
+confirmed release result, preserve its own patch sequence and reproduced tree,
+and retain the same message. Journal the proof and lease push; refresh checks
+for the new head. `release_authorization.py` checks that mapping before merging.
+No per-successor user confirmation is needed. Conflicts, changed feature scope,
+unexpected ref movement, changed messages or failed proof require a new decision;
+the permission excludes another release and the final integration-to-base merge.
+Legacy authorization covers only its exact heads; omitted merge methods mean
+`merge-commit`, and missing restack permission grants none.
 
 ## Completion
 

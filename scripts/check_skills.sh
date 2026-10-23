@@ -140,6 +140,7 @@ if [[ "$(cd "$target_dir" && pwd)" == "$repo_root/skills" ]]; then
   python3 -m unittest discover -s "$target_dir/branch-stack-status/scripts" -p 'test_*.py'
   "$target_dir/merge-stack/scripts/test_merge_stack.sh"
   "$target_dir/merge-stack/scripts/test_release_assembly.sh"
+  python3 "$target_dir/merge-stack/scripts/test_release_squash.py"
   python3 "$repo_root/shared-components/change-request-lifecycle/scripts/test_bitbucket_cloud.py"
   python3 "$target_dir/build-branch-stack/scripts/test_evidence_reuse.py"
   python3 "$repo_root/shared-components/release-manifest/scripts/test_build_schedule.py"

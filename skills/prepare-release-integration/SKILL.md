@@ -1,6 +1,6 @@
 ---
 name: prepare-release-integration
-description: Prepare a Bitbucket release through individual PRs, pause for merge confirmation, assemble it, test the exact candidate on staging, and open the final PR to the base branch.
+description: Prepare a Bitbucket release with an upfront merge strategy and approval choice, assemble individual PRs, test the exact candidate on staging, and open the final PR to the base branch.
 disable-model-invocation: true
 metadata:
   layer: runner
@@ -17,6 +17,25 @@ Keep historical extensions and existing authorization, verification and review
 gates; they do not authorize schema aliases or inferred reporting values.
 # Prepare Release Integration
 
+## Upfront Choices
+
+Before release work, resolve both choices from the user's instructions:
+
+- **Strategy:** merge commit (`merge-commit`) or squash (`squash`).
+- **Approval:** pause after publishing PRs (`pause`) or proceed to assembly
+  automatically (`proceed`). Proceed authorizes this release's selected PRs and
+  verified squash restacks; pause requires one confirmation before assembly.
+
+Immediately ask for all missing choices together, then wait. Ask only for missing
+answers; do not assume defaults or treat strategy selection as merge permission.
+Interpret “merge commit” as one strategy; clarify a bare “commit” if ambiguous.
+Resolve these choices before discovery, record creation, Git operations or PR
+publication. Explicit choices and authorization persist for the same release;
+resume them without asking again. A recorded legacy default is not a user choice.
+Record both choices and their direct user evidence in `extensions.merge_options`
+under `strategy`, `approval`, and `evidence`. Read the shared preparation contract
+for scoped authorization. Staging authorization remains separate.
+
 Coordinate `open-stack-requests`, `merge-stack`,
 `rebuild-staging-with-branches`, and `verify-staging-acceptance`.
 Read those skills from their installed sibling directories; stop if a required
@@ -31,8 +50,8 @@ Use the selected release's ordered, already-pushed branches, dependency pins,
 verification evidence, and release ID. Link contributing build manifests for
 scope and branch evidence; an explicit user branch list is also supported. Do not
 require draft PRs. Resolve the remote default branch unless the user names a
-base. Accept explicit upfront authorization for merging and staging deployment;
-otherwise obtain missing authorization at the relevant boundary.
+base. Use the upfront merge choices; obtain missing staging authorization at its
+deployment boundary.
 Validate contributing schema-v2 build records with the operational validator
 before selecting qualification evidence. Reconcile historical records explicitly
 before adoption; legacy validation does not supply dashboard state.
@@ -59,10 +78,11 @@ Record the creation time and ID source. Before publishing PRs, show the ID,
 record path, and integration branch; explain that the ID identifies a candidate,
 not a completed release or Bitbucket tag.
 
-Resume unchanged scope and pinned inputs under the same ID and ref, regardless
-of elapsed time. A replacement after separately authorized fixes or scope changes
-gets a new ID. Preserve and link both records; mark the old candidate superseded
-once its replacement is established. Changed inputs require fresh merge
+Resume unchanged scope and pinned inputs, including recorded verified squash
+restacks, under the same ID and ref, regardless of elapsed time. A replacement
+after separately authorized fixes or scope changes gets a new ID. Preserve and
+link both records; mark the old candidate superseded once its replacement is
+established. Other changed inputs require fresh merge
 authorization and applicable acceptance. No nested attempts directory is needed.
 
 ## Prepare And Publish
@@ -77,17 +97,24 @@ authorization and applicable acceptance. No nested attempts directory is needed.
 3. Call `open-stack-requests` in `release` mode with the record. It creates fresh
    non-draft PRs, one per change, using predecessor targets for clean stacked
    diffs and integration for independent roots.
-4. Present all PR links, descriptions, pinned source SHAs, and merge order.
-   **Pause before merging unless explicitly authorized upfront.** Record direct
-   user authorization in the merge journal as defined by the shared record.
-   Resuming an unchanged authorized release does not need another confirmation.
+   For squash, compose each own-change message under
+   `merge-stack/references/git-commit-message.md` and fingerprint it with
+   `merge-stack/scripts/merge_message.py`; save files and hashes in preparation
+   extensions before presenting the PRs.
+4. Present all PR links, descriptions, pinned source SHAs, merge order, selected
+   strategy, and proposed squash messages. With `approval: pause`, obtain one
+   confirmation for assembly and verified squash restacks. With `approval: proceed`,
+   continue using the user's upfront authorization. Record its exact scope in the
+   merge journal before mutation. Resume an unchanged authorized run without
+   another confirmation.
 
 ## Assemble, Test, And Publish The Release
 
-1. Call `merge-stack` in `release` mode with `strategy: merge-commit`. It merges
-   each PR into integration, retargets successors, preserves source heads by
-   default, and stops for conflicts or drift. Do not repair code or launch
-   reviews automatically. Record the assembled candidate commit and tree.
+1. Call `merge-stack` in `release` mode with the selected strategy and approval
+   choice. It merges each PR into integration and retargets successors. Squash
+   adds one commit per PR with a composed message and verified successor restacks;
+   merge commits retain source history. Stop for conflicts or drift. Do not repair
+   code or launch reviews automatically. Record the assembled candidate commit and tree.
    Advance included `review` slices to `in_release`, record pinned membership,
    reconcile parents, and repair manifest paths under the shared layout. For an
    active build, return these results to its coordinator for shared writes.

@@ -27,6 +27,7 @@ case "$1 $2" in
       *branches/develop*) echo '{"protected":true}' ;;
       *pulls/1/merge*)
         [[ "$args" == *"merge_method=${TEST_EXPECT_METHOD:-merge}"* ]] || exit 3
+        if [ -n "${TEST_MERGE_CAPTURE:-}" ]; then printf '%s\0' "$@" > "$TEST_MERGE_CAPTURE"; fi
         jq -n --arg head "${TEST_HEAD:?}" '{merged:true,sha:$head}'
         ;;
       *) exit 2 ;;

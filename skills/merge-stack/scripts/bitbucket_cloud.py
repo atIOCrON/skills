@@ -220,8 +220,16 @@ class Bitbucket:
                 "source_branch": source, "target_branch": target, "head_sha": head,
                 "base_sha": base, "draft": False, "author_uuid": author}
 
-    def merge(self, id_, head, target, base, method="merge-commit"):
+    def merge(self, id_, head, target, base, method="merge-commit", message_file=None):
         require(method in {"merge-commit", "squash"}, "unsupported merge method")
+        parameters = {"type": "pullrequest_merge_parameters",
+                      "merge_strategy": "squash" if method == "squash" else "merge_commit",
+                      "close_source_branch": False}
+        if message_file:
+            message = Path(message_file).read_bytes().decode("utf-8")
+            require(message.strip() and "\r" not in message and "\0" not in message,
+                    "merge message must be nonempty UTF-8 text with LF endings")
+            parameters["message"] = message.rstrip("\n") + "\n"
         before = self.get_change(id_)
         require(before["state"] == "open" and before["draft"] is False and
                 before["head_sha"] == head and before["target_branch"] == target and before["base_sha"] == base and
@@ -230,10 +238,7 @@ class Bitbucket:
                 before["policy_status"] == "passed" and before["mergeability"] == "mergeable" and
                 before["checks_status"] in {"passed", "not-required"}, "PR failed the merge gate")
         # The API has no caller-supplied expected head/base: verify both parents after landing.
-        result = self.request(f"pullrequests/{id_}/merge", "POST", {
-            "type": "pullrequest_merge_parameters",
-            "merge_strategy": "squash" if method == "squash" else "merge_commit", "close_source_branch": False,
-        })
+        result = self.request(f"pullrequests/{id_}/merge", "POST", parameters)
         if result.get("state") == "MERGED":
             require(self.branch(before["source_branch"])["target"]["hash"] == head, "source moved during merge")
             return {"status": "merged", "merge_method": method,
@@ -259,7 +264,7 @@ class Bitbucket:
             return after
         if operation == "create" and len(args) == 5:
             return self.create(*args)
-        if operation == "merge" and len(args) in {4, 5}:
+        if operation == "merge" and len(args) in {4, 5, 6}:
             return self.merge(*args)
         raise ValueError("unsupported operation or argument count")
 

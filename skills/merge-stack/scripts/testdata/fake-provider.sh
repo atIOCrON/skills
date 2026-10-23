@@ -45,9 +45,10 @@ case "$operation" in
     jq -n --arg id "$1" --arg target "$2" '{id:$id,target_branch:$target}'
     ;;
   merge)
-    [ "$#" -eq 4 ] || [ "$#" -eq 5 ]
+    [ "$#" -ge 4 ] && [ "$#" -le 6 ]
     [ "$3" = "${FAKE_TARGET:-develop}" ]
     [ "$4" = "${FAKE_BASE:-$FAKE_HEAD}" ]
+    if [ -n "${FAKE_MESSAGE_FILE:-}" ]; then cmp "$6" "$FAKE_MESSAGE_FILE"; fi
     jq -n --arg landed "${FAKE_LANDED:-$FAKE_HEAD}" --arg method "${5:-merge-commit}" \
       '{status:"merged",merge_method:$method,landed_sha:$landed}'
     ;;

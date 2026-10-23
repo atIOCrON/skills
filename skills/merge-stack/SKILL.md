@@ -1,6 +1,6 @@
 ---
 name: merge-stack
-description: Merge approved stacks with ordinary merge commits by default; use an explicit squash override. Supports GitHub, GitLab, and Bitbucket release assembly.
+description: Merge approved stacks using an upfront merge-commit or squash choice and approval preference. Supports GitHub, GitLab, and Bitbucket release assembly.
 disable-model-invocation: true
 metadata:
   layer: runner
@@ -17,10 +17,15 @@ Keep historical extensions and existing authorization, verification and review
 gates; they do not authorize schema aliases or inferred reporting values.
 # Merge Stack
 
-Default to `strategy: merge-commit`: preserve commits and create a merge commit
-for each change. Squash only when the user explicitly selects
-`strategy: squash`; never fall back to squash when merge commits are disabled.
-Treat an explicit legacy `mode: squash` as that override.
+Before discovery or mutation, resolve the user's `strategy: merge-commit|squash`
+and `approval: pause|proceed`. Immediately ask for missing choices together and
+wait; use explicit prior instructions or recorded choices for the same run without
+asking again. “Merge commit” is one strategy; clarify an ambiguous bare “commit”.
+Merge commits preserve history; squash adds one commit per change. `pause` means
+one approval after presenting the PRs, order and squash messages; `proceed` gives
+upfront permission for the selected assembly. Neither choice waives provider gates
+or authorizes the final release PR. Treat explicit legacy `mode: squash` as a
+strategy choice. Never substitute strategies when the selected one is unavailable.
 
 For Bitbucket, or explicit `mode: release`, read
 `references/release-assembly.md` instead of the standard workflow below.
@@ -72,7 +77,7 @@ merge and the move to `fulfilled/`; an already confirmed final merge belongs in
 
 ```bash
 provider=<gitlab|github|auto>
-strategy=${strategy:-merge-commit}
+strategy=<merge-commit|squash> # resolved from the user's upfront choice
 remote=${remote:-origin}
 base="$(scripts/resolve_base_branch.sh "$remote" "${base:-}")"
 scripts/provider.sh "$provider" "$remote" auth-check
@@ -148,6 +153,14 @@ that platform workflow. Never replace required remote CI with a local result.
 
 ## Merge Each Change
 
+Present the selected changes, order and strategy before mutation. Compose squash
+messages under `references/git-commit-message.md` from each pinned own-change
+diff, using truthful verification evidence. Save UTF-8 message files and hashes in
+the journal. With `approval: pause`, obtain one confirmation; with `proceed`, use
+the user's upfront permission. Resume recorded authorization for unchanged scope.
+Pass messages through the provider's merge operation and verify the landed text.
+Release assembly uses its scoped authorization and verified-restack rules.
+
 For each ordered branch:
 
 1. Journal intent and fetch `$remote`. With merge commits, retain source heads;
@@ -202,7 +215,7 @@ For each ordered branch:
    ```bash
      scripts/merge_stack_change.sh \
      "$provider" "$remote" <id> <head-sha> <target> <base-sha> \
-     <successor-id-or-null> <journal> "$strategy"
+     <successor-id-or-null> <journal> "$strategy" [message-file]
    ```
 
    The script rechecks source and base SHAs, target, exact-head approval and

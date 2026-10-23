@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "$#" -lt 8 ] || [ "$#" -gt 9 ]; then
-  echo "usage: merge_stack_change.sh <provider> <remote> <change-id> <head-sha> <target> <base-sha> <successor-id-or-null> <journal> [squash|merge-commit]" >&2
+if [ "$#" -lt 8 ] || [ "$#" -gt 10 ]; then
+  echo "usage: merge_stack_change.sh <provider> <remote> <change-id> <head-sha> <target> <base-sha> <successor-id-or-null> <journal> [squash|merge-commit] [message-file]" >&2
   exit 2
 fi
 
@@ -15,11 +15,17 @@ base_sha="$6"
 successor_id="$7"
 journal="$8"
 method="${9:-merge-commit}"
+message_file="${10:-}"
 case "$method" in squash|merge-commit) ;; *) echo "error: unsupported merge method" >&2; exit 2 ;; esac
 script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 
 case "$head_sha" in ''|*[!0-9a-fA-F]*) echo "error: head SHA must be hexadecimal" >&2; exit 2 ;; esac
 case "$base_sha" in ''|*[!0-9a-fA-F]*) echo "error: base SHA must be hexadecimal" >&2; exit 2 ;; esac
+message_json='{}'
+if [ -n "$message_file" ]; then
+  message_file="$(python3 -c 'import pathlib,sys; print(pathlib.Path(sys.argv[1]).resolve())' "$message_file")"
+  message_json="$(python3 "$script_dir/merge_message.py" "$message_file")" || exit 4
+fi
 
 change="$("$script_dir/provider.sh" "$provider" "$remote" get-change "$change_id")" || exit 3
 
@@ -57,14 +63,10 @@ else
   [[ "$head_sha" =~ ^[0-9a-f]{40}$ && "$base_sha" =~ ^[0-9a-f]{40}$ ]] || {
     echo "error: release assembly requires full commit SHAs" >&2; exit 4;
   }
-  jq -se --arg id "$change_id" --arg head "$head_sha" --arg target "$target" --arg method "$method" '
-    any(.[]; .event == "merge-authorized" and .authorized_by == "user" and
-      (.merge_method // "merge-commit") == $method and
-      (.evidence | type == "string" and length > 0) and
-      any(.changes[]?; .change_id == $id and .head_sha == $head and .target_branch == $target))
-  ' "$journal" >/dev/null || {
-    echo "error: user authorization does not cover this PR, head, and target" >&2; exit 4;
-  }
+  authorization_args=("$journal" "$change_id" "$head_sha" "$target" "$base_sha" "$method"
+    "$(printf '%s' "$change" | jq -r '.source_branch')")
+  if [ -n "$message_file" ]; then authorization_args+=(--message-file "$message_file"); fi
+  python3 "$script_dir/release_authorization.py" "${authorization_args[@]}" >/dev/null || exit 4
   if [ "$method" = squash ]; then
     assert_field '.squash_allowed == true' "squash merging is unavailable"
   else
@@ -79,9 +81,12 @@ fi
 "$script_dir/journal_event.sh" "$journal" merge-planned \
   "$(jq -nc --arg id "$change_id" --arg head "$head_sha" --arg target "$target" \
     --arg base "$base_sha" --arg successor "$successor_id" --arg method "$method" \
-    '{change_id:$id,head_sha:$head,target_branch:$target,base_sha:$base,successor_id:$successor,merge_method:$method}')"
+    --arg file "$message_file" --argjson message "$message_json" \
+    '{change_id:$id,head_sha:$head,target_branch:$target,base_sha:$base,successor_id:$successor,merge_method:$method}
+     + (if $file == "" then {} else {message_file:$file,message_sha256:$message.sha256} end)')"
 merge_args=("$change_id" "$head_sha" "$target" "$base_sha")
 merge_args+=("$method")
+if [ -n "$message_file" ]; then merge_args+=("$message_file"); fi
 result="$("$script_dir/provider.sh" "$provider" "$remote" merge "${merge_args[@]}")" || exit 5
 printf '%s' "$result" | jq -e --arg method "$method" '
   (.status == "merged" or .status == "submitted") and

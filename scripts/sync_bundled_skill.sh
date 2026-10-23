@@ -100,6 +100,8 @@ sync_one shared-components/release-manifest/scripts/validate_release_manifest.py
   "$merge_bundle" scripts/validate_release_manifest.py
 sync_one shared-components/change-request-lifecycle/scripts/bitbucket_cloud.py \
   "$merge_bundle" scripts/bitbucket_cloud.py
+sync_one shared-components/git-commit-message/git-commit-message.md \
+  "$merge_bundle" references/git-commit-message.md
 
 for bundle in "$publish_bundle" "$merge_bundle" "$release_bundle"; do
   sync_one shared-components/release-integration/release-preparation.md \

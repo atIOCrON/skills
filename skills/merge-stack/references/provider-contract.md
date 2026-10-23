@@ -16,10 +16,14 @@ It must support these operations:
 - `get-change <branch|url|id>`
 - `list-by-target <branch>`
 - `retarget <id> <branch>`
-- `merge <id> <head-sha> <target-branch> <base-sha> [merge-commit|squash]`
+- `merge <id> <head-sha> <target-branch> <base-sha> [merge-commit|squash] [message-file]`
 
 Omitting the strategy means `merge-commit` on every provider. Squash requires
 an explicit `squash` argument; disabled merge commits never trigger a fallback.
+These low-level defaults preserve existing callers; skill invocations require
+the user's strategy and approval choices. A message file contains the composed
+UTF-8 subject and body. Send that text explicitly, retaining source branches;
+the caller verifies the landed message. Release squash requires the recorded file.
 The Bitbucket adapter also supports publication's `create` operation through
 the shared `scripts/bitbucket_cloud.py`.
 Bitbucket also returns `draft`, `author_uuid`, `merge_commit_allowed`,

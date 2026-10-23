@@ -114,12 +114,20 @@ case "$operation" in
     jq -n --arg id "$1" --arg target "$2" '{id: $id, target_branch: $target}'
     ;;
   merge)
-    [ "$#" -eq 4 ] || [ "$#" -eq 5 ] || die "usage: merge <id> <head-sha> <target> <base-sha> [merge-commit|squash]"
+    [ "$#" -ge 4 ] && [ "$#" -le 6 ] || die "usage: merge <id> <head-sha> <target> <base-sha> [merge-commit|squash] [message-file]"
     id="$1"
     head_sha="$2"
     target="$3"
     base_sha="$4"
     method="${5:-merge-commit}"
+    message_args=(-F auto_merge=false)
+    if [ -n "${6:-}" ]; then
+      message="$(python3 "$script_dir/../merge_message.py" "$6")" || exit 4
+      message_args+=(-f "merge_commit_message=$(printf '%s' "$message" | jq -r '.message')")
+      if [ "$method" = squash ]; then
+        message_args+=(-f "squash_commit_message=$(printf '%s' "$message" | jq -r '.message')")
+      fi
+    fi
     case "$method" in merge-commit|squash) ;; *) die "unsupported merge method" ;; esac
     require_sha "$head_sha" "expected head"
     require_sha "$base_sha" "expected base"
@@ -145,12 +153,15 @@ case "$operation" in
     printf '%s' "$mr" | jq -e '(.should_remove_source_branch != true) and (.force_remove_source_branch != true)' >/dev/null ||
       die "GitLab may remove the source branch; disable removal before this workflow"
     validate_change "$(get_change "$id")"
-    if [ "$method" = squash ]; then
+    if [ "$method" = squash ] && [ -z "${6:-}" ]; then
       glab mr merge "$id" -R "$PROVIDER_URL" --sha "$head_sha" --squash --auto-merge=false --yes >/dev/null ||
         die "GitLab failed to squash change $id"
     else
+      squash=false
+      if [ "$method" = squash ]; then squash=true; fi
       api "merge_requests/$id/merge" -X PUT -f sha="$head_sha" \
-        -F squash=false -F should_remove_source_branch=false -F auto_merge=false >/dev/null ||
+        -F "squash=$squash" -F should_remove_source_branch=false \
+        "${message_args[@]}" >/dev/null || \
         die "GitLab failed to merge change $id"
     fi
     jq -n --arg method "$method" '{status: "submitted", merge_method: $method, landed_sha: null}'
