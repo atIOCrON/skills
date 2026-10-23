@@ -71,6 +71,8 @@ Record:
 - candidate commit and tree SHA, staging receipt and acceptance evidence;
 - acceptance owners, assigned requirements, candidate/environment pins and
   evidence links in `extensions.sessions`;
+- publication owners, assigned PRs/pins, persistent IDs/names, status and private
+  intent/result evidence paths in `extensions.sessions`;
 - final PR identity and current state.
 
 Pin all inputs before publication. Preserve original source/parent pins and
@@ -95,6 +97,11 @@ require the same author, branches, full source SHA, and intended metadata.
 An unrecorded but matching creation may be recovered only from its recorded
 intent and a unique provider match. Stop for unrelated or duplicate PRs.
 Never retry a mutation with an unknown outcome before reconciliation.
+For concurrent publication, the coordinator alone writes this record. Each
+persistent ` - Publishing` owner prepares one PR's metadata, waits for its recorded
+intent, then creates and saves the result in its private path for prompt import.
+Existing destination branches allow stacked PRs to open concurrently; assembly
+retains the recorded merge order. Reuse owner IDs and intents during recovery.
 
 ## Merge Authorization
 

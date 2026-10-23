@@ -18,6 +18,15 @@ their selected predecessor. Reject inherited work outside the release. Explain
 dependencies and testing in each description; do not include predecessor
 changes as if they belong to this feature.
 
+Under `prepare-release-integration`, each persistent ` - Publishing` owner handles
+only its assigned change. Prepare metadata and verify pins, then return the exact
+intent to the coordinator. Create the PR after the coordinator confirms that intent
+is saved; persist the result in the assigned private path and return it for import.
+The coordinator alone updates canonical records. Owners run concurrently against
+existing pinned destination branches; predecessor PR creation is not a prerequisite.
+Resume an unknown outcome by reconciling that intent before any retry. An assigned
+owner ends after its own handoff; it does not dispatch owners or publish other PRs.
+
 For `release-final`, publish only the assembled integration branch against the
 original base. Require recorded acceptance on this exact candidate and tree,
 and require the remote base still equals its pinned SHA. If the base moved,
