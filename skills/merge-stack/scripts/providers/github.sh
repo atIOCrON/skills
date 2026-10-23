@@ -120,13 +120,19 @@ case "$operation" in
     jq -n --arg id "$1" --arg target "$2" '{id: $id, target_branch: $target}'
     ;;
   merge)
-    [ "$#" -eq 4 ] || [ "$#" -eq 5 ] || die "usage: merge <id> <head-sha> <target> <base-sha> [merge-commit|squash]"
+    [ "$#" -ge 4 ] && [ "$#" -le 6 ] || die "usage: merge <id> <head-sha> <target> <base-sha> [merge-commit|squash] [message-file]"
     id="$1"
     head_sha="$2"
     target="$3"
     base_sha="$4"
     method="${5:-merge-commit}"
     case "$method" in merge-commit) api_method=merge ;; squash) api_method=squash ;; *) die "unsupported merge method" ;; esac
+    message_args=(-f "merge_method=$api_method")
+    if [ -n "${6:-}" ]; then
+      message="$(python3 "$script_dir/../merge_message.py" "$6")" || exit 4
+      message_args+=(-f "commit_title=$(printf '%s' "$message" | jq -r '.subject')"
+        -f "commit_message=$(printf '%s' "$message" | jq -r '.body')")
+    fi
     require_sha "$head_sha" "expected head"
     require_sha "$base_sha" "expected base"
     change="$(get_change "$id")"
@@ -144,7 +150,7 @@ case "$operation" in
     [ "$(printf '%s' "$change" | jq -r '.source_branch_auto_delete')" = false ] ||
       die "GitHub auto-deletes merged branches; disable it before this workflow"
     result="$(GH_REPO="$repo" gh api -X PUT "repos/{owner}/{repo}/pulls/$id/merge" \
-      -f sha="$head_sha" -f merge_method="$api_method")" || die "GitHub failed to merge pull request $id"
+      -f sha="$head_sha" "${message_args[@]}")" || die "GitHub failed to merge pull request $id"
     printf '%s' "$result" | jq -e '.merged == true and (.sha | type == "string")' >/dev/null ||
       die "GitHub did not confirm an immediate $method merge for pull request $id"
     printf '%s' "$result" | jq --arg method "$method" '{status: "merged", merge_method: $method, landed_sha: .sha}'

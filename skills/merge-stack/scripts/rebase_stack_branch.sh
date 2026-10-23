@@ -10,8 +10,8 @@
 # 10 = rebase conflict (rebase aborted, worktree left clean).
 set -euo pipefail
 
-if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then
-  echo "usage: rebase_stack_branch.sh <remote> <base-branch> <source-branch> <journal> [integrated-parent-sha]" >&2
+if [ "$#" -lt 4 ] || [ "$#" -gt 6 ]; then
+  echo "usage: rebase_stack_branch.sh <remote> <base-branch> <source-branch> <journal> [integrated-parent-sha] [release-change-id]" >&2
   exit 2
 fi
 
@@ -20,6 +20,7 @@ target="$2"
 branch="$3"
 journal="$4"
 integrated_parent_sha="${5:-}"
+release_change_id="${6:-}"
 script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 
 git fetch --prune "$remote"
@@ -48,10 +49,17 @@ if [ -n "$integrated_parent_sha" ]; then
 else
   old_base_sha="$(git merge-base "$old_remote_sha" "$remote/$target")"
 fi
+expected_base_sha="$(git rev-parse "$remote/$target")"
+if [ -n "$release_change_id" ]; then
+  python3 "$script_dir/release_authorization.py" "$journal" "$release_change_id" \
+    "$old_remote_sha" "$target" "$expected_base_sha" squash "$branch" \
+    --restack-parent "$old_base_sha" >/dev/null || exit 6
+fi
 backup_ref="refs/merge-stack-backups/$old_remote_sha"
 "$script_dir/journal_event.sh" "$journal" rebase-planned \
-  "$(jq -nc --arg branch "$branch" --arg old "$old_remote_sha" --arg base "$(git rev-parse "$remote/$target")" \
-    '{branch:$branch,old_remote_sha:$old,expected_base_sha:$base}')"
+  "$(jq -nc --arg branch "$branch" --arg old "$old_remote_sha" --arg base "$expected_base_sha" \
+    --arg parent "$old_base_sha" --arg target "$target" \
+    '{branch:$branch,old_remote_sha:$old,old_base_sha:$parent,target_branch:$target,expected_base_sha:$base}')"
 git update-ref "$backup_ref" "$old_remote_sha"
 git switch --detach "$old_remote_sha"
 
@@ -89,10 +97,18 @@ if ! cmp -s "$old_patch_ids" "$new_patch_ids"; then
   git range-diff "$old_base_sha..$old_remote_sha" "$remote/$target..$rebased_head_sha" >&2 || true
   exit 6
 fi
+if [ -n "$release_change_id" ]; then
+  expected_tree="$(git merge-tree --write-tree --merge-base="$old_base_sha" "$expected_base_sha" "$old_remote_sha")" || exit 6
+  [ "$(git rev-parse "${rebased_head_sha}^{tree}")" = "$expected_tree" ] || {
+    echo "error: release restack changed the authorized feature tree" >&2; exit 6;
+  }
+fi
 
 "$script_dir/journal_event.sh" "$journal" rebase-verified \
   "$(jq -nc --arg branch "$branch" --arg old "$old_remote_sha" --arg head "$rebased_head_sha" \
-    '{branch:$branch,old_remote_sha:$old,rebased_head_sha:$head,patch_set:"equivalent"}')"
+    --arg parent "$old_base_sha" --arg base "$expected_base_sha" --arg target "$target" \
+    '{branch:$branch,old_remote_sha:$old,old_base_sha:$parent,expected_base_sha:$base,
+      target_branch:$target,rebased_head_sha:$head,patch_set:"equivalent"}')"
 "$script_dir/journal_event.sh" "$journal" force-push-planned \
   "$(jq -nc --arg branch "$branch" --arg old "$old_remote_sha" --arg head "$rebased_head_sha" \
     '{branch:$branch,lease_sha:$old,rebased_head_sha:$head}')"

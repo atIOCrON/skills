@@ -10,7 +10,8 @@ case "$1 $2" in
     case "$args" in
       *merge_requests/1/approvals*) echo '{"approved":true}' ;;
       *merge_requests/1/merge*)
-        [[ "$args" == *"squash=false"* ]] || exit 3
+        [[ "$args" == *"squash=${TEST_EXPECT_SQUASH:-false}"* ]] || exit 3
+        if [ -n "${TEST_MERGE_CAPTURE:-}" ]; then printf '%s\0' "$@" > "$TEST_MERGE_CAPTURE"; fi
         jq -n --arg head "${TEST_HEAD:?}" '{merge_commit_sha:$head}'
         ;;
       *merge_requests/1*)

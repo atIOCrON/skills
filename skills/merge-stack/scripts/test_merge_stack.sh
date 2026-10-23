@@ -132,7 +132,36 @@ export TEST_SQUASH_OPTION=always
 if PATH="$script_dir/testdata:$PATH" "$script_dir/provider.sh" gitlab gitlab merge 1 "$first_sha" develop "$base_sha" >/dev/null 2>&1; then
   echo 'GitLab default bypassed mandatory squash' >&2; exit 1
 fi
-unset TEST_SQUASH_OPTION TEST_HEAD TEST_BASE
+unset TEST_SQUASH_OPTION
+
+message_file="$tmp_dir/commit message.txt"
+cat > "$message_file" <<'MESSAGE'
+Fix the release check
+
+Preserve $values and `literal` text.
+Verified offline.
+MESSAGE
+export TEST_EXPECT_METHOD=squash TEST_EXPECT_SQUASH=true
+export TEST_MERGE_CAPTURE="$tmp_dir/github-message.args"
+PATH="$script_dir/testdata:$PATH" "$script_dir/provider.sh" github github merge \
+  1 "$first_sha" develop "$base_sha" squash "$message_file" >/dev/null
+export TEST_MERGE_CAPTURE="$tmp_dir/gitlab-message.args"
+PATH="$script_dir/testdata:$PATH" "$script_dir/provider.sh" gitlab gitlab merge \
+  1 "$first_sha" develop "$base_sha" squash "$message_file" >/dev/null
+python3 - "$tmp_dir" "$message_file" <<'PY'
+from pathlib import Path
+import sys
+root, message_file = map(Path, sys.argv[1:])
+message = message_file.read_text().rstrip("\n")
+subject, body = message.split("\n\n", 1)
+github = (root / "github-message.args").read_bytes().decode().split("\0")
+gitlab = (root / "gitlab-message.args").read_bytes().decode().split("\0")
+assert "commit_title=" + subject in github
+assert "commit_message=" + body in github
+assert "squash_commit_message=" + message in gitlab
+assert "should_remove_source_branch=false" in gitlab
+PY
+unset TEST_EXPECT_METHOD TEST_EXPECT_SQUASH TEST_MERGE_CAPTURE TEST_HEAD TEST_BASE
 
 export MERGE_STACK_PROVIDER_DIR="$adapter_dir"
 export FAKE_HEAD="$first_sha"

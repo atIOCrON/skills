@@ -196,6 +196,27 @@ class BitbucketTests(unittest.TestCase):
             self.api.run("merge", ["1", HEAD, "integration", BASE])
         self.assertFalse(any(method == "POST" for _, method, _ in self.api.calls))
 
+    def test_explicit_squash_message_is_sent_verbatim(self):
+        self.open_pr()
+        message = 'Fix the release check\n\nPreserve $values and `literal` text.\nVerified offline.\n'
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "commit message.txt"
+            path.write_text(message, encoding="utf-8")
+            self.api.run("merge", ["1", HEAD, "integration", BASE, "squash", str(path)])
+        body = [body for _, method, body in self.api.calls if method == "POST"][-1]
+        self.assertEqual(body["message"], message)
+        self.assertFalse(body["close_source_branch"])
+
+    def test_invalid_message_blocks_mutation(self):
+        self.open_pr()
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "message.txt"
+            for message in (b"", b"Subject\r\n", b"Subject\0body", b"\xff"):
+                path.write_bytes(message)
+                with self.subTest(message=message), self.assertRaises((ValueError, UnicodeError)):
+                    self.api.merge("1", HEAD, "integration", BASE, "squash", str(path))
+        self.assertFalse(any(method == "POST" for _, method, _ in self.api.calls))
+
     def test_foreign_pr_url_and_pagination_are_rejected(self):
         with self.assertRaises(ValueError):
             self.api.resolve("https://bitbucket.org/other/repo/pull-requests/1")

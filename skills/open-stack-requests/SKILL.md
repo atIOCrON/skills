@@ -23,7 +23,7 @@ pass. Do not implement plans or push branches.
 
 For `release` or `release-final`, read `references/release-publication.md` and
 follow that mode instead of the build-only inputs and workflow below. Release
-modes use ordinary merge commits, create non-draft PRs, and launch no review
+modes use the recorded merge strategy, create non-draft PRs, and launch no review
 loops. Existing `draft` and `ready` behavior remains unchanged.
 
 ## Inputs

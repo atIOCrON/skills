@@ -27,5 +27,14 @@ outcomes without making cleanup part of merge success.
 
 Release assembly records user confirmation with `merge-authorized` before
 any merge; see `release-preparation.md`. `merge-planned` and `merge-confirmed`
-include `merge_method`. Preserve the authorization's exact PR/head/destination
-scope on resume. Do not treat a merged integration PR as a production release.
+include `merge_method` and `target_branch`. Preserve the authorization's ordered
+scope, original pins and explicit verified-restack permission on resume. A
+`rebase-verified` entry records source, original parent/head, target/base and new
+head; verify its patch sequence and tree before carrying permission forward.
+Never infer permission from an unverified SHA mapping.
+
+Custom messages use `message_file` (absolute path) and `message_sha256` on
+`merge-planned`. Canonical text is UTF-8 with LF endings and one final newline.
+`confirm_merge.sh` compares the landed text and hash before recording completion.
+Retain message files through recovery; a missing or changed file blocks
+confirmation. Do not treat a merged integration PR as a production release.

@@ -68,6 +68,9 @@ landed_parent="$(git rev-parse "$landed_sha^")"
   exit 7
 }
 if [ "$method" = squash ]; then
+  [ "$(git show -s --format=%P "$landed_sha")" = "$expected_base_sha" ] || {
+    echo "error: squash commit must have exactly the pinned target as its parent" >&2; exit 7;
+  }
   expected_tree="$(git rev-parse "${reviewed_head_sha}^{tree}")"
 else
   parents="$(git show -s --format=%P "$landed_sha")"
@@ -82,13 +85,29 @@ else
     echo "error: cannot reproduce the merge tree; stop for conflict handling" >&2; exit 7;
   }
 fi
+source="$(printf '%s' "$change" | jq -r '.source_branch')"
+[ "$(git rev-parse "$remote/$source")" = "$reviewed_head_sha" ] || {
+  echo "error: source branch was deleted or moved" >&2; exit 7;
+}
 [ "$(git rev-parse "${landed_sha}^{tree}")" = "$expected_tree" ] || {
   echo "error: landed tree differs from the expected merge result" >&2; exit 7;
 }
+planned_message="$(jq -sc --arg id "$change_id" --arg head "$reviewed_head_sha" \
+  --arg target "$target" --arg base "$expected_base_sha" --arg method "$method" '
+  [.[] | select(.event == "merge-planned" and .change_id == $id and .head_sha == $head
+    and .target_branch == $target and .base_sha == $base and .merge_method == $method)] | last // {}' "$journal")"
+if [ "$(printf '%s' "$planned_message" | jq -r '.message_file // empty')" != "" ]; then
+  observed_message="$(python3 "$script_dir/merge_message.py" \
+    "$(printf '%s' "$planned_message" | jq -r '.message_file')" "$landed_sha")" || exit 7
+  [ "$(printf '%s' "$observed_message" | jq -r '.sha256')" = \
+    "$(printf '%s' "$planned_message" | jq -r '.message_sha256')" ] || {
+    echo "error: recorded merge message changed after submission" >&2; exit 7;
+  }
+fi
 "$script_dir/journal_event.sh" "$journal" merge-confirmed \
   "$(jq -nc --arg id "$change_id" --arg head "$reviewed_head_sha" --arg landed "$landed_sha" \
-    --arg parent "$landed_parent" --arg method "$method" \
-    '{change_id:$id,head_sha:$head,landed_sha:$landed,landed_parent_sha:$parent,merge_method:$method}')"
+    --arg parent "$landed_parent" --arg method "$method" --arg target "$target" \
+    '{change_id:$id,head_sha:$head,target_branch:$target,landed_sha:$landed,landed_parent_sha:$parent,merge_method:$method}')"
 
 echo "merged_head_sha=$reviewed_head_sha"
 echo "landed_sha=$landed_sha"
