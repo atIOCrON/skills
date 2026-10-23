@@ -27,6 +27,9 @@ under project/testing policy. Find removable complexity retaining approved behav
 binding checks and meaningful owned-behavior proof: duplicate/low-signal tests,
 oversized fixtures, fake provider/server/persistence lifecycles, broad mocks,
 redundant abstractions, speculative compatibility or disproportionate harnesses.
+Keep focused branch proof; carry full assembled-runtime integration and activation
+checks to their assigned later phases with owners/procedures/milestones. An agent
+executor does not make them branch gates. Preserve explicit user/repository gates.
 Shorter code/test counts alone justify nothing. Do not review correctness or mark
 it clean; separate obvious concerns for later. Cite changed path and policy/
 duplication/ownership evidence, smallest reduction and remaining proof; say if none.

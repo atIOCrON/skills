@@ -13,6 +13,10 @@ installation, code changes, deployment, and PR publication belong to other skill
 
 Return test evidence in both delegated and standalone runs. The release
 coordinator records aggregate acceptance in canonical release records.
+Own assigned deployed-runtime integration/acceptance checks deferred from branch
+implementation or pre-deployment integration. Executor and phase are independent:
+agent-run full storefront/Admin/cache/provider flows belong here too. Identify
+activation/account/device/operator proof separately with its blocking milestone.
 
 ## Pin Scope And Environment
 
@@ -20,6 +24,10 @@ coordinator records aggregate acceptance in canonical release records.
   the supplied release/build records and deployment receipt. A release record
   is optional for standalone testing; explicit requirements and a verified
   deployed identity suffice. Preserve release membership and source pins.
+- Reconcile the supplied deferred checklist against acceptance IDs, phase, owner,
+  executor, procedure, prerequisites, blocking milestone and existing evidence.
+  Assign shared scenarios explicitly; keep unassigned or unavailable obligations
+  pending with an accountable owner rather than treating branch completion as proof.
 - Confirm the live staging candidate commit/tree and environment. Compare them
   with the assigned candidate and receipt; a branch pointer or successful
   pipeline alone does not prove what is running. Stop on identity mismatch.
@@ -57,6 +65,10 @@ Return owner/coordinator IDs, candidate commit/tree, staging environment,
 assigned requirements, fresh/reused results, evidence paths, defects, cleanup,
 required human/external decisions, and pending procedures/owners. Preserve
 original results and pins across retests.
+Include deferred check IDs and blocking milestones, distinguishing completed
+deployed-runtime acceptance from any pending later activation proof. Preserve
+branch implementation evidence and review counts; reclassification alone adds
+no test execution or review requirement.
 
 Return the report without changing release or build records. The release
 coordinator aggregates results and records acceptance only when every requirement

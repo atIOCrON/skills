@@ -10,6 +10,10 @@ Require approved slice/parent/map/checkpoint/ownership, repo/host, parent branch
 base and candidate pins, neutral pack/preflight, exact verification and current or
 mapped proportionate trim. Prepared authoring reviews stay schedule.work; acceptance
 resets no counts. Ledger: `<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`.
+Exact verification here covers branch implementation under operational-records.
+Pending later integration/activation checks do not block a pass or clean completion;
+keep their owners/procedures/milestones in the pack and final handoff. Apply the
+same boundary to affected checks used for restack mappings.
 
 Discovery = fresh parallel Claude/Codex/Cursor on `<base-sha>...<review-sha>`, counted
 only after three substantive pinned outputs, preserved findings, mutation check and

@@ -11,9 +11,12 @@ with artifact links rather than copied reviews:
 - Pass count/one-line outcomes, closures, cap marker/unresolved findings, rejected/
   deferred decisions/evidence, reviewer outputs/failures and ledger/status counts.
   Confirm terminal entries for clean completion; capped handoff preserves open ones.
-- Validated canonical build manifest and selected release links; pending human/
-  external procedures/owners and limitation decisions. Candidate checks/acceptance/
-  freeze belong to release workflow and do not gate build completion.
+- Validated canonical build manifest and selected release links; separate branch
+  implementation results from later integration/activation checks, including agent-run
+  checks. Preserve acceptance IDs, phase, executor, owner, procedure, prerequisites,
+  blocking milestone, status, evidence and authorized classification changes.
+  Unexecuted checks remain pending; candidate acceptance/freeze belongs to release
+  workflow and does not gate build completion. Report limitation decisions separately.
 - `## Skill Feedback For User Review` with entries or `- None`.
 - Final blocker, `Review cap reached` or `In review`. Clean and capped branches enter
   review after own checks/trim/accepted remediation/closure; capped disposition is

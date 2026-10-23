@@ -17,7 +17,10 @@ outcomes for in-scope split.
 
 Map each acceptance group/changed surface/component to candidate-owned mechanism,
 lifecycle modified versus routing/config/reachability only, runtime owner, local/
-inherited/external proof and binding requirement. Exclude unmapped work; changed
+inherited/external proof, verification phase, executor and binding requirement.
+Use operational-records phase rules: focused branch proof gates implementation;
+release integration and activation obligations retain owners, procedures,
+prerequisites, statuses and blocking milestones for later handoff. Exclude unmapped work; changed
 outcomes do not imply ownership of unchanged dependency lifecycles. Identify what
 requires each new layer/dependency/config/persistence/interface/compatibility/scenario;
 choose smaller sufficient designs and return broader ones to architecture checkpoint.
@@ -55,12 +58,17 @@ record defect/rejected alternatives, smallest correction/removal condition, sour
 effective identities, behavioral proof, replay order and maintenance effect; one coherent
 defect per patch and applicable capability skill. A patch grants no general lifecycle ownership.
 
-Run practical plan/preliminary and adversarial checks; add proportionate behavioral
-regressions for candidate-owned changes even if omitted from plan. Lifecycle changes
-(browser activation/rendering/concurrency/current values/cancellation/retry/token/provider
-callbacks) need executable highest-practical-seam proof, not structural assertions alone.
+Run focused branch plan/preliminary and adversarial checks; add proportionate
+behavioral regressions for concrete implementation risks even if omitted from plan.
+Changed lifecycle logic needs executable proof at the cheapest sufficient seam;
+structural assertions alone do not prove behavior. Keep narrowly necessary database,
+migration, security and atomicity checks early. Defer assembled-runtime, deployed-asset,
+full storefront/Admin/cache/provider and cross-feature journeys to release/staging.
+Agent execution does not change phase; explicit user/repository branch gates remain
+required. Justify full-environment exceptions by concrete implementation risk and
+why cheaper proof cannot suffice, or cite explicit user/binding-policy authority.
 Routing/selection/config/reachability of unchanged dependency lifecycles needs source
-contract/effective runtime binding or code identity, exact applicable inherited proof
+contract/effective runtime binding or code identity, exact applicable inherited branch proof
 and separate real-provider acceptance. Lightweight routing doubles are valid; fake
 provider/server/persistence/account/order transitions do not prove production. Plan
 verification specifies evidence outcomes, not permission for excessive harnesses;
@@ -98,7 +106,8 @@ coordinator writes canonical JSON. Write for an operator with no code access:
 - <file> - <why, or None>
 
 ## Verification
-- <command/check> - <pass/fail/evidence>
+- <branch command/check> - <pass/fail/reuse/evidence>
+- <later integration/activation check> - <status/owner/procedure/prerequisites/blocking milestone>
 
 ## Changed Files
 - <file>

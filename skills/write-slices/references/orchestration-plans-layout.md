@@ -51,6 +51,14 @@ ownership/exclusions/release/external acceptance are clarifications: record reas
 verification/rollback, save new drafts, use covering build authority to approve
 map/children into backlog without another human gate.
 
+Verification-phase clarification follows operational-records reconciliation rules.
+Preserve approved requirements and receipts; moving a saved mandatory branch gate
+later requires explicit covering authority and synchronized spec/map/child/build
+changes. A new skill version or an ordinary build invocation is not that authority.
+Apply material-change reapproval rules unless the recorded decision explicitly
+covers the affected plan amendments. Unchanged evidence/review counts survive;
+reclassification alone does not restart execution or review.
+
 ## Delivery gates
 
 | Stage | Meaning |

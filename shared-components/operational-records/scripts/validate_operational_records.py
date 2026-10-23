@@ -160,12 +160,21 @@ def require_operator_handoffs(data):
     return errors
 
 
+def implementation_phase_errors(entry, at):
+    """Keep explicitly deferred checks out of branch gates, regardless of executor."""
+    required = set(entry['implementation']['required_check_ids'])
+    return [at + '.implementation.required_check_ids may contain only branch_implementation checks: ' + check['id']
+            for check in entry['checks']
+            if check['id'] in required and check.get('phase', 'branch_implementation') != 'branch_implementation']
+
+
 def scope_digest(data):
     """Bind canonical scope/pins and required checks; review progress is not scope."""
     payload = {'base':data['base'], 'branches':[
         {key:branch[key] for key in ('slice_slug','spec_slug','plan','source','parent','target','tip_sha','tree_sha')}
         | {'required_check_ids':branch['implementation']['required_check_ids'],
-           'checks':[{'id':c['id'],'kind':c['kind'],'command':c['extensions'].get('command')} for c in branch['checks']]}
+           'checks':[{'id':c['id'],'kind':c['kind'],'command':c['extensions'].get('command')}
+                     | ({'phase':c['phase']} if 'phase' in c else {}) for c in branch['checks']]}
         for branch in data['branches']]}
     encoded=json.dumps(payload,sort_keys=True,separators=(',',':')).encode()
     return 'sha256:'+hashlib.sha256(encoded).hexdigest()
@@ -309,6 +318,7 @@ def validate_record(data, expected_kind=None, path=None, root=None):
             check_ids = [c['id'] for c in branch['checks']]
             if len(check_ids) != len(set(check_ids)):
                 errors.append(at + '.checks contains duplicate IDs')
+            errors.extend(implementation_phase_errors(branch, at))
             implementation = branch['implementation']
             if implementation['status'] == 'unknown' and not implementation['reason']:
                 errors.append(at + '.implementation.reason is required when unknown')
@@ -334,6 +344,7 @@ def validate_record(data, expected_kind=None, path=None, root=None):
                 check_ids = [c['id'] for c in item['checks']]
                 if len(check_ids) != len(set(check_ids)):
                     errors.append(at + '.checks contains duplicate IDs')
+                errors.extend(implementation_phase_errors(item, at))
                 implementation = item['implementation']
                 if implementation['status'] == 'unknown' and not implementation['reason']:
                     errors.append(at + '.implementation.reason is required when unknown')

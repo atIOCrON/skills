@@ -37,6 +37,18 @@ branch verification, review and repository gates. Candidate-wide checks belong
 to release assembly and staging verification; build completion does not imply
 they ran. Later unselected work does not block a complete prefix.
 
+Import selected branches' deferred release integration and activation checklist
+under the operational-records phase contract, including agent-run checks. Preserve
+acceptance IDs, phase, executor, owner, procedure, prerequisites, status/evidence
+and blocking milestone. Staging rebuild owns assembled pre-deployment checks,
+pipeline/deployment health and smoke checks; acceptance owners test deployed
+runtime and external/activation requirements. The release coordinator reconciles
+every obligation against fresh/reused evidence or an explicit pending owner and
+procedure. A pending later check blocks its assigned release/activation milestone,
+not branch review completion. Reuse applicable completed proof; source repairs
+return to the build owner with focused regressions, without resetting prior reviews
+or rerunning unrelated checks solely because release testing found a defect.
+
 Before ready publication or release mutation, obtain a coordinator handoff
 pinning source heads, permitted verified squash restacks and a return condition.
 Other source rewrites wait; other work continues. The release agent owns this

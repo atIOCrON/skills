@@ -129,6 +129,36 @@ class ReviewPackReuseTest(unittest.TestCase):
         self.write_manifest(method="direct")
         self.assertEqual(self.validate(), 1)
 
+    def test_later_agent_check_cannot_be_required_for_branch_review(self) -> None:
+        self.write_manifest()
+        path = self.pack / "evidence-manifest.json"
+        manifest = json.loads(path.read_text())
+        for phase in ("release_integration", "activation_acceptance"):
+            with self.subTest(phase=phase):
+                manifest["checks"][0].update(phase=phase, required=True)
+                path.write_text(json.dumps(manifest) + "\n")
+                self.write_hash_manifest()
+                self.assertEqual(self.validate(), 1)
+                manifest["checks"][0]["required"] = False
+                path.write_text(json.dumps(manifest) + "\n")
+                self.write_hash_manifest()
+                self.assertEqual(self.validate(), 0)
+
+    def test_pending_later_checks_do_not_invalidate_branch_proof(self) -> None:
+        self.write_manifest()
+        path = self.pack / "evidence-manifest.json"
+        manifest = json.loads(path.read_text())
+        manifest["checks"][0]["phase"] = "branch_implementation"
+        later = dict(manifest["checks"][0], id="staging", phase="release_integration",
+                     required=False, result="pending")
+        for field in ("verified_sha", "last_run_sha", "method", "input_identity", "result_identity",
+                      "log_path", "log_sha256", "reuse_evidence_path", "reuse_evidence_sha256"):
+            later[field] = None
+        manifest["checks"].append(later)
+        path.write_text(json.dumps(manifest) + "\n")
+        self.write_hash_manifest()
+        self.assertEqual(self.validate(), 0)
+
     def test_rejects_link_outside_reviewer_workspace(self) -> None:
         external = self.root / "effective-result.php"
         external.write_text("outside sandbox\n")

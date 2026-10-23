@@ -70,6 +70,11 @@ def main(pack, repo):
                 raise ValueError("invalid kind")
             if type(check["required"]) is not bool:
                 raise ValueError("required must be a boolean")
+            if "phase" in check:
+                if check["phase"] not in ("branch_implementation", "release_integration", "activation_acceptance"):
+                    raise ValueError("invalid verification phase")
+                if check["required"] and check["phase"] != "branch_implementation":
+                    raise ValueError("only branch_implementation checks may be required for branch verification")
             if check["result"] not in ("passed", "failed", "pending", "blocked_by_environment"):
                 raise ValueError("invalid result")
             if not isinstance(check["command"], str) or not check["command"].strip():
