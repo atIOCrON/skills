@@ -1,6 +1,6 @@
 ---
 name: prepare-release-integration
-description: Prepare a Bitbucket release with an upfront merge strategy and approval choice, assemble individual PRs, test the exact candidate on staging, and open the final PR to the base branch.
+description: Prepare a Bitbucket release with upfront merge choices, publish individual PRs concurrently through persistent owners, assemble and test the exact candidate on staging, and open the final PR to the base branch.
 disable-model-invocation: true
 metadata:
   layer: runner
@@ -94,9 +94,9 @@ authorization and applicable acceptance. No nested attempts directory is needed.
    or use the exact name the user supplied. Push with an explicit absence lease
    and verify it. On resume, require the recorded ref; do not overwrite a
    pre-existing branch from another run. Never assemble from old staging.
-3. Call `open-stack-requests` in `release` mode with the record. It creates fresh
-   non-draft PRs, one per change, using predecessor targets for clean stacked
-   diffs and integration for independent roots.
+3. Delegate `open-stack-requests` in `release` mode under **Publishing Owners**
+   below. Each owner creates one fresh non-draft PR, using its predecessor target
+   for a clean stacked diff or integration for an independent root.
    For squash, compose each own-change message under
    `merge-stack/references/git-commit-message.md` and fingerprint it with
    `merge-stack/scripts/merge_message.py`; save files and hashes in preparation
@@ -140,6 +140,38 @@ authorization and applicable acceptance. No nested attempts directory is needed.
    confirmed. Then use `merged` while required acceptance remains outstanding,
    or `fulfilled` once satisfied, under the shared layout.
 
+## Publishing Owners
+
+Read `references/orchestration-runtime.md`. Use its implementation-owner provider,
+transport, isolation and same-session rules for one persistent owner per selected
+branch, named `<branch name without feature/> - Publishing`. Match the coordinator's
+provider; ChatGPT/Codex owners are separate GUI-visible project chats. Keep these
+owners separate from implementation and acceptance owners; native sub-agents do
+not own publication. Reuse each recorded ID for recovery and follow-up.
+
+Assign the absolute `open-stack-requests/SKILL.md` path, `release` mode, one change,
+repository/release record, pinned source/parent/destination branches and SHAs,
+branch-only scope and evidence, private metadata/result paths, and coordinator
+identity/return route. Owners prepare descriptions and verify pins, then return
+the exact creation metadata and authenticated author for the coordinator to record
+as intent. Authorize creation of that assigned PR only after its intent is saved.
+Owners save provider results immediately in their private paths and return PR
+ID/URL, author, source/destination SHAs, metadata, verification and outcome.
+
+Dispatch every eligible owner concurrently within actual agent/provider capacity;
+50 PRs may use 50 owners when capacity permits. Fill capacity as results arrive,
+without fixed waves or waiting for predecessor PRs: destination branches already
+exist. Record actual capacity/rate-limit blockers; retain merge order for assembly.
+Unknown creation outcomes require reconciliation before retry or reassignment.
+
+The coordinator alone writes the canonical release record and merge journal,
+imports intents/results promptly, validates identities/uniqueness and records each
+owner's provider, persistent ID/name, assignment/pins, checkout, status and evidence
+under `extensions.sessions`. Owners only publish their assigned PR; source changes,
+retargeting and merging remain with the coordinating workflow. Require every PR's
+verified result before presenting the complete set or starting assembly. The final
+integration-to-base PR remains one coordinator publication in `release-final` mode.
+
 ## Acceptance Owners
 
 Read `references/orchestration-runtime.md` for provider selection, persistent
@@ -177,9 +209,9 @@ candidate identity and evidence applicability before retests in the same chats.
 
 ## Report
 
-Return the preparation record, merge journal, individual PRs, candidate commit
-and tree, staging receipt, acceptance owner IDs/names and evidence, final PR,
-and outstanding blockers.
+Return the preparation record, merge journal, individual PRs, publication owner
+IDs/names and outcomes, candidate commit and tree, staging receipt, acceptance
+owner IDs/names and evidence, final PR, and outstanding blockers.
 Distinguish published, awaiting merge confirmation, assembled, deployed,
 accepted, and awaiting final review. Attach created PRs to the current chat
 when the app supports PR attachments.

@@ -1,20 +1,28 @@
 # Orchestrator Runtime
 
-One coordinator owns scheduling/canonical state/moves/order/restacks/publication/
-evidence transfer and applicability. Persistent independent owners complete each
-plan (or approved dependency chain), including implementation/checks/trim/correctness/
-closure/fixes. Name `<branch without feature/> - Implementing`, first branch for
+One coordinator owns scheduling, canonical state, moves, order, restacks,
+publication assignments, evidence transfer and applicability. Persistent independent
+owners complete each plan (or approved dependency chain), including implementation,
+checks, trim, correctness, closure and fixes. Name `<branch without feature/> - Implementing`, first branch for
 chain; record all plans and reuse owner after amendments/failures/restacks. Fresh
 native sub-agents may review, never implement or review their own implementation
 conversation. Release acceptance uses separate persistent `<branch without feature/> - Acceptance`
 owners with caller-assigned test scope/pins, same runtime, no implementation route
 or native acceptance ownership.
 
+Release publication uses separate persistent `<branch without feature/> - Publishing`
+owners under the same provider/transport/isolation rules, one assigned PR each.
+They prepare metadata concurrently and create each PR after its intent is recorded.
+The coordinator imports their private results and alone writes canonical state.
+Native sub-agents do not own publication. Resume recorded IDs for recovery.
+
 Give each owner coordinator provider/ID/name, canonical path, return route, scope/
 pins/lease, instructions/evidence and return condition. Require early verified
 candidate and final completion: branch/commit/authoring parent, checks, trim/
 correctness receipts/outcomes, dependencies/blockers/paths. Retrieve/import promptly,
-even before placement. Keep prompts brief; launcher exit is dispatch, not completion.
+even before placement. Publication and acceptance owners return their caller's
+stage-specific handoffs instead of implementation receipts. Keep prompts brief;
+launcher exit is dispatch, not completion.
 
 ## Provider and execution ownership
 
@@ -23,7 +31,7 @@ settings without unsolicited model overrides. Different provider needs explicit 
 authorization; installed/authenticated CLI or capacity grants none. Missing persistent
 transport requires provider choice, never fallback/native implementer. Existing owners
 resume original provider/ID even after coordinator change. Record selection/override
-source before creation, also for replacement/acceptance owners.
+source before creation, also for replacement/publication/acceptance owners.
 
 One active executor per session across GUI/CLI; record surface/process/lease, check
 before follow-up/transfer/pause/resume and queue supported steering or wait. Never
@@ -113,8 +121,9 @@ gets new one. Preserve historical release_id only where format permits, never v2
 
 Register every coordinator/owner/reviewer at start/handoff/pause/stop. V2 builds use
 extensions.sessions, schedule.extensions.coordinator, work extensions.owner; releases
-session extensions hold acceptance scope/environment/pins/evidence. Preserve old
-sessions in historical formats. Record provider/role/transport (project-chat,
+session extensions hold publication assignments/intents/results and acceptance
+scope/environment/pins/evidence. Preserve old sessions in historical formats.
+Record provider/role/transport (project-chat,
 desktop-session, cli, native-reviewer), persistent ID/name, parent/coordinator,
 worker ref/plans/checkout/pins/commits/status, executor/lease, UTC times/evidence.
 Work extensions retain authoring base/pause-resume/original completion/accepted pin;
