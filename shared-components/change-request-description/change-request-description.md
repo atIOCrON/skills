@@ -12,7 +12,8 @@ Require:
 
 For a schema-v2 build, read the selected source/pin's `operator_handoff` under
 the operational-records contract. Copy ready, matching-pin problem, solution,
-test_path and pass_condition into their sections; link the canonical manifest.
+test_path and pass_condition into their sections. Retain the canonical manifest
+reference in the publication record or coordinator handoff.
 Do not reconstruct missing JSON from a Sheet or Markdown, or silently copy
 draft/stale wording. Report it for the build coordinator to reconcile.
 
@@ -33,6 +34,22 @@ Suggested paths and conditions are not executed acceptance results.
 ## Composition
 
 Title: short release-note-style headline.
+
+Write for the reviewer: explain the change, completed checks, pending validation,
+and material risks. These rules apply to branch and final release PRs.
+
+Keep full SHAs, parent/source ranges, tree hashes, local plan/manifest/evidence
+paths, diff-stat dumps, review accounting, and restack/consolidation history in
+operational records and coordinator handoffs. Required API inputs and report
+fields are not requirements for the PR body. Include a revision or history detail
+only when it explains a material review or deployment risk; use a short linked
+reference where possible.
+
+Make the description self-contained. Link only reviewer-accessible resources
+that add useful context; omit local-only paths, including backticked paths.
+Summarize evidence as checks and results rather than lists of evidence files.
+Keep release-wide status and deployment instructions in the final release PR;
+individual PRs include only the implications relevant to their change.
 
 Description template:
 
@@ -65,7 +82,8 @@ shorten or paraphrase the text for concision.
 | Suggested operator test path | Suggested operator test path |
 | Pass condition | Pass condition |
 
-Link the source sheet row. If branch evidence contradicts a field, report the
+Link the source sheet row when reviewer-accessible; otherwise retain its reference
+in the publication record or handoff. If branch evidence contradicts a field, report the
 discrepancy rather than silently rewriting it or copying inaccurate text.
 Without applicable sheet text, write these sections from the branch and its
 plan; omit test-path and pass-condition sections when irrelevant.
@@ -76,9 +94,12 @@ plan; omit test-path and pass-condition sections when irrelevant.
   Add necessary implementation detail separately from copied sheet text.
 - **Scope:** identify boundaries and relevant dependencies; do not attribute
   predecessor changes or later integration behavior to this branch.
-- **Verification:** state completed checks and results, the tested revision and
-  environment, and pending validation. A commit SHA or review status alone is
-  not testing evidence; a test path or pass condition is not a recorded pass.
+- **Verification:** state completed checks, results, environment, and pending
+  validation. Say whether checks cover the current PR head. If evidence comes
+  from another candidate, explain its applicability and material differences;
+  retain exact revision pins in operational records. A commit SHA or review
+  status alone is not testing evidence; a test path or pass condition is not a
+  recorded pass.
 - **Risk / Rollback:** describe material risks, how to revert, and consequences
   for persisted data, configuration, dependencies, or external effects.
 

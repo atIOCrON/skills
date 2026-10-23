@@ -132,7 +132,8 @@ authorization and applicable acceptance. No nested attempts directory is needed.
 4. Require the remote integration still equals the tested candidate and the
    remote base still equals its pin. If either moved, stop for updating and
    retesting. Call `open-stack-requests` in `release-final` mode to create the
-   integration-to-base PR with individual PR links and acceptance evidence.
+   integration-to-base PR with delivered scope, individual PR links, and a concise
+   acceptance summary under the publication skill's description rules.
 5. Leave that PR open for the final reviewer. Authorization for individual
    assembly merges does not authorize merging it. Retain `in_release` through
    staging, acceptance, and final PR review. Keep feature plans out of
@@ -212,6 +213,8 @@ candidate identity and evidence applicability before retests in the same chats.
 Return the preparation record, merge journal, individual PRs, publication owner
 IDs/names and outcomes, candidate commit and tree, staging receipt, acceptance
 owner IDs/names and evidence, final PR, and outstanding blockers.
+Keep these audit fields in records and the coordinator handoff; PR bodies follow
+`open-stack-requests/references/change-request-description.md`.
 Distinguish published, awaiting merge confirmation, assembled, deployed,
 accepted, and awaiting final review. Attach created PRs to the current chat
 when the app supports PR attachments.
