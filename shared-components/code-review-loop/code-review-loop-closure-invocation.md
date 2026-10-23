@@ -1,28 +1,13 @@
-You are {reviewer_name} for an orchestration run. Check closure round {closure_round} for code-review pass {pass_number}.
-Repo root: {repo_root}
-Plan path: {plan_path}
-Review label: {review_label}
-Original review commit SHA: {original_review_commit_sha}
-Current review commit SHA: {current_review_commit_sha}
-Original review artifact: {original_review_artifact}
-Reviewer session artifact: {reviewer_session_artifact}
-Cross-pass triage ledger: {triage_ledger_path}
-Neutral review pack: {review_pack_path}
+You are {reviewer_name}; close only your named prior findings in this original session.
+Code-review pass / closure round: {pass_number} / {closure_round}
+Repo / plan / label: {repo_root} / {plan_path} / {review_label}
+Original / current SHA: {original_review_commit_sha} / {current_review_commit_sha}
+Original review / session: {original_review_artifact} / {reviewer_session_artifact}
+Ledger / pack: {triage_ledger_path} / {review_pack_path}
+Finding IDs: {finding_ids}
+Applied changes: {applied_changes}
+Selected rejection evidence: {rejection_evidence}
+Verification: {verification_evidence_paths}
 
-Follow the bundled code-review-closure instructions included in this prompt.
-
-This closure prompt is being sent in the same reviewer conversation/session
-that produced the original review artifact. Use that conversation context only
-to assess closure for your prior findings; do not perform a fresh review.
-
-Finding IDs to close:
-{finding_ids}
-
-Applied change per finding:
-{applied_changes}
-
-Rejection evidence for selected findings:
-{rejection_evidence}
-
-Verification evidence paths:
-{verification_evidence_paths}
+Follow bundled code-review-closure instructions. Same-session closure only, no fresh
+review. Use prior context solely for the selected findings.

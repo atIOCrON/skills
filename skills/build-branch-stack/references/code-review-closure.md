@@ -1,78 +1,25 @@
 # Code Review Closure
 
-Check closure for code-review findings that this reviewer previously raised
-when the orchestrator explicitly requests closure. Do not perform a fresh
-review and do not raise new findings.
+Assess only this reviewer's named prior findings when requested; no fresh review,
+new findings or file writes. Require original review/session artifacts, selected IDs,
+applied changes/rejection evidence, checks, neutral pack, old/current SHAs, plan and
+cross-pass ledger. Batch selected findings, excluding ordinary nits. Same originating
+session is required; otherwise `Closure blocked`, never substitute fresh discovery.
+Use current-stage artifact paths and only pinned diff/cited code/docs/checks/contracts;
+no other reviewer's conclusions or unrelated files beyond needed consumers/contracts.
 
-## Inputs
+Compare committed fixes against original invariant, or test rejection evidence. With
+unchanged commit/base assess added proof only; it cannot resolve an existing demonstrated
+defect. New observations belong solely in Skill Feedback, never findings/blockers,
+implementation/test expansion, ledger entries or another pass. Stay within requested concern.
 
-Require:
-
-- original review artifact path,
-- reviewer session artifact path,
-- finding IDs selected for closure,
-- applied change per finding,
-- rejection evidence for any selected rejected material finding,
-- verification evidence paths,
-- neutral review-pack path,
-- original and current review commit SHAs,
-- plan path,
-- cross-pass triage ledger path
-  (`<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`).
-
-## Scope
-
-- Assess only findings from the original code-review artifact.
-- Assess only IDs named in the closure request. Batch all selected findings from
-  this reviewer into one response; do not assess ordinary nits.
-- This closure is expected to run in the same reviewer conversation/session that
-  produced the original review artifact. If it is not the same conversation,
-  report that as `Closure blocked` rather than doing a fresh review.
-- For accepted code fixes, compare the original and current review commits
-  and decide whether the committed fix resolves the finding while preserving
-  its surrounding invariant.
-- For rejected findings, decide whether the rejection evidence is sufficient.
-- When the commit and base SHAs are unchanged, assess added evidence only. It
-  may justify rejecting a finding or confirm an already implemented contract;
-  it cannot close a demonstrated code defect that still exists.
-- Use evidence from the pinned commit diff, cited docs, cited code, verification
-  results, or applicable engineering principles.
-- Do not write files. Propose ledger transitions for the orchestrator to apply.
-- Do not inspect unrelated files except where needed to validate a changed-code
-  contract or cited reader/consumer.
-- Do not perform a fresh code review or introduce new findings. New concerns
-  noticed during closure are out of scope: surface them as procedural feedback
-  under `## Skill Feedback`, not as ledger writes, new findings, or blockers.
-- Skill feedback and closure observations cannot trigger implementation,
-  verification expansion, a ledger entry, or another discovery pass.
-- Closure must not extend the review loop beyond the original requested
-  concern. Decide only whether the concern is resolved, reasonably rejected, or
-  still materially open.
-- Do not use findings, summaries, or conclusions from other reviewers.
-
-## Cross-Pass Triage Ledger Updates
-
-Ledger schema and status transitions are defined in
-references/orchestration-triage-ledger-protocol.md.
-
-For each selected finding, propose a transition for its existing ledger entry.
-Do not create entries. The orchestrator applies these mappings:
-
-- `## Resolved` -> ledger status `resolved`.
-- `## Rejection Accepted` -> ledger status `rejected`.
-- `## Still Open` -> ledger status remains non-terminal (`accepted-fix-pending`
-  if the worker fix is incomplete, `re-opened` if the entry was previously
-  `resolved` and the concern recurs, preserve `architecture-review-required`
-  when already set, otherwise `open`).
-- `## Needs User Decision` -> ledger status remains non-terminal (typically
-  `open` or `accepted-fix-pending`); use this only when closure requires product
-  intent or authority outside the calling skill. Insufficient evidence remains
-  `## Still Open` for further investigation or architecture reassessment.
-
-Cite the `ledger_id` for every proposed transition. If a finding cannot be
-matched to an existing ledger entry, treat
-that as a procedural failure: do not create a new entry and report the
-mismatch under `## Skill Feedback` so the orchestrator can correct triage.
+Propose existing-ledger transitions under `orchestration-triage-ledger-protocol.md`:
+Resolved→resolved; Rejection Accepted→rejected; Still Open retains accepted-fix-pending
+for incomplete fix, re-opened for failed prior resolution, architecture-review-required
+if already set, otherwise open. Needs User Decision remains non-terminal, only for
+product intent or authority outside caller; insufficient proof stays Still Open.
+Cite ledger_id for every transition. Unmatched finding is procedural feedback, not
+a new entry. Orchestrator applies changes. End Closure confirmed or Closure blocked.
 
 ## Output
 

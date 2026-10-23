@@ -1,55 +1,15 @@
 # Reviewer Preflight
 
-Verify one external reviewer CLI, same-session resume, and read-only repository
-commands.
-
-## Inputs
-
-Require:
-
-- reviewer: `codex`, `claude`, or `cursor`;
-- repository root.
-
-Run this only for CLI reviewers; the host reviewer uses the native runtime
-contract.
-
-## Command
-
-Run:
+Preflight each non-host CLI (codex/claude/cursor) with repository root:
 
 ```bash
 "$orchestration_skill_root/scripts/run_reviewer_preflight.sh" <codex|claude|cursor> "{repo_root}"
 ```
 
-## Pass Criteria
-
-Pass only when:
-
-- the provider CLI resolves and can create a session;
-- the first smoke prompt's normalized token line returns exactly
-  `REVIEWER_SMOKE_OK`;
-- the resumed session can run `git status`, commit-to-commit `git diff`, `git show`, and a
-  synthetic `git apply --check` without changing the worktree;
-- the resumed session's normalized token line returns
-  `ORCHESTRATE_SESSION_SMOKE <HEAD_SHA>` with the actual repository HEAD.
-
-Compare the last non-empty output line to the token.
-
-## Failure Rules
-
-Stop without retrying for: auth/login required, permission denied, missing
-command, or a non-resumable session.
-
-The smoke token convention is defined in references/orchestration-conventions.md.
-
-## Output
-
-Report:
-
-- reviewer verified;
-- command availability;
-- smoke session/chat id;
-- first prompt status;
-- resume and read-only command status;
-- pass/fail;
-- blocker reason when failed.
+Require CLI availability/new resumable session, first normalized last-nonempty line
+exactly REVIEWER_SMOKE_OK, and same-session read-only git status/diff/show plus
+synthetic git apply --check without worktree mutation; resumed line must be exactly
+`ORCHESTRATE_SESSION_SMOKE <HEAD_SHA>` with actual HEAD. Native host uses runtime.
+Stop without retry on auth/permission/missing command/unresumable session.
+Report reviewer/command, smoke ID, first/resumed token and read-only command results,
+pass/fail and blocker.

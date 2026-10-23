@@ -1,256 +1,131 @@
 # Code Review Loop
 
-Review successive verified and pushed commits until valid review evidence
-covers the exact plan-branch tip.
+Review immutable pinned parent-to-tip diffs until current-tip evidence qualifies
+or the five-pass cap is exhausted. The persistent implementation owner runs the
+loop; coordinator owns canonical state, moves and publication.
 
-## Inputs
+## Inputs and pass rules
 
-Require the repository, host mapping, vertical-slice plan and slug, parent
-specification, slice map, design checkpoint, implementation scope,
-dependency-parent branch and pinned base SHA, plan branch, candidate commit,
-neutral pack, reviewer preflight status, verification evidence, and a completed
-trim result on the current tip or a valid restack mapping. Trim passes do not
-count toward this loop's discovery-pass limit or satisfy its review gate.
-Prepared linear candidates may run provisional passes against their pinned
-authoring parents before stack acceptance. All inputs and pass rules below apply;
-acceptance does not reset counts.
+Require approved slice/parent/map/checkpoint/ownership, repo/host, parent branch/
+base and candidate pins, neutral pack/preflight, exact verification and current or
+mapped proportionate trim. Prepared authoring reviews stay schedule.work; acceptance
+resets no counts. Ledger: `<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`.
 
-The cross-pass material concern ledger is
-`<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`.
+Discovery = fresh parallel Claude/Codex/Cursor on `<base-sha>...<review-sha>`, counted
+only after three substantive pinned outputs, preserved findings, mutation check and
+one triage under multi-review-pass-runner. At least one discovery plus terminal
+closure suffices on unchanged commit. Limit five completed passes across resumes/
+designs/epochs; closure/clarification/repair/retry/mappings/incomplete launches add
+none. Return operational receipts/counts together, retaining disqualifications;
+only historical records use v1 tools. Number passes, never predict final/last/closing.
 
-## Pass Policy
+Eligible verified pushed tips with handled prior findings/valid trim review
+concurrently across branches up to capacity, even with moving/unreviewed ancestors.
+Keep immutable review refs/pack/checkouts. Confirmed findings may start isolated
+provisional edits/focused checks after convergence assessment, no commit/push until
+all three reconcile; preserve assessments and discard unsupported edits.
 
-Each numbered pass is a fresh three-reviewer discovery review of
-`<base-sha>...<review-sha>`. Targeted closure rounds do not count as passes.
-One completed fresh pass plus terminal closure is sufficient when the reviewed
-commit has not changed. After a material fix, close the originating findings,
-then run a fresh pass on the new commit.
-Run every eligible numbered pass concurrently across branches up to actual
-reviewer capacity, alongside eligible implementation and trim work. Do not
-wait for other branches to finish trim. Eligibility requires handled prior
-findings and a verified, pushed tip; ancestor reviews need not be clean. A
-descendant may continue passes against its immutable pinned parent after that
-parent moves. Record the movement; keep the descendant provisional until
-upstream fixes settle and restack, verification, and review mapping or a fresh
-pass finish.
+## Review action
 
-Run at most five completed discovery passes for one plan. A pass counts when
-all three reviews are substantively complete on the pinned scope and SHA,
-findings are preserved, and triage is recorded under `multi-review-pass-runner`.
-Targeted closure, local normalization/assessment, substantive clarification, transport retry,
-valid restack or test-only mappings, and an incomplete reviewer launch do
-not count. Preserve the count across task resumptions, implementation shapes,
-and architecture epochs.
-Return each completed pass receipt under `operational-records.md`. The
-coordinator publishes it and derived counts together in canonical schema-v2
-JSON, then runs `scripts/validate_operational_records.py <manifest> --project-root <original-project>`. Historical v1 records retain their `release-manifest.md`
-receipt and validator; never publish v1 state under an adopted canonical path.
-Record disqualifications without deleting receipts; mappings do not add passes.
+Record risk: changed production/interface/ownership/dependency/generated/effective
+behavior or invalidated checks is material, as is uncertainty. Material/unmapped
+changes need closure and fresh discovery below cap. Evidence-only closure requires
+unchanged base/commit/tree, refreshed proof/hash/checks and originating-session
+assessment; failed verification/contradiction or an existing code defect prevents
+that shortcut. Other exceptions require every condition below.
 
-Assess each complete response as it arrives, despite formatting failures.
-Independently confirmed material findings may start provisional edits in a separate implementation
-checkout while other reviewers run. Keep the reviewed SHA, branch tip, neutral
-pack, and reviewer checkout unchanged apart from expected review artefacts.
-Focused checks may run in the implementation checkout; do not commit or push
-provisional edits.
-Reconcile all three reviews in one triage before counting the pass. Retain
-normalization/assessment evidence. Revise or discard provisional work if later
-feedback contradicts the fix or requires architecture reassessment.
+### Test-only exception
 
-Before deciding the post-fix review action, record a risk classification.
-Treat changed production behavior, interfaces, lifecycle ownership, dependency
-inputs, generated or effective output, or invalidated verification as material.
-Only explanatory or evidence changes with unchanged commit and tree identities
-qualify for ordinary targeted closure without fresh discovery. Treat
-uncertainty as material.
+Require all of these: the completed discovery is otherwise clean with exactly
+one accepted finding; delta is only test code/test-owned data; production,
+runtime/build/package/config/dependency/shared-fixture/generated/interface/
+behavior/ownership/effective identities are unchanged; exact new tip verifies,
+including direct execution of every changed/added test (unaffected checks may
+reuse proof); every other ledger entry is terminal; every originating reviewer
+confirms closure in its original session against old/new SHAs. Record mappings
+from all three prior reviewed SHAs to new tip. A test path alone is no proof;
+extra accepted findings, uncertainty, invalid/failed verification, non-test delta
+or closure concern require fresh discovery.
 
-One narrow exception applies when a completed discovery pass is otherwise
-clean and its sole accepted finding needs only a test-only remediation. The new
-commit may complete review without another discovery pass when all of these
-conditions hold:
+### Restack mappings
 
-- the delta changes only test code or test-owned data;
-- production, runtime, build, package, configuration, dependency, shared-fixture,
-  generated-output, interface, behavior, ownership, and effective-result
-  identities are unchanged;
-- the new SHA passes exact-candidate verification, including direct execution
-  of every added or changed test; unaffected checks may use deterministic reuse;
-- every other ledger entry is terminal; and
-- each reviewer who originated the accepted finding confirms closure in the
-  original session against the old and new SHAs.
+Equal `git range-diff` alone is insufficient: prove unchanged logical change and
+effective behavior under the new parent with deterministic checks, verify exact
+new tip, record old/new mappings and refresh pack.
 
-Record `test_only_closure` mappings from all three prior review SHAs to the new
-SHA. A test path alone does not prove eligibility. Any uncertainty, additional
-accepted finding, failed or invalidated verification, non-test delta, or
-closure concern requires a fresh three-reviewer pass.
+For unequal diffs, choose one focused path:
 
-**Prospective-language invariant:** Starting a fresh pass does not establish
-that it will be the final pass. Material findings may require fixes, targeted
-closure, and another fresh pass. In plans, progress updates, prompts, and
-handoffs, use the numbered pass only. Do not predict that it is the final review
-cycle.
+- **Inherited test context:** one-to-one same-order child commits, matching stable
+  patch IDs and byte-identical added/deleted lines in every path; no added,
+  dropped, reowned or manually resolved child hunk/commit. Explain every inequality
+  by inherited test context or metadata; inspect complete old/new tests. Parent
+  change is separately verified/reviewed and effective production behavior stays
+  unchanged. Directly run affected tests on exact new tip. All three original
+  reviewers, in original sessions, receive old/new ranges, parent delta,
+  unequal hunks, full affected tests and checks; each confirms continued coverage.
+- **Generated metadata conflict:** every resolved hunk is generated metadata
+  (for example lockfile root hash). Inspect full ranges/hunks and reproduce it
+  byte-for-byte from combined inputs; locked packages, dependency graph, patch
+  order, child source/tests/config and non-metadata output remain unchanged.
+  Prove effective behavior under separately verified/reviewed or mapped parent;
+  descendants stay provisional meanwhile. Verify exact tip and directly run
+  affected integration tests. One independent reviewer receives ranges, hunks,
+  parent delta, identities and results, and confirms resolution/interaction.
 
-Correct: “Pass 5 is running against the verified SHA.”\
-Correct: “If pass 5 is clean, the branch may satisfy review completion.”\
-Incorrect: “The final pass is running.”\
-Incorrect: “This is the last review cycle.”\
-Retrospectively correct: “Pass 5 was the last required pass; review is complete.”
+Record path, proof, confirmations and intermediate mappings from all three
+directly reviewed tips in the pack. Focused confirmations add no discovery pass.
+Patch IDs/tests alone never establish equivalence. Unexplained inequality,
+changed behavior/output, failed check, missing proof or reviewer concern prevents
+mapping. Manual resolutions outside the generated-metadata path require discovery.
+If the cap was already reached, retain its event/count; mark clean only when all
+mapping gates establish clean coverage.
 
-A conflict-free restack retains prior clean reviews when `git range-diff` is
-equal and deterministic checks prove the logical change and effective behavior
-under the new parent are unchanged. Verify the new tip, record old-to-new SHA
-mappings, and refresh the pack. For an unequal range diff, use `reviewed_restack`
-only through one of these focused paths:
+## Execute each pass
 
-**Inherited test context.** Require all of these:
+1. Confirm local/upstream/fetched-remote/reviewed/verified equality and base ancestry;
+   parent movement records provisional status. Refresh code-review-pack; create
+   `<feature_dir>/<plan_slug>.reviews/code-review-pass<N>/`.
+2. Run multi-review-pass-runner with code-review and
+   code-review-loop-code-review-invocation. Exhaust defects after first blocker;
+   preserve/normalize locally, clarify only substance/scope/identity after saved
+   evidence, never restart for formatting.
+3. Assess supported pinned proof/families/prior ledger; reject hypotheses without
+   deleting reported findings. Apply review-convergence and ledger thresholds before
+   further edits (two-pass architecture ratchet, two-cycle continuation, persistent
+   counts). Consider deletion/simplification first. After three substantive outputs/
+   mutation check, triage once and batch accepted material fixes to existing owner,
+   reconciling provisional work. Nits/skill feedback/closure observations authorize
+   no routine fix, ledger entry or pass.
+4. Coordinator returns implementation-needing slices in_progress. Owner selectively
+   stages/new-commits, cleanly verifies and publishes through coordinator/lease,
+   confirms remote and refreshes current-path pack. Follow staged-diff-scope,
+   git-branch-commit, verification-runner and git-sync-branch.
+5. Resume originating reviewers with only their own IDs/old-current SHAs/changes/
+   checks under code-review-closure and code-review-loop-closure-invocation; owner
+   applies proposed ledger transitions. Rejected material findings need closure for
+   uncertainty/conflicting/new evidence or user request. Repeat until terminal or
+   architecture/authority boundary; no cross-reviewer findings. Human input only if
+   every viable continuation crosses caller authority.
+6. Record eligible mappings or next warranted discovery, never merely for proposed
+   edge cases. After pass 5 complete accepted fixes/checks/push/closure; remaining
+   discovery need records cap marker/Review cap reached, no pass 6. Continue other work.
 
-- Each old child commit maps to one new commit in the same order, with matching
-  stable patch IDs and byte-identical added and deleted lines in each path.
-  No child hunk, file ownership, or commit is added, dropped, or manually
-  resolved.
-- Every range-diff inequality is explained by inherited test context or commit
-  metadata. Inspect the complete old and new tests, not just their changed
-  lines. The parent change is separately verified and reviewed; deterministic
-  checks prove unchanged production and effective behavior under that parent.
-- Verify the exact new tip and directly run every affected test. Give all three
-  original reviewers the old and new ranges, parent delta, unequal hunks, full
-  affected tests, and verification evidence. Each must confirm in its original
-  session that its clean conclusion still applies under the new context.
+## Completion and handoff
 
-**Generated metadata conflict.** A manual resolution may retain prior clean
-reviews only when every resolved hunk changes generated metadata, such as a
-`composer.lock` root content hash, and all of these hold:
+`Reviewed and pushed` requires all ledger entries terminal, no unresolved material
+finding/contradiction, required closure, at least one three-reviewer discovery
+covering the logical change directly or by valid mappings, exact verified/local/
+upstream/fetched-remote equality, and pinned-base ancestry. Pending placement or
+moved parent returns `Reviewed provisionally`; settle restack, verify/map or
+review below cap. Routine restacks retain `review` stage. Rewritten `in_release`
+sources invalidate pinned membership; reconcile under plans layout before release.
 
-- Inspect every resolved hunk and both complete commit ranges. Reproduce the
-  new metadata byte-for-byte from the combined inputs. Confirm unchanged locked
-  packages, dependency graph, and patch order; require byte-identical child
-  source, tests, configuration, and non-metadata generated output.
-- Prove unchanged effective behavior under the new parent. Its own changes must
-  be separately verified and reviewed or validly mapped; until then, retain
-  only provisional descendant status.
-- Verify the exact new tip and directly run affected integration tests. Give one
-  independent reviewer the old/new ranges, resolved hunks, parent delta,
-  identity proof, and test results. Record its focused conclusion on the
-  resolution and parent interaction. A concern blocks the mapping.
+Capped human acceptance carries through a proven restack only with unchanged
+effective behavior and accepted finding risk. Keep original decision SHA and
+valid mapping to verified new tip; no repeated decision when applicable. Otherwise
+remediate or seek a new decision. Human acceptance never makes automated reviews
+clean. Unexpected remote source movement blocks until the user accepts its scope.
 
-Record the chosen path, confirmations, identity proof, and intermediate SHA
-mappings from all three directly reviewed tips in the pack. This focused review
-does not count as a discovery pass. Matching patch IDs or passing tests alone
-never establish the mapping. Unexplained inequality, changed child behavior or
-effective output, failed check, missing proof, or reviewer concern requires a
-fresh three-reviewer pass.
-If the pass cap was reached before this mapping, retain the cap event and pass
-count in the ledger; mark the manifest clean only after all mapping gates pass.
-
-When only explanatory or verification evidence changes, confirm the pinned
-base, commit, and tree SHAs are unchanged. Refresh the pack's evidence and
-deterministic checks, then ask only the originating reviewer in its original
-session to assess its finding. Record its closure and update the ledger; mark
-the same SHA clean-reviewed only after all findings are terminal. Do not run
-another discovery pass solely for added evidence. A code change, restack,
-parent change, failed verification, or new contradiction still blocks ordinary
-evidence-only closure. A code change follows the normal review path unless it
-meets the test-only exception above.
-
-For each pass:
-
-1. Confirm the review commit equals the local branch tip, upstream, fetched
-   remote tip, and latest verified SHA. Require the pinned base to remain an
-   ancestor. Record any dependency-parent head movement; it makes a
-   descendant provisional but does not block a pass on the pinned diff.
-2. Refresh `code-review-pack` for the base and review SHAs.
-3. Create `<feature_dir>/<plan_slug>.reviews/code-review-pass<N>/`.
-4. Run `multi-review-pass-runner` with `code-review.md` and
-   `code-review-loop-code-review-invocation.md`. Start all three reviewers fresh
-   and require exhaustive review after the first blocker. Use complete reviews
-   despite formatting failures; preserve originals and repair headings/IDs locally
-   under the runner. Never retry/restart solely for formatting. Clarify only
-   unclear substance, scope or commit identity; use saved evidence first.
-5. As each complete response arrives, assess its evidence class, pinned SHA,
-   supported path, failure family, and prior ledger history. Reject static
-   hypotheses through triage while preserving the reported findings. Before
-   provisional dispatch, check the architecture and fix-cycle rules and whether
-   removing or simplifying new machinery is the smaller resolution. After all
-   three reviews are substantively complete and the mutation check passes,
-   triage them together. Batch accepted blocker and should-fix findings for the
-   existing implementation owner chat, including changes to provisional edits. Do not
-   routinely fix nits. Skill feedback and closure observations cannot trigger
-   a fix, ledger entry, or another pass.
-6. If one failure family or branch-introduced coordinator, state machine, retry
-   system, lifecycle interception, or verification model caused newly
-   discovered material failures in any two fresh passes recorded in the ledger,
-   stop incremental fixes and mark the ledger `architecture-review-required`.
-   Changing implementation shape or epoch does not reset this count. Group
-   failures by invariant; compare removal, simplification, native ownership,
-   upgrade, narrow dependency correction, and prerequisite splitting; then
-   select the smallest viable design. Amend the plan and design checkpoint,
-   start a new architecture epoch, and continue. Require the user only when
-   every viable option crosses the calling skill's authority boundary.
-7. For accepted fixes, request canonical `in_progress/` state from the
-   coordinator and continue in the same implementation owner chat, then:
-   - prepare an exact tree through `staged-diff-scope`;
-   - create a new commit through `git-branch-commit`;
-   - verify the new SHA through `verification-runner` in a clean worktree;
-   - publish through the coordinator (or an explicit authoring push lease) under
-     `git-sync-branch` and check remote SHA equality;
-   - refresh the neutral pack at the current feature path.
-8. Resume each originating reviewer once with its findings, original and
-   current review SHAs, applied changes, and verification evidence. Apply
-   proposed ledger transitions through the implementation owner; never share another
-   reviewer's findings. Use artefact paths from the feature's current stage.
-9. Repeat fixes and targeted closure until those findings close or reach an
-   architecture or authority boundary. Use targeted closure for a rejected
-   material finding when triage is uncertain, evidence conflicts, new evidence
-   addresses it, or the user requests it.
-10. After closure, record eligible test-only mappings or start the next fresh
-    pass. Another pass is not authorized merely because a reviewer proposed an
-    edge case. After two accepted fix cycles in one failure family, prohibit a
-    third local variation and make the autonomous continuation decision defined
-    by the ledger protocol. Continue only for a confirmed material defect and a
-    viable, non-repeated disposition. Ask the user only when every viable option
-    crosses the calling skill's authority boundary. After processing pass 5,
-    commit, verify, and push its accepted in-scope remediation under the normal
-    rules and complete targeted closure. If the resulting tip still requires a
-    fresh discovery pass, do not start pass 6. Record the review-cap marker,
-    return `Review cap reached`, and let the caller continue other eligible
-    plans.
-
-## Completion
-
-Return `Reviewed and pushed` only when:
-
-- at least one fresh pass from all three reviewers covered the logical change,
-  directly on the current SHA or through recorded valid restack or
-  test-only-closure mappings, and no material finding or contradiction remains
-  unresolved after targeted closure;
-- all ledger entries are terminal and required closure is complete;
-- the same SHA is the local branch tip, upstream, fetched remote tip, and latest
-  verified commit, with either direct clean reviews from all three reviewers or
-  valid mappings from all three clean-reviewed logical changes; and
-- the pinned base remains an ancestor.
-
-If stack placement is pending or the parent head has moved, return
-`Reviewed provisionally` rather than `Reviewed and pushed`. Restack once the
-intended parent is available or upstream fixes settle and verify the new tip;
-keep an already completed slice in `review/`. A rewritten `in_release` source
-invalidates its pinned membership; reconcile it under the plans layout before
-release progression. Map prior reviews or run a fresh pass
-when below the cap. For a capped branch, carry an accepted human disposition
-through a recorded valid restack mapping only when effective behavior and the
-accepted unresolved findings' risk remain unchanged. Keep the original
-decision SHA and map it to the new verified tip; do not repeat the human decision.
-
-Any ineligible fix commit, manual resolution outside the generated-metadata
-path, unexplained range-diff inequality, behavior change, or unexplained SHA
-mismatch invalidates completion and requires verification plus a fresh pass
-when below the cap. At the cap, remediate or seek a new human decision only if
-the old acceptance cannot be proven applicable to the new verified tip. Never
-mark automated reviews clean on the strength of human acceptance.
-Valid restack and eligible test-only mappings need verification and recorded
-evidence, not another discovery review. An unexpected remote source change
-blocks until the user accepts its scope.
-
-Report pass outcomes and SHAs, closure rounds, fixes, verification, rejected
-or deferred findings, artefact paths, ledger counts, identity checks, skill
-feedback, and one of `Reviewed and pushed`, `Reviewed provisionally`,
-`Review cap reached`, or a blocker.
+Return pass/closure outcomes and SHAs, fixes/checks, rejected/deferred findings,
+artefact paths, ledger counts, identity checks, skill feedback and exactly one of
+`Reviewed and pushed`, `Reviewed provisionally`, `Review cap reached`, or a blocker.

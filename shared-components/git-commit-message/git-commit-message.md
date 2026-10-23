@@ -1,28 +1,5 @@
 # Git Commit Message
 
-Compose a commit message from the staged diff. Read-only: do not stage,
-branch, commit, push, or edit files.
-
-## Workflow
-
-1. Run `git diff --cached --stat`.
-2. Run `git diff --cached`.
-3. Stop with a clear message if nothing is staged.
-4. Compose an imperative subject under about 72 characters.
-5. Add a blank line, then body lines for what changed, why, impact, and
-   verification.
-
-Example:
-
-```text
-Update comparison delta ownership
-
-What: Move delta field ownership into the comparison module.
-Why: Keep comparison contracts close to the code that consumes them.
-Impact: Export delta behavior is unchanged; ownership is easier to audit.
-Verification: python -m pytest tests/ -q
-```
-
-## Output
-
-Return only the commit message subject and body. Do not include git commands.
+Read cached stat/full diff without changing files/index/branches. Stop if empty.
+Return only imperative subject (about <72 characters), blank line and body covering
+what changed, why, impact and verification; no Git commands. Caller owns commit/push.

@@ -1,79 +1,25 @@
-# From Approved Plan To Git Handoff
+# From Approved Plan to Git Handoff
 
-Implement one approved, human-selected vertical-slice plan, push verified
-revisions, and finish trim and correctness reviews or reach the correctness cap.
-Do not create a CR.
+Existing persistent owner completes approved human-selected slice on assigned
+verified authoring base through checks/push/trim/correctness, no CR. Require
+in_progress plan, approved parent/map/ownership, plan branch and pinned parent;
+caller creates/adopts branch first. Coordinator owns canonical state/moves/
+acceptance/publication, except explicit authoring lease.
 
-## Inputs
+| Step | Required reference/action |
+| --- | --- |
+| Implement/adopt | plan-implement.md and implementation-readiness.md; slice is executable, spec is not; checkpoint before edits |
+| Candidate | staged-diff-scope.md, git-branch-commit.md; satisfying adopted tip needs no empty commit |
+| Verify/publish | verification-runner.md then git-sync-branch.md via coordinator/lease; await remote-pin confirmation |
+| Early handoff | Return verified candidate immediately to unlock prerequisites, retain in_progress/schedule.work |
+| Review completion | trim-review.md then code-review-loop.md on own verified pushed pinned diff; no cross-branch barrier; continue provisionally through parent movement |
+| Final handoff | orchestration-final-handoff.md: exact checks/trim, clean reviews or cap/unresolved findings, identities/pins/counts/paths |
 
-Require an approved `<feature_dir>/<slug>.md` in `in_progress/`, implementation
-ownership, plan branch, dependency-parent branch, and pinned parent SHA. The
-caller creates or validates and checks out the plan branch first.
-For parallel linear builds, start from the assigned verified authoring base.
-The existing implementation chat owns this entire route, including trim,
-correctness loops, closure and fixes. Report a prepared candidate after step 6,
-then continue steps 7-9 against its pinned authoring base before acceptance
-under `scheduling.md`. Report worker completion promptly. Prepared SHAs and
-receipts stay in `schedule.work`; the coordinator owns acceptance, moves,
-manifest writes and publication. An authoring push needs its explicit lease.
-
-## Route
-
-1. Load the plan, its parent specification and slice map, `AGENTS.md` where
-   present, and applicable repository standards and contracts. Reject a parent
-   specification as an executable plan. Require the specification and slice map
-   to be `approved` and the plan's slice slug and acceptance ownership to match.
-2. Select the persistent owner transport through `orchestration-runtime.md`.
-   In that owner chat, assess any adopted branch tip against the plan and
-   complete remaining implementation; do not dispatch another implementer.
-3. For new edits, use `staged-diff-scope.md` for selective staging and
-   self-review. Block staged/unstaged overlap on candidate files.
-4. Use `git-branch-commit.md` to commit an approved new candidate tree. If
-   the adopted tip already satisfies the plan, use that commit as candidate.
-5. Use `verification-runner.md` to verify the exact commit in a clean detached
-   worktree. Fix failures through new commits and verify each new SHA.
-6. Use `git-sync-branch.md` under the explicit authoring lease, or hand the
-   verified commit to the coordinator for publication. Await its verified
-   remote-tip confirmation before any review requiring a pushed candidate.
-7. Leave canonical plan state with the coordinator in `in_progress/`. Build the neutral commit-pinned review
-   pack and preflight the two non-host providers. Return the verified, pushed
-   candidate immediately so the coordinator can unlock eligible descendant implementation while
-   this owner continues its trim and correctness work concurrently. Each branch starts
-   correctness after its own trim; no cross-branch trim barrier applies. An unfinished
-   descendant is not release-ready.
-8. Require a proportionate trim result on the current tip or a valid restack
-   mapping before `code-review-loop.md`. Then verify, push, and
-   review every accepted fix commit. If it returns `Review cap reached`, preserve
-   the committed, verified, pushed work and artefacts. Return the capped result
-   for the caller to move into `review/` with a durable `review_handoff`;
-   human disposition remains a separate release gate. If an
-   ancestor moves, continue eligible passes against this branch's pinned diff
-   and retain provisional status until upstream fixes settle and restack,
-   verification, and review mapping or a fresh pass finish.
-9. Require local, upstream, remote, and verified tips to match; require the
-   pinned parent to be an ancestor. Return clean reviews or a cap record with
-   unresolved findings, trim, checks, and exact-tip evidence. The caller moves
-   the slice to `review/` after its own passes finish, regardless of ancestor
-   review status. Release readiness separately requires qualified ancestors
-   and clean reviews or an accepted capped disposition on the current tip.
-
-Do not mark a candidate release-ready with failed checks or unresolved material findings
-unless an authorized human explicitly accepts each finding on the exact
-review-capped tip in the separate disposition.
-Failed verification or integrity blocks new descendants; a verified candidate
-with review findings may parent provisional descendants. For
-insufficient ownership, in-scope ambiguity, failed verification or review, or
-unresolved findings needing implementation, preserve evidence, return the feature to `in_progress/`,
-amend the design or ownership, and continue with a new immutable candidate. For staged/unstaged
-overlap, failed push, unexpected parent movement, revision mismatch, or missing
-artefacts, do not overwrite work; reconcile the integrity failure or block the
-affected chain. Recorded parent movement defers restack until upstream fixes
-settle, not reviews.
-Continue independent branches. Require a human decision only at the
-authority boundary defined by the calling skill.
-
-Report the coordinator and owner identities, plan, branch and authoring parent,
-remaining dependencies, changed files, candidate and final
-SHAs, upstream SHA, verification, review passes, ledger, artefact paths, and
-one of a blocker, `Review cap reached`, `Reviewed provisionally`, or
-`Reviewed and pushed`.
+Coordinator accepts and moves review only after own gates; ancestor/descendant
+reviews and separate release qualification do not delay own completion. Failed
+verification/integrity blocks dependents, verified candidates with findings may
+parent provisional work. Needed implementation returns owner in_progress; reconcile
+integrity without overwrite, block only affected chain, continue independent work.
+Restack after upstream settles; parent movement does not block eligible pinned
+reviews. Seek human input only at caller authority boundary. Return blocker,
+`Review cap reached`, `Reviewed provisionally` or `Reviewed and pushed`.
