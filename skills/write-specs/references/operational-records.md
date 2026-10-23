@@ -1,279 +1,167 @@
-# Operational JSON records
+# Operational JSON Records
 
-The operator report reads only the following canonical schema-v2 files:
+Canonical report inputs (schema_version 2, exact kind/identity):
 
-| Kind | File | Owner |
+| Kind | Path | Owner |
 | --- | --- | --- |
-| `spec` | `plans/specs/<stage>/<slug>/record.json` | `write-specs`, `write-slices`, stage coordinator |
-| `slice` | `plans/slices/<stage>/<slug>/record.json` | `write-slices`, build/stage coordinator |
-| `build` | `plans/builds/<build-id>/manifest.json` | build coordinator |
-| `release` | `plans/releases/<lifecycle>/<release-id>/preparation.json` | release coordinator |
-| `deployment` | `plans/deployments/<deployment-id>/manifest.json` | deployment runner |
+| spec | plans/specs/<stage>/<slug>/record.json | Spec/slice/stage coordinator |
+| slice | plans/slices/<stage>/<slug>/record.json | Slice/build/stage coordinator |
+| build | plans/builds/<id>/manifest.json | Build coordinator |
+| release | plans/releases/<lifecycle>/<id>/preparation.json | Release coordinator |
+| deployment | plans/deployments/<id>/manifest.json | Deployment runner |
 
-Read `operational-records.schema.json` for exact fields, types, enums and null
-rules. Every record requires `schema_version: 2`, its exact `kind`, and its
-identity. Unknown fields are rejected except inside the explicit `extensions`
-object, which stores supplementary workflow evidence and immutable historical
-records. The report never interprets extensions. Do not put report state there. Record
-known unresolved relationships in the required `unresolved` array; the report
-surfaces them directly.
-Markdown remains narrative and linked evidence; it supplies no report values.
-Historical `release.json` and release-folder `manifest.json` are archives, not
-alternate inputs. Producers must not publish another format under canonical paths.
+Read `operational-records.schema.json` for required fields/types/enums/nulls. Unknown
+fields are forbidden outside extensions; extensions hold supplementary workflow/
+immutable history, never report values. Reports ignore extensions/Markdown/archived
+release.json or release-folder manifest.json. Required unresolved array records known
+unresolved relationships directly. Producers write no other format at canonical paths.
 
-## Creation and validation
+## Writes and validation
 
-Create JSON with the plan or operational record, not at the end of the run.
-Use JSON serialization, explicit nulls and atomic replacement. Validate the
-proposed record before replacement, then validate its related records in the original project:
+Create JSON alongside plan/state, serialize explicit nulls, validate before atomic
+replacement, then validate related records in original project:
 
 ```bash
 python3 <skill-root>/scripts/validate_operational_records.py <record.json>
 python3 <skill-root>/scripts/validate_operational_records.py <record.json> --project-root <original-project>
 ```
 
-The shared validator checks strict structure, phase accounting, current-tip
-results, declared implementation checks, path/folder identity and cross-record
-references. Scoped producer validation also checks evidence paths exist and
-are nonempty inside `plans/`, without reading Markdown contents. It returns nonzero and field-specific errors. It reads JSON only.
-Run the same script with `<original-project>` alone for a whole-project audit.
-Unrelated historical errors do not block a scoped producer check.
-Check evidence must identify a nonempty file, not a directory. For successful
-commands with empty stdout, link the execution JSON receipt containing the
-command, candidate identity and exit status; retain the original empty log.
-A valid shape does not prove the truth of evidence; the producing skill must
-run its existing checks and review-output validators before recording success.
+Checks cover shape/accounting/pins/declared checks/folder identity/cross-record links.
+Scoped evidence must be safe nonempty files inside plans, not directories. Successful
+empty stdout uses execution JSON receipt (command/candidate/exit) while preserving
+empty log. Project root alone runs whole-project audit; unrelated historical errors
+do not block scoped producers. JSON validation proves consistency, never evidence
+truth: execute required checks/output validation before success claims.
 
-## Plans and relationships
+## Plans and completion
 
-Spec records hold approval, stage and the machine-readable acceptance ownership
-map. Slice records hold approval, stage, `spec_slug` (null for standalone work),
-and `current`: null before selection, otherwise the exact build ID, source and
-current full tip SHA (null before a candidate exists). `current` selects one
-build/source explicitly. Never select one by timestamps or folder names.
+Specs own approval/stage/acceptance map; slices explicitly select current build/source/
+tip, never by dates/names. Use schema null rules for standalone/unselected/unprepared.
+Each acceptance ID has one current owner matching parent, unchanged by superseded
+maps. Keep narrative/JSON/pins/qualification synchronized through approval/selection/
+moves/rewrites; move records, repair paths and retain IDs/original receipts.
 
-Update JSON and narrative together on approval, selection and stage changes.
-Move `record.json` with its plan folder; repair `plan` and maintained references.
-Keep IDs stable. Validate each acceptance ID has one owner and the slice's
-parent matches its spec. Superseded maps remain historical and do not reassign
-current ownership. On a source rewrite, update the slice current pin and the
-build's qualification together; preserve the prior receipt identities.
+Optional fulfilled-slice completion uses schema's accepted kinds/person/UTC decision
+and safe nonempty JSON evidence repeating decision with exactly one matching
+accepted_slices provenance. Code binds exact merged member of merged/released/
+accepted canonical release and matching current/build qualification. Non-code has
+null source/tip/parent/release/current. Reopening archives/removes active completion
+before stage/source changes; completion changes no review count/outcome or build gate.
+Keep bulky history in hashed provenance-linked audits, current fields directly readable
+within report's 16 MiB record limit.
 
-Reports display **Superseded** for a valid slice with stage `superseded`, even
-with no current build/source. Preserve history, recorded counts and record or
-reference errors; unknown counts stay **Unclear**. Other stages, including
-`hold`, `merged` and `fulfilled`, retain their implementation/review status
-unless validated completion acceptance establishes **Complete** below.
-Use `hold` and notes for an explicit pause; preserve its source and review history.
-Unselected `draft`, `backlog` and `to_do` slices display **Not Started**.
+Report rules: superseded→Superseded even without current, preserving history/errors;
+unselected draft/backlog/to_do→Not Started; hold/merged/fulfilled alone preserve
+implementation/review state. Accepted completion→Complete for all kinds, retaining
+selected-build counts; missing code history→Not recorded, non-code→N/A. Unknown counts
+remain Unclear. Hold records pause/notes/source/history, no completion/waiver.
 
-## Completion acceptance
+## Build phases
 
-Fulfilled slices may record an optional `completion` with `status: accepted`,
-`kind` (`code`, `no_change_audit`, `operation` or `workflow`), accepting person,
-UTC acceptance time and a nonempty JSON `evidence` file inside `plans/`.
-The evidence records the same status, `accepted_by`, `accepted_at`, and exactly
-one matching entry in `accepted_slices`. That entry binds `slice_slug`, `kind`,
-`source`, `tip_sha`, `parent` and `release_id` to the acceptance.
+Branches are accepted placements, schedule.work authoring/planned work. Each carries
+explicit slice/spec/source/parent/pins/phases. Implementation not_started/running/
+verified/unknown: verified pins tip with nonempty required_check_ids, every listed
+agent check passed there (prepared_sha for work). A commit/arbitrary check is insufficient.
 
-Code completion pins an exact merged member of a merged, released, accepted
-canonical release. Source, full tip, original parent and release ID are required.
-It can retain `current`; the selected build and source qualification must match
-the accepted provenance. Existing build references and reviews stay intact.
-Non-code completion has null source, tip, parent, release ID and `current`.
+Trim ends proportionate. Correctness distinguishes not_started/running/
+provisionally_complete/clean/review_cap_reached per schema; terminal results require
+current tip/evidence. Clean needs proportionate trim and three clean current-tip
+reviewer results. Scheduled clean must match qualified accepted branch.
 
-The report displays **Complete** for all accepted kinds. Preserve a selected
-build's known loop counts; missing code-review history displays **Not recorded**.
-Non-code work displays **N/A**. Acceptance changes no review outcome or count
-and does not qualify an unfinished build for freeze or release. Stage alone
-does not establish acceptance. On reopening, preserve completion in history
-and remove the active object before changing stage or source.
+Prepared provisional completion needs verified implementation, pinned parent,
+proportionate trim, three clean current-tip reviews with evidence/direct-or-valid-mapping/
+original SHA, correctness provisionally_complete on prepared_sha with ledger evidence.
+Work stays prepared (or blocked awaiting acceptance); report Provisionally Complete.
+Incomplete correctness uses running/null SHA/ledger. Rewrite clears to running unless
+mapping proves new tip; cap records review_cap_reached on verified prepared tip.
+Acceptance transfers receipts/counts unchanged, converts provisional to clean only
+with valid qualification, otherwise running/null. Accepted branches forbid provisional
+status; counts alone establish none. Reconcile older running evidence before completion.
 
-Keep bulky immutable snapshots in referenced audit files, with hashes and
-source provenance. Keep current operational fields directly readable within
-the report's 16 MiB record limit.
+Session metadata: extensions.sessions, schedule.extensions.coordinator and work
+extensions.owner (IDs/names/checkout/authoring base/execution lease/pause-resume).
+Import handoffs promptly. Work worker_completion preserves original authoring pin,
+clean/capped outcome, checks/review receipts/dependencies/handoff, never qualifies
+rewrite. Report worker complete separately from acceptance/current coverage; release
+readiness is separate. Preserve workflow gates/history in extensions without aliases.
 
-## Builds and review phases
+Freeze stays null until authorized/qualified: verified implementation, proportionate
+trim, matched parent heads, clean correctness or current-tip accepted capped
+human_disposition (schema decision/mappings; display remains exhausted). Record authority,
+UTC time and v2 digest from validate_operational_records.py <manifest> --print-scope-digest.
+Migration retains original freeze proof/authority/Git identities with new digest, not v1 hash.
 
-Accepted `branches` and `schedule.work` have explicit slice/spec IDs, source,
-parent/pins and implementation/review state. Work entries do not imply accepted
-branches. Scheduled implementation verification also requires every declared check on
-`prepared_sha`. Scheduled clean correctness refers to its matching qualified
-accepted branch; queue state alone cannot establish clean review. Prepared
-candidates may complete provisional passes: import receipts and counts, record
-proportionate trim on `prepared_sha`, and keep unfinished correctness `running`
-with null phase SHA and a ledger evidence link. When implementation, trim and
-correctness finish, set scheduled correctness to `provisionally_complete`,
-pinned to `prepared_sha` with ledger evidence and three clean current-tip
-`reviews` using the accepted-branch reviewer-result shape. Each result requires
-evidence, a direct or valid mapping method, and its original reviewed SHA.
-This state requires a pinned parent, verified implementation and proportionate
-trim; work remains `prepared` (or `blocked` awaiting acceptance).
-Reports display **Provisionally Complete**; pass counts alone do not establish it.
-On a rewrite, clear the result to `running` with null phase SHA unless verified
-mapping re-establishes completion on the new prepared tip. At the cap without a
-clean result, record `review_cap_reached` on the verified prepared tip. Transfer
-receipts and counts unchanged at acceptance; direct or validly mapped current-tip
-results qualify as clean. Replace `provisionally_complete` with `clean` after
-qualification or `running` with null phase SHA while coverage is incomplete;
-never retain it in accepted `branches`.
-Keep scheduled work's phases current through the coordinator. Existing `running`
-records require evidence reconciliation before claiming provisional completion.
-Store supplementary selection,
-coordinator, session, disposition and integration evidence in the
-record's documented extensions; preserve the existing workflow's gate checks.
-For persistent implementation chats, use `extensions.sessions`,
-`schedule.extensions.coordinator`, and work `extensions.owner` for IDs/names,
-assigned checkout, authoring base, one active execution lease, and pause/resume
-conditions. Import candidate and completion handoffs promptly. A work extension
-`worker_completion` preserves the original authoring pin, clean/capped outcome,
-checks/review receipts, dependencies and handoff evidence; it does not qualify
-a rewritten tip. Report worker complete and accepted/restacked separately while
-canonical phases record current coverage. Release readiness is owned by the
-release workflow; it is not a build completion gate.
+Waived/unknown require reason; current waiver→Review waived, unknown→Review status
+unknown with phase/reason. Neither clean nor release-qualified; waiver adds no passes.
+Missing/invalid/conflicting qualification→Unclear with problem. Correctness status
+precedes trim unless not_started; unknown counts independently stay Unclear. Reports
+are read-only, checking waiver file safety/size/existence, never narrative proof.
 
-Keep `freeze` null until its existing qualification and authorization gates
-pass. Frozen and later candidates require verified implementation, proportionate
-trim, matching parent heads, and clean correctness or an accepted capped
-`human_disposition` on the current SHA. That optional object has a defined
-decision and mapping schema; it never changes the displayed exhausted status. Record the authority, UTC time and canonical scope digest; use
-`validate_operational_records.py <manifest> --print-scope-digest`. Historical
-imports retain the original freeze evidence and record the schema migration's
-new digest without changing authority or Git identities. Do not use the v1
-scope hash for canonical records.
+## Receipts and history
 
-Implementation states are `not_started`, `running`, `verified`, or `unknown`.
-A verified result pins the tip and declares a nonempty `required_check_ids` list;
-every listed agent check must have passed at that tip. Do not infer completion
-from one arbitrary passed check or a commit existing.
+Accounting receipts requires integer completed_passes/historical_completed_passes
+equal to baseline plus completed receipts in disjoint periods. New baseline=null.
+Completed receipt: stable unique ID, UTC completion, original reviewed SHA, triage
+path, three distinct validated reviewers on same SHA. Keep old identities; mappings
+prove current applicability. Disqualified receipts retain reason uncounted. Incomplete
+launches/closures/repairs/mappings add none. Zero-pass trim requires zero_diff applicability
+and evidence.
 
-Phase states distinguish `not_started` from `running`; trim ends at
-`proportionate`. Correctness distinguishes provisional completion
-(`provisionally_complete`), qualified completion (`clean`) and exhaustion
-(`review_cap_reached`). Terminal results require the current tip and an
-evidence path. Clean correctness also
-requires three clean current-tip reviewer results and proportionate trim.
-
-`waived` and `unknown` require reasons. Display **Review waived** for a
-current-tip waiver and **Review status unknown** for an unknown review,
-identifying the phase and reason. Neither means clean completion. Waivers add
-no passes and do not qualify a release. Missing, invalid or conflicting
-qualification displays **Unclear** with the specific problem. The browser
-checks waiver evidence files are safe, present and nonempty inside `plans/`
-without reading their contents. Correctness takes precedence over trim: use
-the trim status only while correctness is `not_started`. Unknown loop counts
-remain **Unclear** independently of review status. Reporting is read-only.
-
-`accounting: "receipts"` requires integer `completed_passes` and
-`historical_completed_passes`, equal to the immutable imported baseline plus completed receipts in each
-disjoint period. The baseline is null for new phases. Historical import may
-carry explicit valid JSON counts into a baseline with an immutable audit JSON
-evidence path. A separately authorized evidence reconciliation may establish a
-missing baseline by auditing triage, accepted reviewer outputs and qualification
-proof for each counted pass. Record included and disqualified attempts, original
-SHAs, evidence paths and input hashes in the audit JSON. Directory counts or a
-prose total alone are insufficient. Do not synthesize missing receipt details;
-new passes require complete receipts. The dashboard reads neither narrative
-counts nor audit evidence to derive values.
-The baseline and new receipts must cover disjoint passes. Each completed receipt contains a stable ID, UTC completion time,
-reviewed SHA, triage path and three distinct validated reviewer outputs on that
-SHA. Disqualified receipts retain a reason and do not count. Incomplete launches,
-repairs, closures and mechanical mappings do not add receipts. Historical
-receipt SHAs stay immutable; current reviewer mappings establish applicability.
-Use `applicability: "zero_diff"` for a documented zero-pass trim exemption.
-
-If historical receipts cannot be established, use `accounting: "unknown"`,
-null counts, an empty receipt array, a null baseline and an explicit reason. This means unknown,
-not zero. A separately established current clean result may still be recorded;
-it does not manufacture historical receipts. Never use unknown accounting for
-new completed passes. Preserve historical counts in immutable import evidence.
+Historical valid JSON counts may enter immutable audited baselines. Separately
+authorized missing-count reconciliation audits each pass's triage/outputs/qualification,
+recording included/disqualified attempts, original pins/paths/input hashes. Baseline
+and receipts cannot overlap. Directory/prose totals are insufficient; never invent
+receipts. Unprovable history uses accounting unknown, null counts, empty passes/null
+baseline/reason, never zero; independently proven clean result may coexist. New completed
+passes always require receipts. Reports derive nothing from narrative/audit contents.
 
 ## Operator handoff
 
-Build `branches` and `schedule.work` may contain the defined `operator_handoff`
-object. It is optional only so untouched existing builds remain readable;
-all new and adopted producer entries require it. Validate build handoffs with
-`--require-operator-handoff` in addition to `--project-root`.
+New/adopted branches/work require schema-defined operator_handoff; optional only for
+untouched old records. Add --require-operator-handoff with project-root. Use explicit
+nulls, unique classification/package/evidence arrays and exact schema enums, primary
+type first. Ready requires current pin/four descriptions/types/surfaces/evidence;
+packages may be empty, unknown needs reason. Identify touched Composer metadata/
+registered first-party Magento modules only, excluding inherited/untouched packages.
 
-Every object has `state` (`draft`, `ready`, `unknown`), `sha`, `problem`,
-`solution`, `test_path`, `pass_condition`, `types`, `change_surfaces`, `packages`,
-`evidence`, and `reason`. Unknown text and unprepared SHA use explicit nulls;
-classifications, packages and evidence use arrays, never delimited strings.
-Unknown state requires a reason. Ready requires the current implementation pin,
-all four nonempty descriptions, types, surfaces and evidence. Packages may be
-empty when none are affected. Arrays contain unique entries; purpose types
-are ordered with the primary type first. Exact types and surfaces are in the
-schema. Name Composer packages from their metadata or first-party Magento
-modules from registration; exclude inherited and untouched packages.
-
-Draft before implementation. Workers return the object with their evidence;
-only the coordinator writes canonical state. Describe the actual branch-owned
-outcome, supported staging actions, prerequisites, observable pass conditions,
-and developer/third-party checks that the operator cannot establish, in the
-project's own terms and named screens for a reader with no code access. Suggested
-checks are not execution or acceptance results. Reconcile after scope changes,
-fixes or restacks; refresh the SHA only after checking applicability. Keep
-superseded wording in immutable audit evidence. Verified implementation
-handoffs must be ready before producer validation succeeds.
-
-The selected build/source owns these values. Reports and exports consume this
-object only; they do not extract descriptions from Markdown, extensions or
-Sheets. Missing old handoffs display as not recorded. Draft, unknown or
-pin-conflicting text is labelled explicitly and does not borrow another build's
-handoff. `Pass condition` describes expected proof; `Type(s)` classifies purpose.
+Draft before implementation. Owner returns data/proof; coordinator writes. Verified
+producer entries need ready text reconciled to branch-only outcome, operator staging
+steps/prerequisites/pass observations and separate developer/third-party checks.
+Follow plan-implement operator wording rules after fixes/restacks; refresh SHA only
+after applicability proof. Suggested tests claim no execution/acceptance; archive
+superseded text immutably. Reports/exports use selected build/source object only,
+never Markdown/extensions/Sheets/another build. Missing old text is not recorded;
+draft/unknown/pin conflicts stay explicit. Pass condition describes proof; types purpose.
 
 ## Releases and deployments
 
-Release `changes` contain explicit slice/build identities, source heads,
-original parents and PRs. Current PR destinations live in the PR record, separate
-from stack parents. Store the candidate commit/tree, final PR, lifecycle,
-assembly state, acceptance and staging receipt in their defined fields.
-Acceptance owners use release `extensions.sessions` for chat history, assigned
-requirements, candidate/environment pins and evidence links. Owners return evidence; the
-release coordinator aggregates it into canonical `acceptance`.
-Lifecycle is `active`, `released`, `superseded` or `cancelled`; it is distinct
-from assembly state. Preserve publication authorization and merge journals in
-extensions; existing mutation gates still apply.
+Release fields pin memberships/source/original parent/PR/candidate/staging/acceptance;
+PR destination differs from stack parent, lifecycle from assembly. Session extensions
+record acceptance owners/scope/environment/pins/evidence for coordinator aggregation;
+preserve publication authority/merge journals and existing mutation gates.
 
-Deployment receipts use `deployment_id`, explicit environment, optional
-originating release ID, candidate commit/tree, `outcome`, evidence and
-`included_slices`. Outcomes are `pending`, `verified`, `failed`, or `unknown`.
-Only record `verified` after checking the deployed candidate and existing
-pipeline/smoke requirements. Acceptance remains separate on the release.
+Deployment schema pins identity/environment/candidate/outcome/evidence/membership.
+Verified needs deployed/pipeline/smoke proof; acceptance remains on release. Producer
+records exact members from validated release/Git ancestry, including integration
+members; report infers no membership/environment/outcome or ancestry. Extensions
+retain base/inputs/backup/old staging pointer/pipeline/recovery/failures.
 
-The deployment producer records exact included slice/source/tip memberships,
-using validated release membership or Git ancestry when preparing its receipt.
-The report performs neither ancestry queries nor environment/outcome inference.
-When deploying a release integration branch, carry its included slices into the
-receipt; recording just the integration input loses operator membership.
-Keep base, selected integration inputs, backup, old staging pointer, pipeline,
-recovery commands and failure details in extensions as deployment evidence.
+## Conditional historical import
 
-## Historical import
-
-Only `migrate_operational_records.py` may inspect historical formats, Markdown
-metadata or local Git to propose canonical records. It is never imported or
-run by the dashboard. Preview first:
+Only migrate_operational_records.py reads old formats/Markdown/Git; dashboard never
+runs/imports it. Preview without writes:
 
 ```bash
 python3 <skill-root>/scripts/migrate_operational_records.py <original-project>
 ```
 
-`--apply` saves byte-for-byte originals and hashes under `plans/audits/`, checks
-for concurrent input changes, then atomically replaces records. Preserve all
-historical detail in extensions. Resolve explicit import warnings; do not
-invent missing receipts, parents or release membership. The imported record
-becomes authoritative; dated originals remain immutable evidence. Active
-coordinators must adopt the contract before their next write. Existing v1
-qualification tools apply only to their historical records, never as dashboard
-fallbacks or as substitutes for v2 validation.
+--apply saves byte-identical originals/hashes under plans/audits, checks concurrent
+changes and atomically replaces, preserving detail in extensions. Resolve warnings;
+invent no receipts/parents/membership. Imported record becomes authoritative, originals
+immutable; coordinators adopt before next write. V1 tools apply only to historical
+records, never dashboard fallback/v2 substitutes.
 
-For adopted v2 records, `--reconcile-json-counts` imports any remaining explicit
-historical JSON counters into audit-backed baselines. It never changes source
-pins or reviewer results. Preview without `--apply` first.
-
-For records adopted by an earlier import, `--reconcile-plan-metadata` explicitly
-restores missing approvals, ownership maps and spec IDs from the original plans
-and archived JSON. It leaves current selection, pins and review results intact;
-original JSON and replacement hashes are saved in the migration audit. This
-option belongs to the one-time importer, never the dashboard or normal writers.
+Preview --reconcile-json-counts for earlier imports' explicit counters→audited baseline
+without pin/review changes. Preview --reconcile-plan-metadata for original-plan/archive
+approval/map/spec IDs without selection/pin/review changes, retaining original/replacement
+hashes. These are one-time importer modes, not dashboard/normal writers.

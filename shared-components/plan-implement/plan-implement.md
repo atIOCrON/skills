@@ -1,176 +1,89 @@
 # Plan Implement
 
-Implement one approved vertical-slice plan from `plans/slices/in_progress/`
-within the assigned file or module ownership scope. The plan defines intent and scope.
-Binding policies, applicable repository standards, and affected contracts
-govern correctness. General best practice informs in-scope work but does not
-expand it. If no plan path or
-ownership scope is provided, ask.
+Implement one approved slice in `plans/slices/in_progress` within assigned
+files/modules. If plan or ownership is missing, ask. Approved intent, exclusions,
+binding policy/contracts and relevant repository standards govern scope; general
+best practice adds none. Persistent owner continues commit/check/review route.
 
-## Before Editing
+## Before editing
 
-1. Read the plan end to end, including out-of-scope notes.
-2. Read the parent and map. Require `Approval Status: approved` on slice and
-   parent, `Slice Map Status: approved`, and parent stage `backlog`, `to_do`,
-   `in_progress`, or `review`. Match the slice slug, acceptance ownership,
-   blocker, and exclusions to the map.
-3. Open every cited `file:line`. If a line number is stale, search the current
-   file for the referenced symbol, behavior, or nearby text and use the current
-   location. Return unverifiable or contradictory claims to the runner for an
-   evidence-based plan amendment; stop only at the calling skill's authority
-   boundary.
-4. Read applicable `AGENTS.md` files when present and the repository docs,
-   configuration, tests, and contracts relevant to the touched surface.
-5. Make a concise scope-to-change map. For each owned acceptance group, record
-   the candidate-owned mechanism; whether the candidate introduces or modifies
-   its lifecycle implementation or only changes routing, selection,
-   configuration, or reachability; its runtime owner; and its branch-local,
-   inherited, and external evidence. Map each changed surface and new component
-   to an acceptance condition, binding policy, or affected contract. Omit
-   anything that cannot be mapped. Do not equate a changed observable outcome
-   with local ownership of an unchanged dependency lifecycle.
-6. Confirm the plan has one independently verifiable outcome, one rollback
-   boundary, explicit sibling exclusions, and no acceptance group that can ship
-   or fail independently. Return it to the runner for an in-scope implementation
-   split if it does not.
-7. For any new architectural layer, dependency, configuration option,
-   persistent object, public interface, compatibility behavior, or supported
-   scenario, identify what requires it. Use a simpler design when it can meet
-   the same requirements. Return any broader design to the runner's autonomous
-   architecture checkpoint.
-8. Before initial editing, write
-   `<feature_dir>/<plan_slug>.execution/design-checkpoint.md`. On a fix dispatch,
-   read it and update it only when the design changes. Record:
-   - the architecture epoch, design identity, and prior failure class, if any;
-   - the native owner or extension point;
-   - the smallest proposed design and expected production surfaces;
-   - every new state owner or asynchronous coordinator, or `none`;
-   - supported extensions, adapters, upgrades, upstream corrections, and
-     direct dependency modifications that are relevant, and why the smaller
-     options do not satisfy the slice;
-   - the verification-ownership classification, proposed local test machinery,
-     applicable inherited evidence, and separate external acceptance; and
-   - conditions that require architecture or slice reassessment.
-9. For a complex or cross-cutting change, write
-   `<feature_dir>/<plan_slug>.execution/implementation-analysis.md` before
-   editing. Keep it concise and include:
-   - the scope-to-change map;
-   - entry points and in-repo readers;
-   - relevant state transitions and failure states;
-   - invariants and hazards the implementation must preserve;
-   - adversarial checks that can disprove the proposed behavior.
+Read entire slice, parent/map and applicable AGENTS/repo/config/test/contracts.
+Require all approved, map matching slug/acceptance/blockers/exclusions and parent
+backlog/to_do/in_progress/review. Open every cited file:line, resolving stale lines
+by symbol/current context; return unverifiable/contradictory claims for evidenced
+amendment, stopping only at caller authority boundary. Require one verifiable
+outcome/rollback boundary and sibling exclusions; return separable acceptance
+outcomes for in-scope split.
 
-Use the analysis to shape the implementation and verification harness. Do not
-send it to fresh reviewers; they retain an independent perspective.
+Map each acceptance group/changed surface/component to candidate-owned mechanism,
+lifecycle modified versus routing/config/reachability only, runtime owner, local/
+inherited/external proof and binding requirement. Exclude unmapped work; changed
+outcomes do not imply ownership of unchanged dependency lifecycles. Identify what
+requires each new layer/dependency/config/persistence/interface/compatibility/scenario;
+choose smaller sufficient designs and return broader ones to architecture checkpoint.
 
-At the design checkpoint, compare proposed verification machinery with the
-candidate-owned production mechanism. If verification would introduce a
-provider simulator, server model, persistence fixture, retry framework, or more
-lifecycle machinery than the production change, simplify it or return the
-verification footprint for correction before editing. Approval of a plan does
-not authorize disproportionate verification machinery. Preserve the approved
-acceptance outcome while amending a requested seam that would simulate
-unchanged external or dependency-owned behaviour.
+Before edits save `<feature_dir>/<plan_slug>.execution/design-checkpoint.md`:
+architecture epoch/design/prior failure, native owner/extension, smallest design/
+production surfaces, new state owners/async coordinators (or none), relevant
+extension/adapter/upgrade/upstream/dependency alternatives and why smaller options
+fail, verification ownership/harness/inherited/external proof, reassessment triggers.
+Read on fixes; update when design changes. Complex/cross-cutting work also needs
+`implementation-analysis.md`: scope map, entry points/readers, transitions/failures,
+invariants/hazards and adversarial checks. Use it for implementation; exclude it
+from fresh reviewer context to retain independence.
 
-Use repository instructions or indexes to choose relevant docs when available.
+Compare test machinery with owned production mechanism before edits. Provider/server/
+persistence simulators, retry models or disproportionate lifecycle fixtures require
+simplification or verification-boundary amendment, even if a plan proposed them.
+Preserve acceptance and binding commands without reconstructing unchanged upstream behavior.
 
-## Implementation Rules
+## Implementation and verification
 
-- Choose the least-complex change that meets the acceptance conditions and
-  preserves affected binding contracts.
-- Prefer the platform's native lifecycle owner and documented extension point.
-  A direct dependency modification can correct a narrow locked dependency
-  defect; it does not by itself authorize local ownership of the dependency's
-  general lifecycle.
-- Do not add capability for hypothetical future needs.
-- Small implementation-detail deviations are allowed when they preserve the
-  approved outcome, stay within the plan's authorization envelope, improve
-  correctness, or better match current repo patterns. Report the divergence.
-- Treat the plan's verification section as required evidence outcomes, not
-  authorization to construct a disproportionate harness. A command mandated by
-  the user or binding repository policy remains required; otherwise choose the
-  smallest meaningful seam that proves the candidate-owned mechanism.
-- If the plan conflicts with a binding policy, applicable repository standard,
-  or affected contract, return it to the runner. Continue after an in-scope
-  correction; require a human decision only when the conflict cannot be resolved
-  without changing approved product scope or the binding source.
-- If ownership is insufficient, return the exact expansion or split needed.
-  The runner may expand repository-local ownership within the approved outcome;
-  do not edit outside the assigned scope first.
-- The workspace may contain edits from the user or other agents. Do not revert,
-  overwrite, or clean up work you did not make.
-- Update every in-repo reader of a changed schema, CLI flag, view, error shape,
-  config key, or exported field within your scope.
-- No backward-compatibility shims, deprecation paths, fallback defaults,
-  speculative features, or unrelated cleanup.
-- Use documented repository primitives and established nearby patterns when
-  applicable.
-- Preserve the existing invariants identified for the touched surface,
-  including state transitions and failure handling.
-- Return to the runner's architecture checkpoint before implementing a
-  page-global mutable coordinator,
-  cross-provider lifecycle manager, retry or recovery framework, substantial
-  replacement of a dependency-owned surface, or permanent dependency
-  modification spanning independently testable defects. Do the same when the
-  production footprint materially exceeds the design checkpoint. The runner may
-  amend the design within its recorded authority. Line counts are warning
-  evidence, not absolute limits.
-- During this edit phase, do not stage, commit, branch, push, or open a request.
-  The persistent owner then continues the assigned handoff route through
-  selective staging, new commits, exact verification and independent reviews;
-  publication remains with the coordinator or its explicit authoring lease.
+Use the least-complex native owner/documented extension meeting the outcome; no
+hypothetical capability, compatibility shim, deprecation/fallback or unrelated cleanup.
+Small detail deviations preserving approved outcome/authority and improving correctness
+or repo fit are allowed; report them. Update every in-repo reader of changed schemas,
+flags/views/errors/config/exports and retain touched invariants/transitions/failures.
+Preserve others' edits. Return scope expansions before editing outside ownership;
+caller can amend in-scope policy conflicts, otherwise obtain authorized decision.
 
-## Verification
+Reassess before page-global mutable coordinators, cross-provider lifecycle managers,
+retry/recovery frameworks, broad dependency replacement, patches spanning independent
+defects or material excess over checkpoint. Lines are signals, not limits. Permanent
+dependency correction needs reproduced locked-version defect and no supported extension:
+record defect/rejected alternatives, smallest correction/removal condition, source/
+effective identities, behavioral proof, replay order and maintenance effect; one coherent
+defect per patch and applicable capability skill. A patch grants no general lifecycle ownership.
 
-Run preliminary verification named by the plan when practical for the owned
-surface. Add proportionate regression tests for changed behaviour even when
-the plan omits them. When the candidate introduces or modifies browser
-activation, renderer replacement logic, concurrency, current-value changes,
-cancellation, retries, token invalidation, or provider callbacks, require
-executable behavioural tests at the highest practical local seam. Source-text,
-snapshot, and generated-artifact-shape checks may supplement but not replace
-proof of runtime behaviour the candidate owns.
+Run practical plan/preliminary and adversarial checks; add proportionate behavioral
+regressions for candidate-owned changes even if omitted from plan. Lifecycle changes
+(browser activation/rendering/concurrency/current values/cancellation/retry/token/provider
+callbacks) need executable highest-practical-seam proof, not structural assertions alone.
+Routing/selection/config/reachability of unchanged dependency lifecycles needs source
+contract/effective runtime binding or code identity, exact applicable inherited proof
+and separate real-provider acceptance. Lightweight routing doubles are valid; fake
+provider/server/persistence/account/order transitions do not prove production. Plan
+verification specifies evidence outcomes, not permission for excessive harnesses;
+user/binding-policy commands remain required. Report impossible verification and why.
 
-When the candidate only changes routing, selection, configuration, or
-reachability for an unchanged dependency-owned lifecycle, prove that mechanism
-directly through source-contract evidence and effective runtime binding or code
-identity. Reuse inherited test evidence only when its exact version,
-configuration, relevant inputs, and effective result apply, and keep
-real-provider acceptance separate when it cannot run locally. Lightweight test
-doubles may establish candidate-owned routing or binding. Do not construct a
-fake provider, server, persistence layer, account store, or order lifecycle
-solely to prove unchanged behaviour owned elsewhere; the harness's transitions
-are not production evidence. Run planned adversarial checks for complex or
-cross-cutting work.
-Report failures honestly; if verification is impossible here, say why.
+This edit phase does not stage/branch/commit/push/open CRs. Owner then follows assigned
+selective-stage/new-commit/exact-check/independent-review route; coordinator or explicit
+lease publishes. New findings authorize no new responsibility merely through broad acceptance.
 
 ## Operator handoff
 
-When invoked by a build coordinator, return `operator_handoff` using the bundled
-`operational-records.md` contract and exact classifications. Reconcile its four
-operator descriptions, changed surfaces and registered package/module identities
-against the branch-only diff after implementation or fixes. Suggested checks do
-not claim executed acceptance. Workers return draft or ready data for the pinned
-candidate; the coordinator owns canonical writes and validation.
+Return `operator_handoff` under `operational-records.md`; reconcile four descriptions,
+registered touched packages/modules and surfaces against branch-only diff after fixes.
+Suggested tests claim no executed acceptance. Workers return draft/ready pinned data;
+coordinator writes canonical JSON. Write for an operator with no code access:
 
-Write the four descriptions for a store operator or tester with no code access
-who will run the check on staging or production:
-
-- Use the project's own names from storefront labels, Admin labels and code
-  comments (for example taxonomy products versus ordinary products). Never
-  substitute a term from another domain.
-- Name the real screen for every step, verified in templates and layouts: the
-  page that triggers the behaviour, what the operator must do first, and where
-  the result is read. "Inspect the payload" is not a step.
-- Explain an internal term in brackets on first use. Use a field name only when
-  the operator sees it at the destination.
-- Give the operator no commands, file paths or test names; say what the
-  automated tests cover instead.
-- Write short positive sentences with no sentence cap. Say what covers a case
-  rather than what cannot be done and who does it instead.
-- Say when a fresh staging setup may not reproduce the old problem, and when an
-  automated test is the only proof of a case.
-- Describe an internal refactor as "an internal tidy-up with no visible effect".
+- Use verified project/storefront/Admin terminology, not another domain's labels.
+- Name real screens/actions/prerequisites/result location, checked in templates/layouts;
+  internal terms get brackets on first use; fields appear only if visible there.
+- Give no commands, paths or test names; explain automated/third-party coverage instead.
+  Use short positive sentences without a sentence cap.
+- State when fresh staging cannot reproduce old issue or only automation proves a case.
+  Describe internal refactors as “an internal tidy-up with no visible effect”.
 
 ## Output
 

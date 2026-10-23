@@ -1,317 +1,171 @@
 # Plans Layout
 
-Specs and executable slices share lifecycle stages; approval is separate:
-
 ```text
-plans/specs/<stage>/<spec_slug>/record.json
-plans/specs/<stage>/<spec_slug>/<spec_slug>.md
-plans/specs/<stage>/<spec_slug>/<spec_slug>.slices.md
-plans/slices/<stage>/<slug>/record.json
-plans/slices/<stage>/<slug>/<slug>.md
-plans/slices/<stage>/<slug>/<slug>.reviews/
-plans/slices/<stage>/<slug>/<slug>.execution/
-plans/slices/<stage>/<slug>/<slug>.evidence/
+plans/specs/<stage>/<spec_slug>/{record.json,<spec_slug>.md,<spec_slug>.slices.md}
+plans/slices/<stage>/<slug>/{record.json,<slug>.md,<slug>.reviews/,<slug>.execution/,<slug>.evidence/}
 plans/builds/<build-id>/manifest.json
-plans/releases/<stage>/<release-id>/preparation.json
+plans/releases/<lifecycle>/<release-id>/preparation.json
 plans/deployments/<deployment-id>/manifest.json
 plans/audits/<audit-id>/
 ```
 
-Both use `draft`, `backlog`, `to_do`, `in_progress`, `hold`, `review`, `in_release`, `merged`,
-`fulfilled`, and `superseded`. `Specification Status` or `Slice Status` must
-match the folder. `Approval Status` is `draft` or `approved`. Delivery progress
-preserves scope approval. Writing requests, folders, and successful checks do not imply approval.
+Specification/Slice Status matches stage folder; Approval Status independently
+remains draft/approved. Progress, folder creation or checks imply no approval.
+Update schema-v2 record/narrative together under operational-records on approval,
+selection, moves and rewrites. JSON owns operational/report values; prose/Sheets
+are projections. Slugs use durable repo terms, not dates/agents/vague names (e.g.
+catalog_relationship_ownership); unique per spec/slice namespace across stages,
+drafts, superseded and legacy locations.
 
-`hold` records an explicit pause; retain approval, selection, pins and evidence.
-Record the authority and reason, update canonical JSON with the folder move,
-and resume only under the recorded authority. A hold establishes no delivery
-completion or review waiver.
+## Approval and changes
 
-## Operational Records
+Save/trim drafts with both statuses draft and present absolute paths for approval.
+Approval sets approved and moves whole folder to backlog; no approved delivery stage.
+Approve saved map/children together; parent approval alone approves no child.
+Human to_do selection records review/readiness, including authorized explicit build
+selection. No repeat approval/agent plan-review phase or artifacts for unchanged
+approved scope; separately requested critique is outside delivery.
 
-Maintain schema-v2 `record.json` with each spec and slice. Operational JSON
-contracts are in `operational-records.md`; Markdown is narrative, not report
-input. Update JSON on approval, selection, stage moves and source rewrites.
+Specs define complete outcome/stable acceptance IDs; only approved parents in
+backlog/to_do/in_progress/review authorize decomposition/build. Slices link parent/
+map, own cohesive acceptance IDs, exclude siblings and have independent verification/
+rollback boundaries. Classify legacy standalone slices explicitly with same cohesion.
+Maps stay beside parent, use slugs rather than stage paths, assign one owner per
+acceptance ID with outcome/blockers/verification/rollback/exclusions. Save proposed
+maps/children before approval; map status draft/approved/stale, only approved permits build.
 
-Build manifests record implementation, branch dependencies, reviews, checks,
-and every contributing session. Keep them in `builds/<build-id>/` after their
-changes ship; a release links its contributing builds rather than copying or
-moving them. New build IDs use `stack-build-<YYYYMMDDTHHMMSSZ>` from UTC time,
-generated once and retained across repairs and resumes; describe scope in the
-manifest. Existing IDs and legacy `release_id` fields remain unchanged.
+Material changes to acceptance/scope/binding decisions/authorized complexity/required
+verification/external acceptance reset parent draft+draft approval/map stale:
 
-Release records identify selected scope, pinned candidates, PR assembly, and
-acceptance. Use `releases/active/` while preparing or awaiting final disposition,
-`released/` after the final merge and required acceptance are confirmed,
-`superseded/` for an identified replacement, and `cancelled/` for an explicitly
-abandoned candidate. Record the disposition, evidence, and replacement links,
-then move the whole folder and repair maintained references. Deployment alone
-does not establish a released candidate. Resume unchanged inputs under the same
-ID; changed scope or pinned inputs create a new linked candidate, not an attempt
-subfolder. Move an existing whole-release record; create a linked summary only
-when none exists. Do not duplicate its build evidence or invent historical states.
+- Unstarted backlog/to_do children return draft, preserving approvals/selection/
+  evidence and repaired references.
+- Started/review/in_release children retain stage/evidence with reapproval blockers;
+  affected delivery waits for revised spec/map/children approval.
+- Merged/fulfilled need follow-up slices; superseded history stays unchanged.
 
-Deployment receipts record installing a candidate, with environment and outcome
-inside `deployments/<deployment-id>/`. Retain failed and superseded receipts;
-link their release when applicable. Historical release folders may retain mixed
-release/deployment evidence.
+Reapprove saved decomposition together; unstarted return backlog, separate decision
+to reselect to_do. Slice outcome/ownership/exclusion/dependency changes use write-slices
+reapproval/draft/stale map, retaining evidence; after final merge use follow-up.
+Clarifications preserve approval. Implementation-only splits preserving outcome,
+ownership/exclusions/release/external acceptance are clarifications: record reason/
+verification/rollback, save new drafts, use covering build authority to approve
+map/children into backlog without another human gate.
 
-Use `audits/<audit-id>/` for separate investigations, production acceptance,
-reconciliation and maintenance records that may span builds or releases. Link
-applicable plans and operational records. Implementation checks stay with their
-build or slice. Keep audit folders flat; include an index of findings, commands,
-outcomes and retained evidence. Moving an archive does not authorize deleting it.
+## Delivery gates
 
-Resolve supplied legacy record paths on resume; do not create a second record
-at the new default. Defer moves used by active workers until they finish or
-adopt the new path. Preserve dated logs and archives, and retain a migration map.
-
-## Drafting and Approval
-
-Save specs and slices in `draft/` with both statuses `draft`. Revise and trim
-the files, then present their absolute paths for explicit approval. Approval
-sets `Approval Status: approved` and moves the whole folder to `backlog/`;
-there is no `approved/` delivery stage. Approve saved children with their
-decomposition; parent approval alone does not approve them. Human selection of
-approved plans into `to_do` records that they have been reviewed and are ready
-for implementation. Explicit build selection may authorize that move. Do not
-add an agent-led plan-review phase, separate review artefacts, or another
-approval request for unchanged approved plans. Any separately requested plan
-critique is outside this workflow. Delivery `review/` follows implementation.
-
-A spec defines the complete outcome and stable acceptance IDs. Decompose or
-build only approved specs in `backlog`, `to_do`, `in_progress`, or `review`.
-Each slice references its parent and map, owns cohesive acceptance IDs,
-excludes sibling outcomes, and has independent verification and rollback
-boundaries. Standalone legacy plans require explicit classification and the
-same cohesion check.
-
-The `.slices.md` map stays beside its parent and moves with it. Save proposed
-maps and children before approval. `Slice Map Status` is `draft`, `approved`,
-or `stale`; only approved maps authorize builds. Give each acceptance ID one
-owner and record slice outcomes, blockers, verification and rollback boundaries,
-and exclusions. Use slugs, not stage-dependent paths. Keep branch, release,
-and deployment state in the corresponding operational records.
-
-Material changes to acceptance IDs, scope, binding decisions, authorized
-complexity, required verification, or external acceptance reset a spec's stage
-and approval to `draft` and its existing map to `stale`. Apply these child rules:
-
-- Move unstarted `backlog` or `to_do` children to `draft`, setting both slice
-  and approval statuses to `draft`. Preserve prior approvals, selection history,
-  and evidence; update maintained links and manifest paths.
-- Preserve stages and evidence for `in_progress`, `review`, and `in_release`
-  children; record the reapproval blocker in their plans and build/release records.
-  Block affected delivery until the revised spec, map, and child plans are approved.
-- Preserve `merged` and `fulfilled` results; use follow-up slices for changed
-  requirements. Leave superseded history unchanged.
-
-Approve the revised spec, map, and saved children together; add no per-child
-approval ceremony. Reapproved unstarted children return to `backlog`; restoring
-`to_do` requires a separate selection decision.
-
-Changes to a slice's approved outcome, ownership, exclusions, or dependencies
-require reapproval through `write-slices`: save it as a draft, mark the map
-stale, and preserve implementation and review evidence. After final merge,
-use a follow-up slice for new work. Clarifications preserve approval.
-
-An implementation-only split preserving approved outcomes, ownership,
-exclusions, release scope, and external acceptance is a clarification. Record
-its reason and revised verification and rollback boundaries. Save new children
-as drafts; existing build authority may approve them and the revised map if
-it covers the split. Record that authority, advance them to `backlog`, and
-retain spec approval without adding a human approval gate.
-
-## Parent Progress
-
-Reconcile parents after decomposition approval and every child stage change
-within `write-slices`, `build-branch-stack`, or release/merge completion.
-A spec awaiting approval stays in `draft`. Before delivery, an approved spec without an
-approved decomposition stays in `backlog`. Draft or stale maps alone do not reset
-child stages; a parent returned to draft applies the child rules above.
-
-Require a nonempty approved map, approved children resolving exactly once
-across current and legacy locations, and consistent acceptance ownership.
-Missing, duplicate, draft, unapproved, or superseded children, a draft/stale map,
-inconsistent ownership, or a destination collision block reconciliation.
-Retain the current stage and report the blocker; an empty map proves nothing.
-
-Apply these rules in order to the complete approved map, not just the selected
-release or currently running batch:
-
-| Mapped child states | Parent stage |
+| Stage | Meaning |
 | --- | --- |
-| Every slice fulfilled and required parent acceptance passed or explicitly accepted | `fulfilled` |
-| Every slice merged or fulfilled, with required child or parent acceptance outstanding | `merged` |
-| Every slice in in_release, merged, or fulfilled, with at least one in_release and one prepared candidate covering all unmerged slices | `in_release` |
-| Every slice in review, in_release, merged, or fulfilled, with at least one final merge pending and no complete prepared candidate coverage | `review` |
-| Any slice started, and at least one slice remains in backlog, to_do, or in_progress | `in_progress` |
-| None started and at least one selected in to_do | `to_do` |
-| Every slice in backlog | `backlog` |
+| draft | Saved scope/decomposition awaiting approval |
+| backlog | Approved, unselected; parent/map approved before slice selection; code prerequisites may remain |
+| to_do | Human-reviewed selected scope; move selected children only |
+| in_progress | Implementation/fixes/checks/trim/correctness underway |
+| hold | Explicit authorized pause/reason; retain approval/selection/pins/history; resume only under recorded authority |
+| review | Accepted pushed verified own implementation/checks, proportionate trim, clean correctness or five-pass cap after accepted remediation/closure; final merge pending |
+| in_release | Pinned member of fully assembled recorded candidate, confirmed commit/tree/inclusion |
+| merged | Confirmed final-destination merge/landed commit, required acceptance outstanding |
+| fulfilled | Final merge plus all required acceptance passed or limitations explicitly accepted by authorized decision maker |
+| superseded | Replaced under recorded authority, no selection/build/fulfillment credit |
 
-A defect returning an unmerged child to `in_progress` returns its parent there.
-Keep merged work in `merged` while acceptance remains unresolved; track required
-fixes in follow-up slices without undoing the confirmed merge. Add no acceptance
-gate absent from the approved spec. Release preparation reconciles `in_release`
-after complete candidate assembly.
-`merge-stack` reconciles `merged` and
-`fulfilled` after confirmed final merges, including partial runs and resumes;
-intermediate integration merges establish neither stage.
+Review entry pins immutable review_handoff SHA/outcome/evidence, preserves artifacts
+and pending checks' owners/procedures/prerequisites. Own review completion waits
+for neither ancestors' decisions nor descendants/external/candidate checks. Routine
+restacks retain review while current evidence becomes pending; changed parents
+require restack/verification before release. Defects/check failures/behavior changes
+needing edits return owners in_progress. Cap disposition alone is no final acceptance.
+Hold establishes no completion/waiver.
 
-On a parent transition, move its folder and map, update `Specification Status`,
-repair references, and report the change in that workflow. Read-only workflows
-report discrepancies without moving files. Do not infer legacy standalone parents.
+In_release needs assembled candidate, not selection/preparation/individual PRs/partial
+assembly. Record release_candidate release_id/preparation_record/candidate_sha/
+included_tip_sha on branch, or link preparation entry if no build; verify Git/squash
+inclusion. Historical rewrites retain build pins/reviews and separate build_tip_sha
+from selected source/included tip with preparation evidence; review equivalence
+needs independent proof. Already merged/fulfilled stay there. Invalidated/cancelled/
+superseded/withdrawn candidates return unmerged members review unless another qualified
+candidate covers unchanged tips; record replacements. Implementation defects return
+owners in_progress. Candidate stage proves no staging/acceptance/final merge/deployment.
 
-## Supersession
+Only final destination merge (normally master), never staging/intermediate assembly,
+qualifies merged/fulfilled. Acceptance failure preserves merge; fixes use follow-up.
+If already accepted, final merge may move directly review/in_release→fulfilled.
 
-Before moving a replaced plan to `superseded/`, record replacement slugs,
-reason, and approval or existing authority. Preserve history and evidence;
-superseded plans cannot be selected, built, or counted as fulfilled.
+## Parent reconciliation
 
-For slices, revise and approve the active map, transfer each acceptance ID to
-one replacement owner, and update blocker links before excluding the old slice
-from parent progress. Superseding a parent blocks child delivery; record which
-children are replaced or reassigned to an approved parent. Replacement never
-fulfills a child.
+Reconcile complete approved map after decomposition approval/every child transition,
+including repairs/partial merges/resumes, never just selected batch/release. Draft
+parent stays draft; approved without approved decomposition stays backlog. Stale/
+draft map alone resets no child stages. Require nonempty approved map, each approved
+child resolving exactly once across legacy/current paths and consistent ownership.
+Missing/duplicate/draft/unapproved/superseded children, map/ownership/collision failures
+retain parent stage with blocker. Apply in order:
 
-## Moves and Legacy Layout
+| Complete mapped state | Parent |
+| --- | --- |
+| All fulfilled; parent acceptance satisfied/accepted | fulfilled |
+| All merged/fulfilled; required child/parent acceptance outstanding | merged |
+| All in_release/merged/fulfilled, some in_release; one prepared candidate covers all unmerged | in_release |
+| All review/in_release/merged/fulfilled, final merge pending, no complete candidate coverage | review |
+| Some started, some backlog/to_do/in_progress | in_progress |
+| None started, some to_do | to_do |
+| All backlog | backlog |
 
-Move whole folders, including maps and artefacts, at lifecycle transitions.
-Create destination parents; stop on collisions or active users of the old path.
-Never merge folders. Update internal status, incoming and outgoing links,
-handoffs, and manifest plan/artefact paths. For a frozen manifest whose digest
-includes moved paths, recompute the digest after path-only repairs; retain its
-freeze authorization and time, and record old/new digests and the migration.
-Changed source, dependency, or candidate scope still invalidates the freeze.
-Verify paths and report incomplete
-moves or repairs without undoing confirmed merges. Keep internal slice links
-relative so they survive moves.
+Unmerged defect returns parent in_progress. Add no unapproved acceptance. Release
+workflow owns candidate reconciliation, merge workflow final merge/fulfillment.
+Move parent/map, update status/links and report. Read-only workflows report discrepancies
+without moves; infer no standalone parent.
 
-Spec slugs and slice slugs must each be unique across stages, including drafts,
-superseded history, and legacy locations. Read-only workflows resolve legacy
-paths without moving them. Authorized writing or delivery workflows migrate
-encountered plans while preserving approval, acceptance IDs, evidence, and progress:
+## Supersession and moves
 
-- Legacy `Specification Status: approved` records approval, not delivery.
-  Add `Approval Status: approved`; derive the new stage from a valid approved
-  map and verified children, or use `backlog` when no decomposition exists.
-  Invalid maps block progress derivation; repair the map before moving the
-  parent out of its legacy location. Keep legacy draft specs unapproved;
-  preserve recorded fulfillment and supersession subject to their evidence.
-- Legacy slices in `backlog`, `to_do`, `in_progress`, `review`, or `merged` keep
-  that stage, subject to confirmed final-merge evidence for `merged`.
-  Add explicit slice status and approval metadata from recorded approvals and
-  the approved map; do not invent approval for unmatched or unapproved plans.
-  Unapproved plans become saved drafts while preserving their existing evidence.
-- Legacy `plans/slices/done/` or `plans/done/` becomes `fulfilled/` only after
-  confirming landed merges and completed or explicitly accepted acceptance.
-  A confirmed final merge with pending acceptance goes to `merged`; an unmerged
-  change goes to `review`, or `in_progress` when a failed check needs a fix.
-- Encountered `review` slices with confirmed final merges go to `merged` while
-  acceptance remains pending, or directly to `fulfilled` once satisfied.
-- Move `plans/specs/<spec_slug>/` to its reconciled lifecycle stage and
-  `plans/<stage>/<slug>/` under `plans/slices/`, applying the same rules.
-  Classify a legacy broad specification through `write-specs`; never treat it
-  as a slice. A spec with no recorded approval is a draft.
+Supersession records replacement slugs/reason/authority and retains history/evidence.
+Approve active map's replacement owner per acceptance ID and blockers before excluding
+old slice. Superseded parent blocks delivery pending child replacement/reassignment;
+replacement fulfills nothing.
 
-Use the move rules above; leave no duplicate.
+Move whole folders/maps/artifacts; create parents, stop collisions/active old-path
+users, never merge folders or duplicate plans. Repair status/incoming/outgoing links/
+handoffs/manifest paths; internal slice links stay relative. Path-only frozen-digest
+repairs retain authority/time with old/new digests/migration proof; source/dependency/
+scope change invalidates freeze. Report failed moves without undoing confirmed merges.
 
-## Delivery Stages
+Read-only callers resolve legacy paths; authorized writers migrate encountered plans:
 
-Operational records live outside spec and slice lifecycle folders. Their
-canonical JSON owns branch order, targets, SHAs, checks, acceptance, CRs,
-integration, and deployment state; spreadsheets and prose are reconciled views.
+- Old Specification Status approved means approval, not stage. Add approved metadata;
+  derive stage from valid map/children or backlog without decomposition. Invalid map
+  blocks derivation/move. Unapproved specs are drafts; retain fulfilled/superseded
+  only with evidence.
+- Legacy backlog/to_do/in_progress/review/merged slices retain stage (merged needs
+  final merge). Derive approval from recorded decision/map, never invent it;
+  unapproved/unmatched become drafts preserving evidence.
+- Legacy plans/slices/done or plans/done requires final merge+acceptance for fulfilled;
+  pending acceptance→merged; unmerged→review or in_progress if fixes needed. Apply
+  same rule to encountered review slices already finally merged.
+- Move plans/specs/<slug> to reconciled stage and plans/<stage>/<slug> into slices.
+  Broad specs route through write-specs, never execute as slices.
 
-- `draft`: saved specification or slice awaiting scope/decomposition approval.
-- `backlog`: approved scope, not yet selected for implementation. A slice's
-  parent and map must also be approved before it is considered for `to_do`.
-  Implementation prerequisites may remain pending.
-- `to_do`: an approved slice reviewed by a human and selected for implementation;
-  the parent reflects selection across its approved map. Move only selected
-  children; no separate agent review or plan-review evidence is required.
-- `in_progress`: implementation, fixes, CLI code review loops, commits, and
-  required branch checks are underway, or a defect needs implementation work.
-  Keep a slice here through proportionate trim and clean correctness reviews
-  or the five-pass cap. Finish accepted cap remediation and closure; record
-  unresolved findings. Do not wait for ancestor reviews or descendants to
-  finish this slice's review passes.
-- `review`: implementation handoff is complete; operator review or release
-  selection remains. Final destination merge is pending; implementation and
-  trim are complete, and correctness passes are clean or capped. At entry, its pushed tip
-  passes exact-tip verification; record `review_handoff` on that SHA and preserve
-  artefacts. A capped slice may await human disposition here. Keep it here
-  through routine restacks, pending current-tip checks, review mappings, human
-  acceptance, and external or release-candidate checks until included in a
-  recorded, fully assembled release candidate. Starting preparation, selecting
-  branches, creating individual PRs, or partial assembly alone does not qualify.
-  A changed ancestor
-  requires restack and re-verification before release progression, but does
-  not undo completed implementation. Return to `in_progress` when a defect,
-  failed check, or behavioral change requires implementation work. Record
-  pending checks with owners, procedures, and prerequisites. Parent `review`
-  means some mapped scope still awaits review or release selection, or complete
-  prepared-candidate coverage cannot be established.
-- `in_release`: the slice's pinned tip is included in a recorded, fully assembled
-  release candidate whose commit and tree are confirmed. Review, staging tests,
-  acceptance, and the final PR now proceed through that release. Record the
-  release ID, preparation path, candidate SHA, and included tip in the build
-  manifest's branch `release_candidate` when a build manifest exists; otherwise
-  link the preparation record's change entry from the slice. Verify inclusion
-  against Git or recorded squash mapping. Preserve historical build pins; when
-  the selected source differs, record its source and included tip separately
-  from `build_tip_sha`, with evidence linking the preparation change entry.
-  Do not imply unchanged code or review applicability without separate proof.
-  This stage proves neither staging success, acceptance, final
-  merge, nor production deployment. Keep already merged/fulfilled slices in
-  their stages. A spec enters only when one prepared candidate covers every
-  unmerged child in its complete approved map and all others are merged or
-  fulfilled; partial scope leaves the parent in `review`. If that candidate is
-  cancelled, superseded, withdrawn, or invalidated, return unmerged slices to
-  `review` unless an unchanged tip remains covered by another qualifying
-  candidate. Record replacement links. Defects requiring implementation return
-  their owning unmerged slices to `in_progress`. Reconcile parents and repair
-  maintained paths; active coordinators own shared moves and manifest writes.
-- `merged`: the final destination merge (normally master) and landed commit are
-  confirmed, but required acceptance remains pending or unresolved. Record merge
-  evidence and each outstanding check's owner, procedure, and result. Staging
-  deployment and intermediate integration merges do not qualify. A spec enters
-  `merged` when every active mapped slice is merged or fulfilled and required
-  child or parent acceptance remains outstanding. Preserve merge history when
-  acceptance fails; use follow-up slices for fixes. Move directly from `review`
-  or `in_release` to `fulfilled` when acceptance is satisfied at final merge.
-- `fulfilled`: every final required acceptance check passed or its limitation
-  was explicitly accepted by an authorized decision maker, and the change
-  request's final destination merge and landed commit are confirmed. Review-cap
-  disposition alone is insufficient. Implementation or code review completion
-  alone is insufficient. For specs, all active mapped slices and required
-  parent acceptance must meet the fulfillment rules above.
-- `superseded`: replaced by identified plans and no longer actionable; use the
-  supersession rules above.
+## Operational archives and artifacts
 
-For repair runs, return only slices needing implementation work to
-`in_progress`. Restack and re-verify descendants in their current stage unless
-they also need implementation work, then reconcile affected parents.
+Builds retain order/dependencies/pins/checks/reviews/sessions after shipping; releases
+link evidence rather than copy/move it. New IDs once-generated UTC
+stack-build-<YYYYMMDDTHHMMSSZ>; repairs/resumes retain ID/path and historical release_id.
+Resolve existing legacy records instead of creating duplicates. Defer active-worker
+moves until adoption; retain dated archives/migration map.
 
-## Artefacts
+Release lifecycle active until final disposition; released needs final merge+acceptance;
+superseded needs replacement, cancelled explicit abandonment. Record disposition/
+evidence/links then move whole folder/repair refs. Deployment alone is no release.
+Unchanged inputs resume ID, changed scope/pins create linked new candidate, not attempt
+subfolders. Move existing whole-release record; linked summary only if absent, never
+invent states. Deployment receipts retain failed/superseded outcomes/environment/
+release links; historical folders may mix release/deployment evidence. Audits remain
+flat investigations/acceptance/reconciliation/maintenance with indexed findings/
+commands/results/evidence and plan/record links; archive move authorizes no deletion.
 
-- `<feature_dir>/<slug>.reviews/` contains
-  `code-review-pass<N>/`, `code-review-pack/`, and
-  `code-review-triage-ledger.md`. After the branch handoff audit it also
-  contains `artefact-audit-ledger.md`, which records follow-up planning
-  decisions for that feature. Preserve any historical plan-review artefacts;
-  they are not required for implementation selection or dispatch.
-- `<feature_dir>/<slug>.execution/` contains one-off scripts and execution
-  helpers. Keep permanent tests and tooling in their normal repo locations.
-- `<feature_dir>/<slug>.evidence/` contains small test outputs, measurements,
-  and comparisons. Maintain `index.md` with the tested commit and worktree
-  state, commands, results, and relative links to evidence and helpers.
-- Give each worker or run distinct subdirectories. Keep protected inputs,
-  large databases, dumps, and bulk outputs outside artefact folders; record
-  external paths and reproduction commands in the index.
-- Preserve all three folders, when present, in the user's main checkout before
-  removing a worktree.
+- .reviews: code-review-pass<N>, code-review-pack, code-review-triage-ledger and
+  artefact-audit-ledger after audit. Preserve old plan reviews, not dispatch prerequisites.
+- .execution: one-off helpers; permanent tests/tooling in normal repository locations.
+- .evidence: small outputs/comparisons with index pinning commit/worktree/commands/
+  results and relative evidence/helper links. Distinct worker/run subdirectories.
+- Protected inputs/databases/dumps/bulk outputs stay outside artifacts with paths/
+  reproduction in index. Preserve all three folders in primary checkout before cleanup.
 
-## Plan Slug Format
-
-Use durable repo terms. Avoid dates, agent names, and vague words. Examples:
-`catalog_relationship_ownership`, `valid_gtin_quality_gate`.
+Repair only slices needing implementation into in_progress; restack/reverify descendants
+in current stages, then reconcile parents. Incomplete archive/audit moves never undo merges.

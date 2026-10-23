@@ -1,95 +1,43 @@
 # Code Review Triage
 
-Turn commit-pinned review feedback into accepted fix requests or concise
-rebuttals. Do not edit implementation files.
+Assess pinned review hypotheses, no implementation edits. Require outputs, plan/pass,
+owned scope, base/tip, pack and `<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`.
+Confirm pack SHAs/ancestry/diff/checks, read committed content (not index/worktree),
+standards/nearby patterns and `orchestration-triage-ledger-protocol.md`.
 
-## Inputs
+Use complete understandable responses despite format diagnostics: preserve originals/
+findings, normalize locally under runner, never request formatting restarts. Deduplicate;
+a reviewer label is no evidence. Accept only material `reproduced` or `binding-proof`:
+confirm pin/path/existing-facilities/command/artifact/observed failure, or committed code/
+binding source/full deduction. One bounded existing-facility reproduction per family;
+never add code/tests/simulators/delay/lifecycle frameworks/guards/substantial harness to
+prove a hypothesis. Reject speculation, unsupported inputs/scale/future needs/preferences;
+best practice alone proves no defect. Existing issues block only when depended on,
+worsened or required by scope. Preserve disposition of every reported finding.
 
-Require reviewer responses, plan path, pass number, intended implementation
-scope, review base and commit SHAs, neutral pack, and cross-pass ledger path:
-`<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`.
+Prefer deletion/simplification of new machinery; broad acceptance does not authorize
+new ownership/coordinator/retry/lifecycle responsibility without demonstrated checkpoint
+need. Batch accepted material fixes for existing owner, mapping each to acceptance,
+prerequisite or binding source; independently releasable capability needs scope decision.
+Do not routinely fix nits, stage/commit/push or inspect unrelated dirty work.
 
-## Read First
+Resolve source conflicts in order: safety/security/legal/policy, approved scope,
+repo standards, affected contracts, nearby convention, general best practice.
+Amend within caller authority; human decision only for changed scope/higher binding source.
 
-1. Confirm the pack's SHAs, ancestry, diff, verification evidence, and branch
-   identity checks.
-2. Read `git diff <base-sha>...<review-sha>` and committed content at
-   `<review-sha>`; ignore the index and working tree.
-3. Read applicable standards and nearby patterns.
-4. Read or initialize the ledger using
-   `references/orchestration-triage-ledger-protocol.md`.
+Ledger is the only file triage writes. Apply protocol identity/family/status/consolidation
+and convergence triggers across epochs before dispatch. Two discovery passes with new
+failures from one family/architecture/verification source require architecture reassessment,
+not another incremental fix. Two accepted family fix cycles require autonomous continuation,
+not a third local variation. The owning loop enforces the five-pass cap after remediation.
+Return confirmed requests through `implementation-dispatch.md` with finding/family/ledger
+IDs, owner, evidence class/path/proof and focused check; owner independently confirms first.
 
-## Rules
-
-- Treat comments as hypotheses; deduplicate them before acting.
-- Use complete, understandable reviews even when formatting validation fails.
-  The coordinator preserves originals and repairs headings/IDs locally under
-  `multi-review-pass-runner`; do not request formatting retries or restarts.
-  Preserve every reported finding and record its disposition in triage.
-- Independently accept only `reproduced` or `binding-proof` findings that meet
-  the material-finding definition. A reviewer label is not evidence.
-- For `reproduced`, confirm the pinned SHA, supported production-like path,
-  existing-facilities-only claim, command or procedure, artifact, and observed
-  failure. For `binding-proof`, confirm the pinned committed code, binding
-  source, and complete proof chain.
-- Reject static plausibility and any claim that needs a new simulator,
-  generalized delay, lifecycle framework, production guard, or substantial
-  harness to establish it. Allow one bounded reproduction cycle with existing
-  facilities per failure family; do not implement code or tests to prove a
-  review hypothesis.
-- Reject claims based only on unsupported inputs, hypothetical scale, future
-  use, or architecture preference.
-- General best practice cannot establish a defect alone.
-- A pre-existing issue blocks only when this commit depends on or worsens it,
-  or the plan requires its correction.
-- Recommend the smallest fix mapped to an acceptance condition, demonstrated
-  prerequisite, or binding contract. Flag a new independently releasable
-  capability as a product-scope decision.
-- Before accepting a fix, ask whether deleting or simplifying branch-introduced
-  machinery closes the finding. A broad acceptance condition alone does not
-  justify a new state owner, coordinator, retry system, or lifecycle
-  responsibility; require an architecture checkpoint with demonstrated need.
-- Batch material findings for one implementer. Do not routinely fix nits.
-- Do not stage, commit, push, or inspect unrelated dirty work.
-
-Resolve source conflicts in this order: safety, security, legal, and policy;
-approved scope; repository standards; affected contracts; nearby conventions;
-general best practice. Resolve repository-local conflicts within the calling
-skill's authority. Require the user only when resolution changes approved
-product scope or a higher-ranked binding source.
-
-## Ledger And Handoff
-
-The ledger is the only file triage may write. Apply its failure-family, status,
-recurrence, architecture-source, and consolidation rules across all passes and
-epochs. If the same failure family or branch-introduced coordinator, state
-machine, retry system, lifecycle interception, or verification model produces
-new material failure modes in any two recorded fresh passes, mark
-`architecture-review-required` and do not dispatch another incremental fix.
-Changing implementation shape or epoch does not reset this count. Return it for
-autonomous architecture reassessment. Otherwise send accepted fixes through
-`implementation-dispatch`, including finding ID, family ID, owner, required
-change, evidence class, evidence, and verification check. The worker must
-reproduce the failure or confirm the binding proof before editing. Fixes never
-mutate the reviewed SHA.
-
-Before all three outputs arrive, the orchestrator may assess one complete
-response against the pinned commit and existing ledger. A confirmed material
-finding may be sent as a provisional fix request, identified by reviewer
-finding ID, only after checking recurrence and fix-cycle limits. Keep this
-assessment outside the ledger and implementation outside the reviewer checkout.
-After all three reviews are substantively complete on the pinned scope and SHA,
-with local normalization/assessment evidence, reconcile overlapping or conflicting findings
-and write the ledger once. Reassess or discard provisional edits that the full
-triage does not support; only then treat the fix request as accepted.
-
-After two accepted fix cycles in one failure family, prohibit another local
-variation and record an autonomous continuation decision under the ledger
-protocol. Continue only for a confirmed material defect with a viable
-disposition that does not repeat an exhausted variation. Ask the user only when
-every viable disposition crosses the calling skill's authority boundary. The
-owning loop, not triage, enforces the five-pass plan cap after pass 5 has been
-triaged and its accepted work processed.
+Early complete responses may unlock isolated provisional fixes only after evidence and
+recurrence checks. Keep assessments outside ledger and edits outside reviewer checkout.
+After all three substantively complete and mutation checks pass, reconcile once, write
+ledger, revise/discard unsupported provisional work, then accept/commit. Skill feedback
+and closure observations authorize no ledger entry, fix or additional pass.
 
 ## Output
 

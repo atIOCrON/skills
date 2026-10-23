@@ -1,12 +1,7 @@
 # Code Review Pack
 
-Build a neutral, commit-pinned pack at
-`<feature_dir>/<plan_slug>.reviews/code-review-pack/`. Every fresh reviewer in
-a pass uses the same immutable review boundary.
-
-## Contents
-
-Create or refresh:
+Build `<feature_dir>/<plan_slug>.reviews/code-review-pack/` for one immutable
+base/review SHA boundary shared by fresh reviewers. Required files:
 
 ```text
 index.md
@@ -21,139 +16,72 @@ deterministic-checks.md
 hash-manifest.sha256
 ```
 
-`index.md` records the plan, dependency-parent branch and pinned base SHA,
-plan branch, review commit and tree SHAs, creation time, and evidence paths.
-For a prepared candidate, identify the pinned authoring parent, intended stack
-placement, and pending acceptance. For any provisional branch, identify unreviewed
-or moved ancestors and state that the pack covers its pinned parent-to-tip diff.
-Include relevant inherited code and interactions; conclusions apply to this
-snapshot until mapped onto the accepted stack parent.
-Link the slice's parent specification, slice map, and design checkpoint. Record
-whether the actual production surfaces stayed within the checkpoint and identify
-any new state owner, coordinator, lifecycle interception, whole-template
-replacement, or other architectural layer. It also records which standards
-sources were found. If `AGENTS.md` is absent,
-say so and identify the applicable plan, repository docs and configuration,
-affected contracts, tests, and nearby patterns used for review. General
-engineering practice may inform a finding but is not a binding repository rule.
-For the trim phase, also identify applicable testing policies, CI rules, and
-nearby test conventions, or state that no explicit testing policy was found.
-`ownership-map.md` maps each changed path to plan scope or owner. Capture each
-deterministic command, exit status, and literal output.
+Index pins plan/parent branch/base, branch/review commit/tree, UTC creation,
+standards sources and evidence links; link approved parent/map/design checkpoint.
+Record actual surfaces against checkpoint and new owners/coordinators/lifecycle
+interception/template replacements. Without AGENTS identify docs/config/contracts/
+tests/patterns used, not invented policy. Trim also needs testing/CI conventions
+or explicit absence. Prepared packs name authoring parent/intended placement;
+provisional packs identify unreviewed/moved ancestors and relevant inherited
+interactions. Scope remains pinned diff until accepted-parent mapping.
 
-Include the smallest pinned chain that determines changed behavior: the source
-representation, any generator or transformation configuration, and the
-consumer, runtime binding, or effective result. Put targeted excerpts or Git
-object IDs and SHA-256 hashes in `index.md` or a linked context file. Identify
-each source path and revision; explain omitted links. For generated or derived
-deliverables, show reviewers both the source representation and the effective
-result, plus the capability-provided content, configuration, and toolchain
-identities that determine it.
+Ownership map assigns changed paths to plan/owner. Capture literal deterministic
+commands/exits/output. Include smallest determining chain: source, generator/config,
+consumer/runtime binding/effective result, pinned revisions/objects/SHA-256 and
+explained omissions. Generated changes need source and effective content with
+capability input/config/toolchain identities. Review-required external files need
+exact copies or sufficient pinned excerpts inside reviewer repository/pack with
+authoritative source/revision/replay identity and hash; paths/hashes/commands alone
+are insufficient. Keep bulk trees external as code paths, not escaping Markdown links.
 
-Every source or effective result needed for review must be readable from the
-reviewer's repository workspace. A path, hash, replay log, or reproduction
-command does not replace the content. If the authoritative file is outside the
-repository workspace, copy the exact file or the smallest sufficient pinned
-excerpt into the pack, record its authoritative path, revision or replay input,
-and SHA-256, and include the copy in `hash-manifest.sha256`. Keep large trees
-outside the pack, but include the review-relevant files or excerpts; record
-external bulk paths as code, not local Markdown links. The validator rejects a
-pack outside the repository and local links that escape it.
+Evidence manifest records review SHA and every required check with exact fields:
+`id`, `kind` (agent/external), `required`, `verified_sha`, `last_run_sha`, `method`
+(direct/identity_reuse/null), `command`, `runtime`, `result`
+(passed/failed/pending/blocked_by_environment), `input_identity`, `result_identity`,
+`log_path`, `log_sha256`, `reuse_evidence_path`, `reuse_evidence_sha256`. Use explicit
+nulls. Direct pins both SHAs to tested tip; reuse pins verified_sha current, retains
+origin run, valid log and capability-defined content-addressed input/result proof.
+Only required passed agent checks verified for review SHA qualify. Link logs/proof
+from verification summary using safe local Markdown links.
 
-In `evidence-manifest.json`, record the review SHA and one entry per required
-check: `id`, `kind` (`agent` or `external`), `required`, `verified_sha`,
-`last_run_sha`, `method` (`direct`, `identity_reuse`, or `null`), `command`,
-`runtime`, `result` (`passed`, `failed`, `pending`, or
-`blocked_by_environment`), `input_identity`, `result_identity`, `log_path`,
-`log_sha256`, `reuse_evidence_path`, and `reuse_evidence_sha256`. Use `null`
-for inapplicable fields.
+Hash every pack file except hash-manifest itself, including nested copies. Validate
+after every create/refresh; fix errors before review:
 
-For a direct agent result, set `verified_sha` and `last_run_sha` to the tested
-SHA and `method` to `direct`. For reuse, set `verified_sha` to the current review
-SHA, retain the originating run in `last_run_sha`, set `method` to
-`identity_reuse`, and record content-addressed input and result identities plus
-the current-tip reuse proof. The originating log and reuse proof must both
-remain valid. A required passed agent check counts only when `verified_sha`
-matches the review SHA. Link each log and reuse proof from
-`verification-summary.md`.
-Link supporting files with local Markdown links. Run
-`scripts/validate_review_pack.py <pack-dir> <repo-root>` after creating or
-refreshing the manifest; it checks local Markdown links, file hashes, check
-fields, and log hashes. Fix errors before review. Include every pack file except
-`hash-manifest.sha256` in the hash manifest; never hash the hash manifest itself.
+```bash
+python3 <skill-root>/scripts/validate_review_pack.py <pack-dir> <repo-root>
+```
 
-In `acceptance-gates.md`, list each human or external gate separately from code
-review findings. Record `passed`, `pending`, or `blocked by environment`, the
-tested SHA or release, owner, procedure, and evidence location. State what
-prevents a pending check and what will unblock it. A pending external gate does
-not become a code-review defect merely because it cannot run here; retain its
-required status for the later acceptance or production decision.
+Validator checks repository boundary/local links, fields/hashes/logs. Acceptance
+gates separately list human/external passed/pending/blocked by environment, tested
+SHA/release, owner/procedure/prerequisites/evidence/unblock condition. Pending external
+proof is no automatic code defect and remains required for acceptance/production.
 
-After a restack, link its old/new ranges, `range-diff`, delta classifications,
-and deterministic evidence from `index.md`. Include evidence that the changed
-parent preserves this branch's effective behavior; an equal patch alone is not
-enough. For an equal range diff, record the old-to-new SHA mappings and all
-three retained reviews. For a `reviewed_restack` mapping, record the chosen
-path and proof under `code-review-loop.md`: per-commit patch IDs and changed-line
-comparison, explained inequalities, affected tests, exact-tip results, and either
-three original-session confirmations for inherited test context or one focused
-independent conclusion
-for a generated metadata conflict. Require a fresh discovery pass for unmapped
-changes or changed behavior or effective output.
+## Identity and refresh
 
-After an eligible test-only remediation, link the old and new SHAs, exact-tip
-verification, changed-test results, unchanged production and effective-result
-identities, ledger state, and same-session closure from each originating
-reviewer. Record `test_only_closure` mappings for all three reviews. Any missing
-identity, non-test delta, extra accepted finding, or closure concern requires a
-fresh three-reviewer pass.
+Use explicit object IDs for diff (including binary), commit/tree, base ancestry,
+parent-head movement, local/upstream/fetched-remote/reviewed/verified equality,
+clean-worktree checks and capability source/effective identities. Failed check,
+unexplained delta or review-tip mismatch blocks review; moved parent makes pinned
+review provisional, not invalid by itself.
 
-For specialized generated or dependency-derived changes, link the applicable
-capability's candidate evidence and deterministic reproduction results. Record
-the immutable inputs and their identities, the effective result identity, and
-the exact capability command used. Do not duplicate capability-specific replay
-or validation procedures in this universal review pack.
+Build before pass 1. Fix/restack refreshes pins/diff/hashes/checks/evidence. Reuse
+proven unchanged capability inputs, never rerun checks merely for fresh review.
+Evidence-only closure keeps base/commit/tree and refreshes affected proof/hashes.
+Fresh reviewers receive pinned diff, approved slice/parent/map/checkpoint, standards,
+reproducible inputs and checks; exclude implementation analysis, prior findings,
+triage/fix narratives/conclusions/hints. Distinguish behavioral proof from structural
+assertions; structure cannot replace owned runtime proof.
 
-## Deterministic Checks
+Restack/test-only mapping rules are authoritative in build `code-review-loop.md`.
+Pack records old/new ranges/pins, range-diff/delta classifications, determining
+identities and parent interaction proof, all three original reviewed SHAs and
+intermediate mappings. Equal patches alone are insufficient. Focused unequal
+mappings include per-commit comparison/affected tests/exact checks and chosen path's
+three original-session confirmations or independent generated-conflict review.
+Test-only mappings include changed-test runs, unchanged production/effective inputs,
+terminal ledger and originating-session closures. Missing proof/unmapped changes
+need fresh discovery below cap; retain prior clean reviews only through valid mappings.
+Trim carries through its separate rules. Link specialized capability/reproduction
+evidence and exact commands, without copying ecosystem procedures.
 
-Use explicit object IDs:
-
-- scope and patch: `git diff <base-sha>...<review-sha>` and `--binary`;
-- identity: `git rev-parse <review-sha>^{commit}` and `^{tree}`;
-- ancestry: `git merge-base --is-ancestor <base-sha> <review-sha>`;
-- pinned base ancestry and dependency-parent head SHA; record movement as
-  provisional pending restack, not as a failed review check;
-- local branch tip, upstream, fetched remote tip, reviewed, and verified SHA
-  equality;
-- clean-worktree current-tip evidence plus direct or reused check evidence for
-  `<review-sha>`;
-- source and effective-result identity plus capability-defined deterministic
-  checks where required.
-
-A failed check, unexplained delta, or review-tip SHA mismatch blocks review.
-
-## Refresh Policy
-
-Build the pack before pass 1. After a fix commit or restack, refresh the commit,
-diff, hashes, deterministic results, and verification evidence. Preserve and
-link all three prior clean reviews for a proven valid restack mapping or an
-eligible test-only remediation with recorded closure; otherwise run a fresh
-three-reviewer discovery pass. Reuse immutable inputs
-only when the applicable capability proves their content, configuration, and
-toolchain identity; never rebuild an unchanged proven input merely to refresh
-the pack. Starting a fresh reviewer pass does not itself rerun checks.
-For evidence-only closure, keep the pinned diff and SHAs, refresh the evidence
-links, manifest, hashes, and affected deterministic results, and record what
-changed in the pack. Rerun the validator after each refresh.
-
-Fresh reviewers receive only the pinned diff, approved plan, parent
-specification, slice map, design checkpoint, repository standards, reproducible
-inputs, verification results, and this pack. Distinguish behavioural evidence
-from source-text, snapshot, mutation, and generated-artifact assertions;
-structural checks cannot stand in for runtime lifecycle proof. Exclude prior findings,
-triage, fix narratives, conclusions, and review hints.
-
-## Output
-
-Report the pack path, base and review SHAs, refreshed files, deterministic-check
-status, and any blocker.
+Return pack path, base/review SHAs, refreshed files, deterministic status and blockers.

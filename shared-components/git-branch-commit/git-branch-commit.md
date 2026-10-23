@@ -1,104 +1,52 @@
 # Git Branch Commit
 
-Create or adopt local plan branches and commit approved candidate trees. Do not
-push or create change requests.
+Create/adopt plan branches and commit approved trees; no push/CR. Base defaults
+remote default; assigned verified authoring base may differ from final linear
+predecessor. Only coordinator restacks/accepts. Name `<type>/<change-description>`
+by purpose (feature/fix/docs/refactor/chore), never tools/models/bots.
 
-Base branch `<base-branch>` defaults to the remote default; chained mode passes
-the local stacking predecessor, which need not be a functional dependency.
-For parallel authoring use the assigned verified base; only the coordinator
-restacks and accepts candidates onto the final tail. Name new branches
-`<type>/<change-description>`. Choose the type from the change's purpose:
-`feature` for new behavior, `fix` for corrections, `docs` for documentation,
-`refactor` for restructuring without behavior changes, or `chore` for maintenance.
-Do not default every change to `feature`. Never name tools, models, assistants,
-or bots in a branch.
+## Start and commit
 
-## Branch Start
+1. Inspect status/current branch; fetch/prune origin. Resolve/pin parent locally;
+   if on origin require local equals fetched tip (unpublished local parent allowed).
+2. New branch must be absent locally/remotely; switch -c from pinned parent SHA.
+   Existing selected branch: record local/remote tips, create tracking local if
+   remote-only, require parent ancestry and remote ancestor of local; stop divergence/
+   unexpected remote-ahead. Inspect full range/paths for plan ownership. Never reset,
+   recreate or rebase merely to fit scope.
+3. Preserve unrelated dirty work only when safe/unambiguous; workflow moves/artifacts
+   stay out of implementation commits. Never implement on parent.
+4. After staged-diff-scope, confirm expected branch, status/stat/staged/unstaged/
+   untracked/full diff; reject empty/out-of-scope/overlap. `git write-tree` must equal
+   approved candidate tree. Compose under git-commit-message, commit and confirm
+   HEAD tree equals it. Verify exact SHA before review. Satisfying adopted tip
+   needs no empty commit; fixes use new commits, never amend published commits.
 
-1. Inspect `git status --short` and `git branch --show-current`.
-2. Fetch and prune `origin`. Resolve the parent locally. If it exists on
-   `origin`, require the local parent to equal the fetched remote tip. A local
-   stack parent need not exist on `origin`.
-3. For a new plan branch, stop if its name exists locally or on `origin`.
-   Record the pinned parent SHA, then run
-   `git switch -c <branch-name> <parent-sha>`.
-4. For a user-selected existing plan branch, record its initial local and
-   fetched remote tips. If only the remote branch exists, create a local
-   tracking branch at that tip. Require the pinned parent SHA to be an ancestor
-   of the branch tip. If both tips exist, require the remote tip to be an
-   ancestor of the local tip; stop on divergence or an unexpected remote-ahead
-   state. Inspect the full parent-to-tip range and map its commits and changed
-   paths to the selected plan. Stop for unrelated or unaccounted work. Do not
-   reset, recreate, or rebase the branch merely to fit the plan.
+## Restack and handoff
 
-Allow unrelated dirty files only when they cannot be overwritten or carry
-ambiguous implementation state. Feature stage moves are workflow state; keep
-them and their artefacts out of candidate commits. Do not implement on the
-dependency parent.
+Require clean implementation tree (separate worktree if stage moves prevent it;
+never discard moves). Publication owner drafts existing CR and ready descendants
+before rewriting. Record old base/tip/remote and new base with recoverable backup.
 
-## Candidate Commit
+```bash
+git rebase --onto <new-base-sha> <old-base-sha> <branch-name>
+```
 
-After `staged-diff-scope` approves a candidate tree:
+Resolve ordinary conflicts within authority; integrity/missing prerequisites/
+out-of-authority resolution blocks affected operations only. Compare full ranges
+with range-diff and deterministic source/tree/effective identities; classify
+verbatim/mechanical regeneration/intentional behavior change. Stop unexpected
+source changes, ready CRs or unclassified deltas. Verify new tip cleanly and refresh
+parent pin/pack. Retain reviews only under build code-review-loop equal/focused
+mapping proof; unmapped/manual/behavior/effective changes require fresh pass below
+cap. At cap preserve real state and verify, carrying human disposition only with
+proven unchanged behavior/finding risk; otherwise new decision/remediation.
+Lease-push under git-sync-branch.
 
-1. Require the expected plan branch. Inspect status, staged stat, staged and
-   unstaged paths, untracked paths, and the full staged diff.
-2. Stop for an empty stage, out-of-scope path, or staged/unstaged overlap.
-3. Require `git write-tree` to equal the approved candidate tree SHA.
-4. Compose the message with `git-commit-message.md` and commit.
-5. Require `HEAD^{tree}` to equal the approved tree SHA. Verify this exact
-   commit before review.
-
-An adopted tip that already contains the requested work needs no empty commit;
-verify and review its exact SHA. Create a new commit for every accepted fix
-batch. Changing reviewed behavior invalidates its reviews. A conflict-free
-mechanical restack may retain all three reviews only under the Restack rules
-below. Never amend a published commit.
-
-## Reviewed Revision
-
-Before `review/` handoff, require the local, upstream, fetched remote, and
-verified tips to match, plus proportionate trim and clean correctness reviews
-or the exhausted cap after fixes and closure. Keep automated review state and
-unresolved findings. Require the pinned parent SHA to be an ancestor; its ref
-may have advanced. Ready CRs and release progression require the parent head
-at its pin and clean current-tip reviews or an accepted capped disposition.
-Restack a changed parent, verify, map reviews or run a fresh pass when allowed,
-and synchronize the new tip before release progression.
-
-## Restack
-
-Require a clean implementation tree. Use a clean worktree if preserved feature
-stage moves prevent a clean restack; never discard them. If a change request
-exists, the publication skill must return it and ready descendants to draft
-first.
-
-1. Record old base and branch tips, any old remote tip, and the new parent
-   SHA. Create a recoverable backup ref for the old tip.
-2. Rebase with `git rebase --onto <new-base-sha> <old-base-sha> <branch-name>`.
-   Resolve ordinary conflicts autonomously within scope, retaining the backup.
-   Stop only affected operations for integrity failures, unavailable prerequisites,
-   or resolutions outside authority; continue eligible work. The generated-metadata
-   exception in `code-review-loop.md` requires its proof.
-3. Compare ranges with `git range-diff` and deterministic source, tree, and
-   effective-output identity checks. Classify each delta as `verbatim`, `mechanical
-   regeneration`, or `intentional behavior change`.
-4. Verify the new tip in a clean detached worktree and update the pinned base
-   and review pack. Retain prior reviews only for an equal `range-diff` with
-   effective-identity evidence or the narrow `reviewed_restack` mapping in
-   `code-review-loop.md`. Record the old-to-new SHA mappings and required
-   evidence. Unmapped manual resolutions, inequalities, changed effective
-   output, or behavior changes need a fresh three-reviewer pass when below the
-   cap. At the cap, keep the actual review state and finish exact-tip verification.
-   Carry the accepted human disposition through a valid behavior-preserving
-   mapping when the accepted findings' risk is unchanged; seek a new decision
-   only when that applicability cannot be proved.
-
-Use `git-sync-branch.md` for the lease-protected push. A provisional
-descendant stays `in_progress/` until its own trim and correctness reviews
-finish or reach the cap. A routine restack of a completed slice leaves it in
-`review/` while current-tip evidence is refreshed. A rewritten `in_release`
-source invalidates its pinned membership; reconcile it under the plans layout.
-Stop for an unexpected
-source change, an existing ready change request, or an unclassified delta.
-Report branch, parent and candidate SHAs,
-verification, restack evidence, and unrelated local files.
+Review handoff needs local/upstream/fetched-remote/verified equality, parent-pin
+ancestry, own proportionate trim and clean/capped correctness after remediation/
+closure. Parent ref may move provisionally; ready CR/release requires matched
+parent head and current clean/capped disposition. Unfinished owners remain
+in_progress; routine restacks keep completed slices review with coverage pending.
+Rewritten in_release sources invalidate membership under plans layout. Report
+branch/parent/candidate SHAs, checks/restack proof and unrelated local files.

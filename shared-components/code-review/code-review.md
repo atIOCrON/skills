@@ -1,11 +1,7 @@
 # Code Review
 
-Review one pinned plan-branch commit against its pinned dependency-parent SHA.
-Do not edit files.
-
-## Scope
-
-Read the neutral review pack, then independently confirm:
+Independently review one immutable plan-branch commit against pinned parent; no edits.
+Read neutral pack and confirm:
 
 ```bash
 git diff --stat <base-sha>...<review-sha>
@@ -15,77 +11,35 @@ git rev-parse <review-sha>^{commit}
 git merge-base --is-ancestor <base-sha> <review-sha>
 ```
 
-Use only explicit SHAs. Ignore the index and working tree. Read committed file
-content with `git show "${R}:path/to/file"` after setting `R` to the full review
-SHA; quote the entire object expression in zsh. Stop if the diff is
-empty, either SHA is unresolved, ancestry is wrong, or the pack does not match
-the resolved objects.
+Read committed content via `git show "${R}:path/to/file"` with full review SHA in R;
+quote object expressions in zsh. Ignore index/worktree. Stop on empty diff, unresolved
+SHA, bad ancestry or pack/object mismatch. Inspect every changed file and affected
+entry point/reader/transition/invariant; exhaust independent defects after first blocker.
 
-## Review Lenses
+Use approved slice intent, relevant AGENTS/repo docs/config/tests/contracts and nearby
+patterns. Best practice informs, never expands scope or establishes binding policy.
+Plan mismatch is material only for changed approved behavior, missing deliverable/
+verification or concrete risk. Report binding conflicts as Contradictions; existing
+issues separately, blocking only if depended on/worsened or required by plan.
 
-Review against the approved plan, applicable repository standards, affected
-contracts, established nearby patterns, and engineering principles relevant to
-the touched surface. Read applicable `AGENTS.md` files when present. Otherwise
-use the plan, repository docs and configuration, tests, and affected contracts
-as sources of project-specific standards.
+Judge correctness and proportionality separately. Material excess includes unauthorized
+layers, duplicate native ownership, separable outcomes, checkpoint excess, disproportionate
+harnesses or structural-only proof of newly owned runtime behavior. Distinguish routing/
+config/reachability from unchanged upstream lifecycles; fake state transitions prove no
+production lifecycle. Prefer removal/simplification/split/upgrade/narrow extension to guards.
 
-General best practice may support a finding but cannot expand scope. Report a
-binding-source conflict under `Contradictions`. Treat the plan as approved
-intent, not a literal script. A plan mismatch is material only when it changes
-approved behavior, omits an in-scope deliverable, skips required verification,
-or creates a concrete risk.
+Blocker/should-fix needs `reproduced` (pinned SHA, supported production-like path using
+existing facilities) or `binding-proof` (committed code plus binding contract/policy/
+standard deductively proves failure). Static plausibility, unsupported inputs, imagined
+sequences/scale/future needs and architecture preferences are no findings; nonblocking
+workflow advice belongs in feedback. Allow one bounded existing-facility reproduction
+cycle; never require new provider simulators, generalized delay/lifecycle machinery,
+production guards or substantial harness to establish a hypothesis.
 
-Place nearby pre-existing issues under `Related Existing Issues`; they block
-only when this change depends on or worsens them, or the plan requires them.
-
-## Review Method
-
-Inspect every changed file, affected entry point, reader, state transition, and
-surrounding invariant. Continue after the first blocker and report every
-independent material defect established in this pass.
-
-Assess two questions separately:
-
-1. Is the implementation correct for the approved slice and its contracts?
-2. Is it proportionate and aligned with the platform's native ownership model?
-
-A proportionality problem is material when the branch introduces an
-unauthorized architectural layer, duplicates upstream or platform ownership,
-combines independently releasable responsibilities, materially exceeds its
-design checkpoint, adds verification machinery disproportionate to its owned
-production mechanism, or relies on source-shape assertions alone for runtime
-behaviour the candidate introduces or modifies. Treat candidate-owned routing,
-selection, configuration, or reachability separately from unchanged lifecycle
-behaviour owned by a dependency or external provider. A fake system's state
-transitions are not evidence of the production system it imitates.
-Do not treat mere style or architecture preference as a defect. Recommend
-simplifying, splitting, upgrading, or using a narrower extension mechanism
-before adding guards to new machinery.
-
-A blocker or should-fix must use one evidence class:
-
-- `reproduced`: the failure occurred on the pinned review SHA through a
-  supported production-like path using existing facilities; or
-- `binding-proof`: committed code plus a binding runtime contract, policy, or
-  repository standard deductively establishes the failure.
-
-Static plausibility, defensive speculation, imagined lifecycle sequences,
-unsupported inputs, hypothetical scale, future use, and architecture
-preferences are not findings. Omit them unless they reveal non-blocking
-workflow feedback. A reproduction may use one bounded cycle of existing tests,
-fixtures, services, browser flows, and diagnostics. Do not add or request a
-provider simulator, generalized delay, lifecycle framework, production guard,
-or substantial harness merely to establish a finding.
-
-Recommend the smallest sufficient fix. Identify any new surface and whether it
-is a prerequisite for the approved outcome or a new independently releasable
-capability.
-
-Use `blocker` for safety, security, data loss, or failure of a required outcome;
-`should-fix` for other material defects; and `nit` for preferences. Require
-proportionate regression tests for behaviour the candidate owns even when the
-plan omits them; do not demand local reconstruction of unchanged
-dependency-owned behaviour or unrelated coverage expansion.
+Recommend smallest sufficient fix; identify new surface as prerequisite versus independent
+capability. Blockers mean security/safety/data loss/required-outcome failure; other material
+defects are should-fix, preferences nits. Require proportionate regressions for owned
+behavior, never unrelated coverage or local reconstruction of unchanged dependency lifecycles.
 
 ## Output
 

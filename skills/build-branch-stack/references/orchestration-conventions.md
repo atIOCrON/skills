@@ -1,37 +1,11 @@
 # Orchestration Conventions
 
-Bundled reference for shared orchestration vocabulary and artefact contracts.
-Load only the reference file needed for the current task.
+Load only needed bundled definitions: orchestration-runtime.md (owners/transports),
+orchestration-plans-layout.md (paths/stages/slugs), orchestration-triage-ledger-protocol.md
+(concerns/families/status/recurrence), orchestration-definitions.md (materiality/root
+cause), orchestration-finding-ids.md (reviewer/ID/line formats). CR layouts use
+orchestration-change-requests.md when supplied by publishing caller.
 
-## References
-
-- `references/orchestration-runtime.md`:
-  persistent implementation chats, execution ownership, reviewer mapping, and skill-root
-  resolution.
-- `references/orchestration-plans-layout.md`:
-  plans directory layout and plan slug format.
-- `references/orchestration-triage-ledger-protocol.md`:
-  cross-pass triage ledger schema, status vocabulary, identity matching,
-  recurrence, and consolidation.
-- `references/orchestration-definitions.md`:
-  material finding and root cause definitions.
-- `references/orchestration-finding-ids.md`:
-  code-review finding IDs, historical plan-review IDs, reviewer slugs, and
-  canonical finding line format.
-- `references/orchestration-change-requests.md`:
-  dependency-parent, chained, and base-targeted change-request layouts.
-
-## Inline Conventions
-
-Use applicable `AGENTS.md` files when present; they may point to further
-repository standards. Their absence does not block the workflow.
-
-The literal token `ORCHESTRATE_SESSION_SMOKE` proves session resume in
-`reviewer-preflight`.
-
-## Precedence
-
-Components inline operational values such as artefact paths and ID shapes at
-their point of use. These reference files are the canonical definitions and
-win on any conflict unless a component explicitly defines an operational
-exception.
+Applicable AGENTS may link standards; absence does not block. Reviewer preflight
+resume token is `ORCHESTRATE_SESSION_SMOKE`. Canonical definitions win conflicts
+with inlined operational values unless an explicit component exception applies.

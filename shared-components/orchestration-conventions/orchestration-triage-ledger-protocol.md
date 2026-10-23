@@ -1,108 +1,47 @@
-# Cross-Pass Triage Ledger Protocol
+# Cross-Pass Triage Ledger
 
-The code-review orchestration run maintains a single cross-pass ledger at
-`<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`. Its concern
-table has one row per distinct material concern:
+Orchestrator alone writes `<feature_dir>/<plan_slug>.reviews/code-review-triage-ledger.md`
+from triage and closure proposals; reviewers never write it. Tables:
 
 ```text
 | ledger_id | first_pass | last_pass | reviewers | concern (one line) | files | architecture source | status | resolution evidence |
-```
-
-Its family table tracks recurrence across implementation shapes and epochs:
-
-```text
 | family_id | invariant / runtime owner / supported path / observable failure | first_pass | last_pass | accepted_fix_cycles | epochs | disposition |
 ```
 
-The orchestrator owns ledger writes. It applies entry changes from
-`code-review-triage` and status transitions proposed by `code-review-closure`.
-Reviewers never write the ledger.
+Non-terminal: open, accepted-fix-pending, re-opened, recurring-escalation,
+architecture-review-required; all block clean completion. Terminal: resolved,
+rejected, deferred-by-user. Allocate sequential `ledger-NN` and `family-NN`.
 
-## Status Vocabulary
+Match all prior passes/epochs before creating entries: family identity is invariant,
+runtime owner, supported path and observed failure; concern is root cause within
+family. Reviewer/ID/wording/files/design/epoch do not change identity. Static
+hypotheses, nits/advice/nonmaterial mismatches/nonblocking existing issues/closure
+observations/skill feedback create no entries. On match update last_pass/reviewers,
+broaden concern/files only with evidence; no duplicate. Otherwise create smallest
+root-cause row open with first/last=current. Accepted dispatch increments family
+fix cycles; retain epochs/counts across redesigns. Architecture source names new
+coordinator/state/retry/lifecycle/verification/layer, else `-`; add missing column
+on old ledgers without losing history.
 
-- Non-terminal statuses: `open`, `accepted-fix-pending`, `re-opened`,
-  `recurring-escalation`, `architecture-review-required`. Any non-terminal
-  entry blocks loop completion.
-- Terminal statuses: `resolved`, `rejected`, `deferred-by-user`.
+| Trigger | Required transition/action |
+| --- | --- |
+| Matched resolved/rejected concern recurs | re-opened; surface in current triage |
+| Nonterminal last_pass - first_pass >= 2 | recurring-escalation with root-cause/design action; blocks completion, not in-scope continuation |
+| New material failure modes from one family/architecture in any two discovery passes | architecture-review-required before further incremental dispatch; reassess native owner/removal/simplification/upgrade/narrow correction/prerequisite split; record selected new epoch/prior class in evidence |
+| Two epochs fail for same reason | No third mechanism variation; change owner/mechanism or block if no viable in-scope design |
+| Two accepted family fix cycles | Autonomous continuation, no third local variation |
 
-`ledger_id` values are shaped `ledger-NN`, assigned as the next sequential
-integer when an entry is created.
+Two-pass architecture trigger spans distinct findings/designs/epochs, not merely
+consecutive passes or three appearances of one concern. Architecture-required
+entries must retain that stronger gate while recording any recurrence escalation.
+Continuation records trigger, confirmed/rejected hypotheses, fix/epoch history,
+removal/simplification/native owner/upgrade/correction/split alternatives, decision
+and one authorized next action. Allowed decisions: reject, complete, redesign,
+change-owner, upgrade, dependency-correction, split, blocked-authority. One decision
+authorizes at most one edit-and-pass cycle for a confirmed defect with viable
+non-repeated disposition. Ask only when all viable options cross caller authority.
 
-## Identity Matching
-
-Before creating a ledger entry, match the finding against every concern and
-failure family from every prior pass and epoch. Match a family by its invariant,
-runtime owner, supported path, and observable failure. Reviewer identity,
-finding ID, wording, files, implementation shape, and epoch do not break a
-match. Match a concern by root cause within that family. Do not create entries
-for static hypotheses, rejected nits, advisory comments, non-material plan
-mismatches, non-blocking related issues, closure observations, or skill
-feedback.
-
-- On match: append the current pass number to `last_pass`, add the reviewer to
-  `reviewers` if not already present, and update `concern` or `files` only if
-  the new evidence broadens scope. Do not create a duplicate row.
-- On no match: create a new entry with the next sequential `ledger_id`,
-  `first_pass` and `last_pass` equal to the current pass, status `open`, and
-  the smallest concern phrasing that captures the root cause.
-
-Assign `family_id` values as `family-NN`. On an accepted worker dispatch,
-increment that family's `accepted_fix_cycles`. Record every architecture epoch
-used to address it. Changing files or design does not reset either count.
-
-Set `architecture source` to the branch-introduced coordinator, state machine,
-retry system, lifecycle interception, verification model, or other architectural
-layer that caused the finding; otherwise use `-`. When updating an older ledger
-without this column, add it and preserve every existing value.
-
-## Recurrence And Re-opening
-
-If a matched entry's existing status is `resolved` or `rejected`, transition
-it to `re-opened` and surface it in the current pass's triage output.
-`re-opened` is non-terminal and blocks completion.
-
-After applying identity matching for a pass, inspect every non-terminal entry.
-Any non-terminal entry whose `last_pass - first_pass >= 2` (it appeared in
-three or more passes) must be set to status `recurring-escalation` and
-surfaced in the triage output with a one-line root-cause or architecture action.
-This is an internal escalation to the orchestrator and design checkpoint. It
-blocks review completion, not further work: reassess the root cause and continue
-unless the decision changes approved product scope or needs external authority.
-
-Independently, if one failure family or architecture source causes newly
-discovered material failure modes in any two fresh discovery passes recorded
-in the ledger, set its non-terminal entries to `architecture-review-required`.
-Stop incremental fixes before
-another worker dispatch. Return to the design checkpoint; group failures by
-invariant; compare removal, simplification, native ownership, upgrade, narrow
-dependency correction, and prerequisite splitting; then record the selected
-design as a new architecture epoch and continue. Record the epoch number and
-prior failure class in `resolution evidence`. This two-pass ratchet applies
-across distinct findings, implementation shapes, and epochs; it does not wait
-for consecutive passes or one concern to recur three times.
-
-If two epochs fail for the same underlying reason, do not try a third variation
-of that mechanism. Select a fundamentally different owner or mechanism, or
-block the affected chain when no option can satisfy the approved outcome and
-hard constraints.
-
-## Autonomous Continuation Decision
-
-Record a decision after two accepted fix cycles in one family. Include the
-trigger, confirmed evidence, rejected hypotheses, related fixes and epochs,
-removal or simplification options, native owner, upgrade, narrow dependency
-correction, prerequisite split, decision, and one authorized next action.
-
-After two family fix cycles, do not authorize another local variation. Choose
-`reject`, `complete`, `redesign`, `change-owner`, `upgrade`,
-`dependency-correction`, `split`, or `blocked-authority`. Continue only for a
-confirmed material defect with a viable, non-repeated disposition. Ask the user
-only when every viable option crosses the calling skill's authority boundary.
-One decision authorizes at most one edit-and-pass cycle for that failure family.
-
-## Review Pass Cap
-
-After the fifth completed discovery pass, add a durable marker to the ledger:
+At exhausted five-pass cap retain nonterminal concerns and add durable marker:
 
 ```text
 ## Review Cap
@@ -114,17 +53,11 @@ After the fifth completed discovery pass, add a durable marker to the ledger:
 - remaining_review_requirement: <why completion still needs another discovery pass>
 ```
 
-The cap marker is a plan-level workflow outcome, not a finding status or a
-whole-run blocker. Keep non-terminal concern rows unchanged and do not start
-pass 6. The caller finishes accepted fixes and closure, verifies and pushes the
-tip, then moves the slice to `review/` if trim is proportionate and branch
-checks pass. Record unresolved findings for a separate human disposition.
-Dependent work may continue on the verified pinned tip.
+No pass 6. This is plan outcome, not finding status/whole-run block. Finish accepted
+fixes/checks/push/closure; caller may move to review with proportionate trim and
+passed branch checks, keeping unresolved findings for separate human disposition.
+Verified pinned tip may parent dependent work.
 
-## Consolidation
-
-Create a consolidation group when three or more `open` or `re-opened` entries
-share a failure family or binding standard. Name the group after that family or
-standard. Produce one fix request for the group, and tag its entries in the
-`resolution evidence` column with a shared `consolidation_group: <short-name>`
-note.
+Consolidate three or more open/re-opened concerns sharing family/binding standard
+into one fix request named for it; tag each resolution evidence
+`consolidation_group: <short-name>` without merging distinct concern identities.

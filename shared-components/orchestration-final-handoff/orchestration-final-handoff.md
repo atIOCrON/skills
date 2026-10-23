@@ -1,51 +1,21 @@
 # Orchestration Final Handoff
 
-Final reporting component for orchestration workflows.
+Require route/state, plan, changed files/reviewed SHA, checks, passes/reviewer paths,
+ledger/counts, rejected/deferred/user decisions and skill feedback. Report concisely
+with artifact links rather than copied reviews:
 
-## Inputs
-
-Require:
-
-- route and final state;
-- plan path;
-- changed files and reviewed commit SHA;
-- verification summary;
-- review pass summaries;
-- reviewer artifact paths;
-- ledger path and status counts when code review ran;
-- rejected, deferred, or user-decided findings;
-- skill feedback entries.
-
-## Output For Branch Handoff
-
-Include:
-
-- owner/coordinator identities, plan path and files changed;
-- branch, authoring parent, remaining dependencies and worker-completion receipt;
-- worker complete and accepted/restacked as separate results;
-  worker completion may precede final placement or current-tip review mapping;
-- pinned parent and final verified, local, and remote branch SHAs, plus the
-  three clean-review SHAs or valid review mappings;
-- clean-worktree verification commands and status;
-- code-review pass count and one-line outcome per pass;
-- review-cap state and marker path when five completed passes did not satisfy
-  review completion;
-- rejected/deferred findings with evidence or recorded reason;
-- reviewer artifact paths, including failures;
-- triage ledger path and terminal-status counts;
-- confirmation no non-terminal ledger entries remain;
-- canonical build-manifest path, validation result and current branch checks;
-- linked release handoff when selected; candidate-wide checks, acceptance and
-  freeze belong to that workflow and do not block build completion;
-- pending human or external acceptance checks, their procedures and owners,
-  and any authorized limitation decisions;
-- `## Skill Feedback For User Review` with entries or `- None`;
-- final branch state: branch-level blocker, `Review cap reached`, or `In
-  review`. After accepted fixes, closure, proportionate trim, and exact-tip
-  verification, both completed states enter `review/`. A capped slice awaits
-  human disposition for release readiness. Its verified pinned tip may parent
-  dependent work while review or disposition remains pending. Release handoffs
-  do not change the slice stage until candidate membership is recorded.
-
-Keep the handoff concise and cite artifact paths rather than copying large
-review outputs.
+- Owner/coordinator IDs, plan/files, branch/authoring parent/dependencies, original
+  worker-completion receipt; worker complete and accepted/restacked separately.
+- Pinned parent and verified/local/upstream/fetched-remote final SHAs; all three
+  direct/mapped review identities, clean-worktree checks and current branch coverage.
+- Pass count/one-line outcomes, closures, cap marker/unresolved findings, rejected/
+  deferred decisions/evidence, reviewer outputs/failures and ledger/status counts.
+  Confirm terminal entries for clean completion; capped handoff preserves open ones.
+- Validated canonical build manifest and selected release links; pending human/
+  external procedures/owners and limitation decisions. Candidate checks/acceptance/
+  freeze belong to release workflow and do not gate build completion.
+- `## Skill Feedback For User Review` with entries or `- None`.
+- Final blocker, `Review cap reached` or `In review`. Clean and capped branches enter
+  review after own checks/trim/accepted remediation/closure; capped disposition is
+  separate release gate. Verified tips may parent dependents. Release selection
+  alone changes no stage without assembled membership evidence.

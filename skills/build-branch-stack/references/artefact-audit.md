@@ -1,94 +1,39 @@
 # Artefact Audit at Branch Handoff
 
-Audit each selected feature after its required branch-level agent checks pass,
-its artefacts are preserved under `plans/slices/review/<slug>/`, and the canonical
-release manifest records the reviewed and tested SHA. A complete tested stack
-snapshot is not required: use the exact feature tip and mark questions that
-intrinsically require unbuilt descendant branches or a complete candidate as
-pending. Revisit those questions after that snapshot exists without repeating
-resolved branch-local decisions. On a repair run, re-audit affected features
-and descendants whose evidence or code snapshot changed.
-Human or external acceptance may still be pending; record it separately from
-the audit's follow-up planning decisions.
-The audit creates planning files in the user's primary checkout; it does not
-change verified commits, push branches, or open change requests.
+After selected slices pass branch gates and review artifacts/manifest pin their tip,
+read plan/reviews/execution/evidence/ledger/latest triage/worker notes for related
+issues/follow-ups/deferrals/rejections. Advisory notes are candidates, not findings;
+deduplicate by problem. Use targeted read-only checks at tested chain/integration
+snapshot or exact feature tip, recording actual SHA. Defer intrinsically cross-branch
+questions until tested candidate exists; never call unmerged code merged. Re-audit
+repair-affected code/evidence, without repeating resolved decisions. External acceptance
+is separate. Search specs/maps/slices across all stages/legacy paths in snapshot and
+primary checkout for coverage before planning concrete substantial still-needed work.
+Rejected notes alone justify no plan; insufficient evidence stays unknown.
 
-## Find and verify candidates
+Current acceptance failure/missing requirement/confirmed defect is current-plan fix:
+return owner in_progress, reconcile parent, fix/check/restack descendants in current
+stages and re-audit. Cap disposition alone does not demote review. Pending external/
+candidate checks alone are no fix; send invalidated candidate proof to release owner,
+never backlog it.
 
-For each feature, read its plan and available `<slug>.reviews/`,
-`<slug>.execution/`, and `<slug>.evidence/`. Inspect the cross-pass
-`code-review-triage-ledger.md`, latest `triage.md`, and reviewer or worker notes
-about related existing issues, follow-ups, out-of-scope work, deferrals,
-rejections, or open concerns. The review triage ledger records review-pass
-status; it is not the follow-up planning ledger. Advisory notes are candidates,
-not accepted findings. Group repeated notes by underlying problem.
-
-Verify each candidate with targeted reads and small read-only checks against
-the tested stack state: the latest verified chain head for a dependency chain,
-or the tested temporary integration commit for an ordered independent batch.
-Use an exact verified feature tip when no combined snapshot exists. Record the
-SHA actually checked and mark a cross-branch question pending if no tested
-snapshot can resolve it. Do not describe unmerged branch code as merged code.
-Check specifications across all status folders, slice maps, plans across all
-slice stages, and legacy `plans/<slug>.md` files in the tested snapshot and primary checkout for an
-equivalent outcome.
-
-Create a new plan only when the work is still needed, specific enough to
-define an outcome, substantial enough for the planning workflow, and not
-already covered. Do not turn a rejected or deferred review finding into a plan
-solely because it appears in an artefact. If evidence is insufficient, record
-what remains unknown rather than inventing a plan. A demonstrated acceptance
-failure, an unimplemented acceptance condition, or a confirmed defect needing
-code is a current-plan fix: return its owner to `in_progress/`, reconcile its
-parent under the shared layout, then restack affected descendants in their
-current stage. At the review cap, record
-unresolved findings as pending human disposition; do not demote a completed
-slice solely because that decision is pending. Repeat affected checks and audit
-after a fix.
-Return invalidated release-candidate evidence to the release owner for applicable
-checks. Do not move that gap to the backlog. A pending external or release-candidate
-check alone is not a current-plan fix.
-
-## Decision ledger and plans
-
-Use `<feature_dir>/<slug>.reviews/artefact-audit-ledger.md` for each feature.
-Create it on that feature's first audit if absent. Record its verified tip SHA,
-audit snapshot SHA, audit date, artefact paths reviewed, and one row per
-distinct candidate:
+Maintain primary `<feature_dir>/<slug>.reviews/artefact-audit-ledger.md` with verified
+tip/audit snapshot/date/sources and one distinct candidate row:
 
 ```text
 | Candidate | Source artefact | Current-code evidence | Decision | Reason | Planning reference |
 ```
 
-Use `planned`, `not planned`, `current-plan fix`, or `pending` for the decision.
-Explain why each candidate received that decision, including resolved issues,
-duplicates, existing-plan coverage, advisory-only notes, and work too vague or
-minor to plan. Record the existing specification and slice-plan slugs when they
-already cover the candidate; use `none` when no planning artefact covers it. If no candidates were found,
-record that fact and the artefacts checked. On a rerun, update that feature's
-ledger and reconcile existing plans; do not append duplicate rows or plans.
-Refer to source artefacts by feature-relative path so later stage moves preserve the
-references. Refer to a follow-up plan by its slug.
+Use planned/not planned/current-plan fix/pending; explain resolved/duplicate/covered/
+advisory/vague/minor decisions, existing spec/slice slugs or none. No candidates still
+records sources. Reruns reconcile, no duplicates; feature-relative artifact links/plan slugs.
 
-Route each `planned` candidate through the same saved drafting workflow as
-new work. Create a parent file under `plans/specs/draft/` or reuse an existing
-specification by slug. Apply `write-specs` lifecycle and approval rules; never
-infer approval from the audit. Once the parent is approved, use `write-slices`
-to save the map beside it at its current stage and save child files under
-`plans/slices/draft/` before seeking decomposition approval. Approval moves
-those children to `backlog/` and reconciles the parent's stage. A cohesive
-single-slice outcome still needs a one-entry map; independently releasable
-outcomes need separate saved drafts. Include source feature, candidate,
-verified tip SHA, and audit snapshot SHA for traceability. Translate review
-suggestions into outcomes unless a mechanism is binding. Do not implement
-children or move them beyond `backlog/` here; leave unapproved files as drafts.
-
-Write the ledgers and plans in the user's primary checkout, not a temporary
-verification worktree. Preserve unrelated work and keep these new files out
-of the already verified branch tips. If a destination collides or cannot be
-written safely, record the candidate as pending and report the blocker. If a
-repair makes a previously generated plan obsolete, reconcile only a plan
-still in `draft/` or `backlog/` and untouched since the audit; otherwise report
-that the plan needs a scope decision. Branch readiness survives an audit write
-failure, but report the audit as incomplete until every selected feature has a ledger
-and warranted plans exist.
+Planned outcomes use write-specs saved draft/approval, then write-slices saved map/
+children/decomposition approval. One cohesive slice still needs map; separable outcomes
+need distinct drafts. Trace source candidate/feature/tip/snapshot, translate suggested
+mechanism to outcome unless binding. Approved children stop backlog, unapproved draft.
+Audit grants no approval/implementation/push/CR. Keep files out of verified tips/temporary
+worktrees; preserve unrelated work. Unsafe writes/collisions stay pending. Reconcile
+obsolete generated plans only if untouched draft/backlog, else report scope decision.
+Audit failure leaves branch readiness intact but incomplete until every selected ledger/
+warranted plan exists.
