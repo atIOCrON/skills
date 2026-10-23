@@ -18,6 +18,10 @@ their selected predecessor. Reject inherited work outside the release. Explain
 dependencies and testing in each description; do not include predecessor
 changes as if they belong to this feature.
 
+Apply the description guide's audience rules before publication. Individual PRs
+describe their own change, checks, and risks; keep release bookkeeping in the
+preparation record and handoff.
+
 Under `prepare-release-integration`, each persistent ` - Publishing` owner handles
 only its assigned change. Prepare metadata and verify pins, then return the exact
 intent to the coordinator. Create the PR after the coordinator confirms that intent
@@ -31,6 +35,12 @@ For `release-final`, publish only the assembled integration branch against the
 original base. Require recorded acceptance on this exact candidate and tree,
 and require the remote base still equals its pinned SHA. If the base moved,
 stop for updating and retesting the candidate; do not silently rebuild it.
+
+The final description summarizes delivered behavior, included PR links, acceptance
+results, outstanding limitations, and material deployment/rollback requirements.
+Explain any authorized reuse of acceptance and relevant candidate differences.
+Keep exact candidate/base/tree pins and local evidence paths in the release
+record; include only reviewer-accessible links needed to assess the release.
 
 Create one JSON metadata file per PR with `title`, `description`, and optional
 `reviewers` UUID objects. Do not add reviewers or send separate notifications
