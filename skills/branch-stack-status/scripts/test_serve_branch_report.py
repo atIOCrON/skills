@@ -172,6 +172,63 @@ class ContractTests(unittest.TestCase):
         self.assertTrue(records.validate_record(data));b['checks'][1]['status']='passed';self.assertFalse(records.validate_record(data))
         self.assertEqual(report.review_summary(b,A)['status'],'Implementation Finished')
 
+    def test_later_agent_checks_do_not_block_verified_branch_or_prepared_work(self):
+        for scheduled in (False, True):
+            entry = prepared_work() if scheduled else branch('one')
+            entry['implementation'].update(status='verified', sha=A, required_check_ids=['check'])
+            entry['checks'] = [{'id':'check','phase':'branch_implementation','kind':'agent',
+                                'status':'passed','sha':A,'evidence':'plans/evidence/check.md','extensions':{}}]
+            data = build([] if scheduled else [entry])
+            if scheduled:
+                data['schedule'] = {'work':[entry], 'extensions':{}}
+            for verification_phase in ('release_integration', 'activation_acceptance'):
+                for status in ('pending', 'blocked_by_environment', 'failed'):
+                    with self.subTest(scheduled=scheduled, phase=verification_phase, status=status):
+                        entry['checks'][1:] = [{'id':'later','phase':verification_phase,'kind':'agent',
+                                               'status':status,'sha':None,'evidence':None,'extensions':{}}]
+                        self.assertFalse(records.validate_record(data))
+                        if not scheduled:
+                            self.assertEqual(report.review_summary(entry,A)['status'], 'Implementation Finished')
+
+    def test_later_phase_cannot_be_declared_a_branch_gate_even_if_agent_passed(self):
+        for scheduled in (False, True):
+            entry = prepared_work() if scheduled else branch('one')
+            entry['implementation'].update(status='verified', sha=A, required_check_ids=['check'])
+            entry['checks'] = [{'id':'check','kind':'agent','status':'passed','sha':A,'evidence':None,'extensions':{}}]
+            data = build([] if scheduled else [entry])
+            if scheduled:
+                data['schedule'] = {'work':[entry], 'extensions':{}}
+            for verification_phase in ('release_integration', 'activation_acceptance'):
+                for implementation_status in ('running', 'verified'):
+                    with self.subTest(scheduled=scheduled, phase=verification_phase, status=implementation_status):
+                        entry['checks'][0]['phase'] = verification_phase
+                        entry['implementation'].update(status=implementation_status,
+                                                       sha=A if implementation_status == 'verified' else None)
+                        self.assertTrue(any('only branch_implementation' in error
+                                            for error in records.validate_record(data)))
+
+    def test_phase_omission_preserves_legacy_gate_and_unknown_phase_is_rejected(self):
+        entry=branch('one');data=build([entry])
+        entry['implementation'].update(status='verified',sha=A,required_check_ids=['check'])
+        entry['checks']=[{'id':'check','kind':'agent','status':'pending','sha':None,'evidence':None,'extensions':{}}]
+        self.assertTrue(records.validate_record(data))
+        entry['checks'][0].update(status='passed',sha=A)
+        self.assertFalse(records.validate_record(data))
+        entry['checks'][0]['phase']='agent'
+        self.assertTrue(records.validate_record(data))
+
+    def test_phase_reclassification_changes_frozen_scope_digest(self):
+        entry=branch('one');data=build([entry])
+        entry['checks']=[{'id':'later','kind':'agent','status':'pending','sha':None,'evidence':None,'extensions':{}}]
+        legacy_digest=records.scope_digest(data)
+        entry['checks'][0]['phase']='branch_implementation'
+        branch_digest=records.scope_digest(data)
+        entry['checks'][0]['phase']='release_integration'
+        release_digest=records.scope_digest(data)
+        self.assertEqual(len({legacy_digest,branch_digest,release_digest}),3)
+        entry['checks'][0].pop('phase')
+        self.assertEqual(records.scope_digest(data),legacy_digest)
+
     def test_imported_baseline_and_new_receipts_are_disjoint(self):
         data=build([branch('one')]);p=data['branches'][0]['review_progress']
         p.update(status='running',completed_passes=3,historical_completed_passes=1,passes=[receipt()],

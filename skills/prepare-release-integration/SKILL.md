@@ -17,6 +17,14 @@ Keep historical extensions and existing authorization, verification and review
 gates; they do not authorize schema aliases or inferred reporting values.
 # Prepare Release Integration
 
+Own release integration verification after individual branches complete their
+implementation checks/reviews. Import deferred checks from selected specs, slice
+maps/plans and build records; preserve acceptance IDs, status/evidence, owner,
+executor, procedure, prerequisites and blocking milestone. Branch completion is
+not assembled-runtime acceptance. Agent-run testing belongs here when it proves
+cross-feature, deployed-asset or full storefront/Admin/cache/provider behavior.
+Use the phase and evidence-reuse rules in `references/operational-records.md`.
+
 ## Upfront Choices
 
 Before release work, resolve both choices from the user's instructions:
@@ -123,11 +131,17 @@ authorization and applicable acceptance. No nested attempts directory is needed.
    `expected_candidate_sha` equal to the assembled commit. The exact-candidate
    guard must pass before any remote mutation. Reuse that skill's backups,
    deployment, checks, and receipt; do not create an MR into staging.
+   Assign pre-deployment integration checks and pipeline/deployment health to that
+   runner; pass the deferred checklist so no build obligation disappears in transit.
 3. Delegate `verify-staging-acceptance` under **Acceptance Owners** below.
    Import every assigned result and required human/external evidence for this
    deployed candidate. Deployment success alone is not acceptance. Record
    acceptance only when all requirements pass or have an authorized limitation
    decision; leave unavailable evidence pending with its owner and procedure.
+   Assign deployed-runtime acceptance and any activation/account/device/operator
+   proof separately, regardless of executor. Keep later activation obligations
+   linked to their explicit blocking milestone; never infer release acceptance
+   from successful branch tests, CI or deployment smoke checks.
    Proceed to final publication only after aggregate acceptance qualifies.
 4. Require the remote integration still equals the tested candidate and the
    remote base still equals its pin. If either moved, stop for updating and
@@ -190,6 +204,10 @@ Assign the absolute `verify-staging-acceptance/SKILL.md` path, repository and
 release record, source branch/parent pins, assembled candidate commit/tree,
 staging URL and deployment receipt, acceptance IDs and scenarios, permitted
 test data/settings, evidence directory, coordinator identity and return route.
+Include deferred integration/activation check IDs, procedures, prerequisites,
+blocking milestones, owners and fresh/reusable evidence. Assign every selected
+obligation once or record why it belongs to a later milestone; do not drop a check
+because its original executor was an implementation agent.
 Every owner tests the same deployed candidate. Assign shared cross-branch
 scenarios explicitly to one owner and cover every release acceptance requirement.
 Run independent tests concurrently; serialize tests sharing mutable fixtures,

@@ -31,6 +31,16 @@ verification, not another development cycle. A new mix of branches needs
 combined checks; passing each source build does not verify the mix. Reuse
 applicable evidence and let the pipeline build the deployment artifact once.
 
+This is a later integration-testing phase: individual branch implementation
+verification belongs to `build-branch-stack`. Import deferred integration checks
+from supplied specs/slices/builds with acceptance IDs, owner, executor, procedure,
+prerequisites, status/evidence and blocking milestone. Run assembled checks here
+when they can qualify before deployment; full deployed storefront/Admin/cache/
+provider journeys and activation/account/device/operator acceptance flow to
+`verify-staging-acceptance` under release coordination or an explicit standalone
+assignment. Keep those obligations pending and hand them off; deployment health
+alone does not satisfy them. Agent-run checks can belong to any testing phase.
+
 ## User input
 
 The user supplies:
@@ -182,8 +192,11 @@ why both builds are necessary; otherwise do not create an unused local
 deployment artifact. This skill does not change CI configuration.
 
 Before moving staging, every required check must have passed or be assigned
-to a confirmed CI gate before activation. Any local failure stops the rebuild;
-leave the receipt in `building` and report the source branch to correct.
+to a confirmed CI gate before activation. Here required checks means the assigned
+pre-deployment integration gates, preserving explicit user/repository policy;
+checks requiring the deployed runtime remain pending for staging acceptance.
+Any local failure stops the rebuild; record `outcome: "failed"` with evidence and
+report the source branch to correct.
 Do not alter the integration candidate to make checks pass. After pushing,
 any CI failure stops deployment verification; inspect deployment state before
 retrying or rolling back.
@@ -240,6 +253,9 @@ necessary duplicate build. Record assembly, local verification and pipeline
 timings when available. Report "deployed and ready for user testing" after
 verification; full staging acceptance belongs to `verify-staging-acceptance`
 when requested, and is not implied by deployment.
+Return all pending deployed-runtime/activation obligations with owners, procedures,
+prerequisites and blocking milestones to the release coordinator or standalone
+caller. Do not mark them passed, waived, or silently remove them from scope.
 
 Also report the exact leased revert command without running it. When staging
 previously existed, the command must restore `staging_before` while leasing on

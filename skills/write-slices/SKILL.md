@@ -63,6 +63,10 @@ Each slice must:
 - have at most one required unmerged predecessor. Use a merged prerequisite or
   a different split when several unmerged branches would be required.
 
+Independently testable means sufficient proof of the branch implementation;
+full assembled-runtime acceptance belongs to the later release/staging workflow.
+Do not split a cohesive slice merely to satisfy a later testing phase.
+
 Split independently useful outcomes with materially different implementation,
 acceptance, or rollback boundaries. Providers, SDKs, lifecycle owners, and
 acceptance environments inform this decision; they need not split a common
@@ -111,6 +115,17 @@ may appear in several plans, but one slice owns the underlying behaviour. Do
 not leave orphaned IDs or let sibling plans silently share ownership. A slice
 may own several criteria only when they prove one cohesive outcome.
 
+Carry each verification obligation's phase, executor, accountable owner, procedure,
+prerequisites and blocking milestone into the child and map's verification boundary.
+One acceptance ID may need both branch proof and later integration/activation proof.
+Only focused implementation checks gate branch completion; assembled storefront/
+Admin/cache/provider and deployed-asset checks remain pending for release/staging.
+Agent execution does not change their phase. Preserve explicit user/repository
+branch gates and narrowly necessary database/migration/security/atomicity tests;
+use the cheapest sufficient proof and justify full-environment exceptions.
+Reclassifying existing mandatory gates follows operational-records reconciliation
+and shared approval rules; changing skills alone does not amend approved plans.
+
 Save the decomposition manifest beside its parent at its current stage:
 
 ```text
@@ -149,9 +164,9 @@ progress. Apply the shared approval, revision, and move rules. Each child needs:
 - demonstrated dependency and intended branch target;
 - release, disable, removal, or rollback boundary;
 - inherited binding decisions and explicitly authorized complexity;
-- changed outcomes distinguished from preserved contracts, with sufficient
-  agent-run behavioural checks and human or external acceptance only when
-  required; and
+- changed outcomes distinguished from preserved contracts, with focused branch
+  implementation checks and separately owned pending release integration and
+  activation/external acceptance obligations (or `none` where inapplicable); and
 - required new or modified database objects, when applicable, at the same
   precision as the parent spec.
 

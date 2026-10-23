@@ -16,6 +16,11 @@ spec unless blocked. No branch/wave/one-spec/build-phase barrier.
 | Own trim proportionate + verified pushed tip | Correctness pass 1 |
 | Prior findings handled + valid trim/current verified pushed tip | Next eligible pass/closure |
 
+Verification in this table means branch implementation verification under the
+operational-records phase contract. Pending release integration/activation checks
+do not block implementation, reviews, placement or build completion. Inventory and
+hand off their owners/procedures/milestones; an agent executor does not change phase.
+
 Linear order controls placement, not code need. Prove prerequisites in authoring
 base; acceptance/ancestor reviews need not finish first. Missing code permits only
 independent preparation. Each branch trims before correctness, branches overlap;
@@ -36,4 +41,6 @@ upstream settles, continuing pinned reviews/unrelated work. Verify new tips with
 smallest sufficient checks plus capability-proven unchanged-input/effective reuse.
 Return invalidated work to same owner, retaining original completion separately
 from acceptance/current coverage. Release readiness is separate; authorized prefix
-tests pin snapshot/route feedback without whole-build barriers or waived gates.
+tests belong to the release/staging workflow, pin snapshot/route feedback and add
+no whole-build barrier or waived gate. Proven implementation defects return to
+their owners; a pending later check alone does not reopen branch review.

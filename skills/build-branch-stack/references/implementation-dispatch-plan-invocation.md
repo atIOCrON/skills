@@ -14,4 +14,7 @@ fixes with fresh reviewers and preserved cap. Coordinator retains canonical stat
 moves/accepted refs/restacks/publication. Return early candidate and final completion
 with pins/checks/outcomes/receipts/dependencies/evidence/operator_handoff; save for
 retrieval if push reporting unauthorized. Suggested checks claim no acceptance.
+Only branch implementation checks gate this assignment. Return release integration/
+activation obligations with their phase, executor, owner, procedure, prerequisites,
+blocking milestone and real status; agent-run full-runtime checks still belong later.
 Return lease before acceptance; reuse this chat for amendments/invalidated work.

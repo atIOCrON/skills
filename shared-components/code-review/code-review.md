@@ -28,6 +28,13 @@ harnesses or structural-only proof of newly owned runtime behavior. Distinguish 
 config/reachability from unchanged upstream lifecycles; fake state transitions prove no
 production lifecycle. Prefer removal/simplification/split/upgrade/narrow extension to guards.
 
+Respect the pack's verification phases. Focused branch implementation proof gates
+this review; pending assembled-runtime, cross-feature, deployed-asset or full
+storefront/Admin/cache/provider acceptance belongs to release/staging, even when
+agent-run. Missing later evidence alone is no code defect. Report proven defects
+normally, preserve explicit user/repository branch gates, and justify any demand
+for a full environment over cheaper sufficient implementation proof.
+
 Blocker/should-fix needs `reproduced` (pinned SHA, supported production-like path using
 existing facilities) or `binding-proof` (committed code plus binding contract/policy/
 standard deductively proves failure). Static plausibility, unsupported inputs, imagined

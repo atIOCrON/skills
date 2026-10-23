@@ -56,12 +56,61 @@ implementation/review state. Accepted completion→Complete for all kinds, retai
 selected-build counts; missing code history→Not recorded, non-code→N/A. Unknown counts
 remain Unclear. Hold records pause/notes/source/history, no completion/waiver.
 
+## Verification phases
+
+`build-branch-stack` owns individual branch implementation verification. The
+release/staging workflow owns assembled-runtime integration and acceptance:
+
+| Check `phase` | Evidence and owning workflow |
+| --- | --- |
+| `branch_implementation` | Focused regressions, syntax/static checks, patch/dependency integrity and narrowly justified executable proof; build owner |
+| `release_integration` | Assembled runtime, cross-feature interactions, deployed assets and full storefront/Admin/cache/provider flows; release coordinator via staging rebuild and acceptance owners |
+| `activation_acceptance` | Environment/account/device/operator-dependent proof; named activation or acceptance owner |
+
+Classify each verification obligation by what it proves and when it is needed.
+Phase and executor are separate: `kind: agent` can apply to any phase. No human/
+external acceptance does not mean all runtime checks block branch completion.
+An acceptance ID may need checks in several phases without changing its owning slice.
+Use the cheapest sufficient proof. Keep focused database/migration/security/atomicity
+tests early when concrete implementation risks require them; a database alone is
+no reason to defer. Stronger evidence alone does not justify a full environment.
+Justify a full-environment branch exception with the concrete implementation risk
+and why cheaper proof cannot suffice. Explicit user or binding repository early
+gates remain branch obligations; record their authority when classifying them as
+`branch_implementation`.
+
+New/adopted check entries declare `phase`. Only branch obligations enter
+`implementation.required_check_ids`; release/activation checks stay in `checks`
+with their real status and links. Store acceptance IDs, accountable owner, executor,
+procedure, prerequisites, and the milestone blocked under each check's `extensions`.
+Use pending for unexecuted checks, never passed or waived merely because deferred.
+Branches can finish review while these checks remain pending; required acceptance
+still blocks release qualification/fulfillment or the specified activation milestone.
+Release/deployment owners link and reconcile the deferred checklist on handoff.
+
+### Existing plans and saved gates
+
+Missing phase is legacy/unclassified; preserve its existing gate until reconciled.
+Skill updates alone do not remove saved mandatory checks. Before reclassification,
+record old/new phases and gate membership, rationale and covering user/policy
+authority. Reconcile the approved spec, map, child plans and both build branches/
+scheduled work together under the shared approval/change rules. Moving a mandatory
+gate later needs explicit covering authority; ordinary build authority alone does
+not grant it. Obtain reapproval where required; preserve acceptance IDs/outcomes,
+repository policy, original evidence, review receipts/counts and historical approvals.
+Keep deferred obligations pending with an owner/procedure unless valid prior passed
+evidence applies. Reuse completed proof while determining inputs remain equivalent;
+phase changes alone trigger no execution or review rerun. Record authorized changes
+to a frozen check scope and renew its qualification/authority; path-only digest
+migration cannot authorize gate changes.
+
 ## Build phases
 
 Branches are accepted placements, schedule.work authoring/planned work. Each carries
 explicit slice/spec/source/parent/pins/phases. Implementation not_started/running/
 verified/unknown: verified pins tip with nonempty required_check_ids, every listed
-agent check passed there (prepared_sha for work). A commit/arbitrary check is insufficient.
+branch agent check passed there (prepared_sha for work). Later-phase checks cannot
+appear in required_check_ids. A commit/arbitrary check is insufficient.
 
 Trim ends proportionate. Correctness distinguishes not_started/running/
 provisionally_complete/clean/review_cap_reached per schema; terminal results require

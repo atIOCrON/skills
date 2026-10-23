@@ -94,8 +94,9 @@ or gates only for demonstrated gaps; inspect uncertainty before adding scope.
 - Explicit non-goals and binding constraints.
 - Stable acceptance IDs (`AC-01`, `AC-02`, ...), each expressing one observable
   behaviour or verifiable system property.
-- Changed outcomes distinguished from preserved contracts, with sufficient
-  agent-run verification for the change and plausibly affected contracts.
+- Changed outcomes distinguished from preserved contracts, with verification
+  obligations assigned to the phases in `operational-records.md`, separately
+  identifying executor, owner, procedure, prerequisites and blocking milestone.
 
 Include applicable decisions, dependencies, external acceptance, and authorized
 complexity. For required new or modified tables and views, specify name, grain,
@@ -139,8 +140,14 @@ them implicitly.
 ## Proportionate Verification
 
 Use the smallest sufficient checks for each acceptance condition and plausibly
-affected contract. Reuse existing checks; broader checks require broader impact
-or binding repository policy.
+affected contract. Plan focused branch implementation proof separately from
+assembled-runtime release integration and activation/external acceptance. Defer
+full storefront/Admin/cache/provider flows and deployed-asset proof to the later
+release/staging workflow, even when one branch owns the feature or an agent runs
+the checks. Preserve explicit user and binding repository branch gates.
+Reuse existing checks; broader checks require broader impact or binding policy.
+Keep narrow database/migration/security/atomicity checks early when concrete
+implementation risks require them; justify any full-environment branch exception.
 
 Distinguish one-time verification from ongoing regression coverage. Existing
 checks, diff review, or direct inspection may satisfy acceptance; each acceptance
@@ -158,15 +165,19 @@ For each added check, including fixtures, harnesses, service dependencies, full
 API or end-to-end runs, manual acceptance steps, and observation windows, name
 the credible failure it catches that existing evidence or a cheaper check would
 miss. Otherwise remove it, unless the user or binding repository policy requires
-it. Prove changed runtime behaviour at a sufficient executable seam; source
-assertions may supplement it. Do not reconstruct unchanged upstream lifecycles
-with fakes.
+it. Prove changed runtime behaviour at the cheapest sufficient executable seam
+in its assigned phase; source assertions may supplement it. Do not reconstruct
+unchanged upstream lifecycles with fakes or move full-runtime proof into branch
+completion merely because it supplies stronger evidence.
 
 Require human or external acceptance only when behaviour needs that environment
 or authority; otherwise use `none`. Routine deployment monitoring becomes a
 gate only for a demonstrated delayed failure or binding policy. Preserve user
 requirements and mandatory repository gates; do not invent staging sign-off
-or waiting periods.
+or waiting periods. `none` for human/external acceptance does not remove release
+integration obligations. Deferred checks remain required and pending with owners
+and procedures. Apply the operational-records reconciliation rules before moving
+an existing approved mandatory gate to a later phase.
 
 Example: declaring existing properties ordinarily needs checks that warnings
 disappear and delegation and returned data remain correct. Database fixtures,

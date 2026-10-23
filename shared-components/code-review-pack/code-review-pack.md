@@ -35,13 +35,17 @@ authoritative source/revision/replay identity and hash; paths/hashes/commands al
 are insufficient. Keep bulk trees external as code paths, not escaping Markdown links.
 
 Evidence manifest records review SHA and every required check with exact fields:
-`id`, `kind` (agent/external), `required`, `verified_sha`, `last_run_sha`, `method`
+`id`, `phase` (branch_implementation/release_integration/activation_acceptance),
+`kind` (agent/external), `required`, `verified_sha`, `last_run_sha`, `method`
 (direct/identity_reuse/null), `command`, `runtime`, `result`
 (passed/failed/pending/blocked_by_environment), `input_identity`, `result_identity`,
 `log_path`, `log_sha256`, `reuse_evidence_path`, `reuse_evidence_sha256`. Use explicit
 nulls. Direct pins both SHAs to tested tip; reuse pins verified_sha current, retains
 origin run, valid log and capability-defined content-addressed input/result proof.
-Only required passed agent checks verified for review SHA qualify. Link logs/proof
+`required` means required for branch verification here; later-phase obligations
+use false and remain required at their assigned release/activation milestone.
+Legacy manifests without phase retain saved gate semantics until authorized
+reconciliation. Only required passed branch agent checks verified for review SHA qualify. Link logs/proof
 from verification summary using safe local Markdown links.
 
 Hash every pack file except hash-manifest itself, including nested copies. Validate
@@ -52,15 +56,16 @@ python3 <skill-root>/scripts/validate_review_pack.py <pack-dir> <repo-root>
 ```
 
 Validator checks repository boundary/local links, fields/hashes/logs. Acceptance
-gates separately list human/external passed/pending/blocked by environment, tested
-SHA/release, owner/procedure/prerequisites/evidence/unblock condition. Pending external
-proof is no automatic code defect and remains required for acceptance/production.
+gates separately list all deferred integration/activation obligations, including
+agent-run checks, with phase/executor, acceptance IDs, real status, tested SHA/release,
+owner/procedure/prerequisites/evidence and blocking milestone. Pending later proof
+is no automatic code defect and remains required for its release/activation gate.
 
 ## Identity and refresh
 
 Use explicit object IDs for diff (including binary), commit/tree, base ancestry,
 parent-head movement, local/upstream/fetched-remote/reviewed/verified equality,
-clean-worktree checks and capability source/effective identities. Failed check,
+clean-worktree checks and capability source/effective identities. Failed required branch check,
 unexplained delta or review-tip mismatch blocks review; moved parent makes pinned
 review provisional, not invalid by itself.
 
@@ -70,7 +75,9 @@ Evidence-only closure keeps base/commit/tree and refreshes affected proof/hashes
 Fresh reviewers receive pinned diff, approved slice/parent/map/checkpoint, standards,
 reproducible inputs and checks; exclude implementation analysis, prior findings,
 triage/fix narratives/conclusions/hints. Distinguish behavioral proof from structural
-assertions; structure cannot replace owned runtime proof.
+assertions; structure cannot replace sufficient executable implementation proof.
+Reviewers respect phase boundaries: pending release/staging proof alone does not
+block branch review or justify a full environment. Proven code defects remain findings.
 
 Restack/test-only mapping rules are authoritative in build `code-review-loop.md`.
 Pack records old/new ranges/pins, range-diff/delta classifications, determining

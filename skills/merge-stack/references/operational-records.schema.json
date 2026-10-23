@@ -519,6 +519,14 @@
           "type": "string",
           "minLength": 1
         },
+        "phase": {
+          "description": "Owning verification phase, independent of executor kind. Omission preserves legacy gate semantics until authorized reconciliation.",
+          "enum": [
+            "branch_implementation",
+            "release_integration",
+            "activation_acceptance"
+          ]
+        },
         "kind": {
           "enum": [
             "agent",

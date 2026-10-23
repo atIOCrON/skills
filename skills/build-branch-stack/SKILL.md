@@ -1,6 +1,6 @@
 ---
 name: build-branch-stack
-description: Build explicit approved scope or automatically drain the to_do spec queue as a linear stack, prioritizing parallel implementation and maintaining one canonical build manifest.
+description: Build approved slices as a linear branch stack, verify individual implementations, and hand integration testing to release/staging workflows. Support explicit scope or the to_do spec queue with parallel implementation and one canonical build manifest.
 disable-model-invocation: true
 metadata:
   layer: runner
@@ -11,8 +11,12 @@ metadata:
 Build and push approved executable slices from explicit scope or the approved
 `plans/specs/to_do/` queue. Specs group work; slices own implementation. Finish
 with individually verified branches in `review/` and a canonical build manifest.
-Release selection, candidate-wide checks, acceptance and freeze belong to
-`prepare-release-integration`.
+Verify individual branch implementations here. Assembled-runtime integration,
+cross-feature and deployed-asset/full storefront/Admin/cache/provider flows belong
+to the later release/staging workflow: `prepare-release-integration` coordinates
+`rebuild-staging-with-branches` and `verify-staging-acceptance`. Release selection,
+acceptance and freeze belong to release preparation. Agent execution or branch-only
+feature ownership does not turn release testing into a branch-completion gate.
 
 ## Contracts and ownership
 
@@ -70,6 +74,11 @@ Apply the same cohesion gate to legacy plans.
 
 Read `references/implementation-readiness.md` before dispatch and include it in
 owner instruction paths. Resolve missing capability, identity or evidence readiness.
+Classify verification obligations under `operational-records.md` before dispatch;
+only branch implementation obligations enter `implementation.required_check_ids`.
+Carry later checks as pending with owners/procedures and blocking release or
+activation milestones. On resume reconcile saved mandatory gates and approved
+plans/maps under explicit covering authority; skill changes alone amend neither.
 
 ## Autonomous decision authority
 
@@ -161,8 +170,11 @@ Number ongoing passes; use “final,” “last” or “closing” only retrosp
 
 Finish with verified pushed selected tips, current branch checks, proportionate
 trim, completed/capped correctness, safe placement and applicable evidence.
-Preserve repository-required checks; add no candidate-wide integration, pipeline
-or acceptance gate to build completion. Leave completed slices in `review`.
+Preserve explicit user/repository branch gates; add no assembled-runtime
+integration, deployment pipeline or release acceptance gate to build completion.
+Use focused runtime/database proof when concrete implementation risk requires it,
+with the cheapest sufficient seam and justified exceptions. Leave completed slices
+in `review` while later checks remain explicitly pending, rather than waived/passed.
 Pending required acceptance blocks fulfillment/production decisions unless an
 authorized decision explicitly accepts the limitation; final merge remains required.
 
