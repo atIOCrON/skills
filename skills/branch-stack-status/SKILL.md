@@ -126,7 +126,11 @@ columns start hidden. Columns lets the operator choose visible columns and
 retains that preference in browser storage per project. Every filter and the
 column chooser has its own option search. Types, Change surfaces and Packages
 join Stages, Statuses, Builds, Releases and Specs as filters supporting multiple
-selections, OR within a filter and AND between filters. Stages alone
+selections, OR within a filter and AND between filters.
+Each filter's All checkbox selects or clears every option; clearing all options
+matches no rows. Explicit No release, No build, No specs and other missing-value
+options select rows without values in that field. These selections survive reload.
+Stages alone
 controls fulfilled and superseded. Filters show only matching rows by default;
 check Show predecessors to include dimmed ancestors for context. Refresh is
 automatic and browser reload preserves filters and this choice in the URL.
