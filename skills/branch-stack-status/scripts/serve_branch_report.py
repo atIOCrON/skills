@@ -319,11 +319,13 @@ PAGE = r'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="view
 <script>
 const $ = id => document.getElementById(id);
 const expanded = new Set(), names = {stage:'stages',status:'statuses',build:'builds',release:'releases',spec:'specs',types:'types',surfaces:'change surfaces',packages:'packages'};
+const EMPTY = '__empty__', NONE = '__none__';
+const emptyNames = {stage:'No stage',status:'No status',build:'No build',release:'No release',spec:'No specs',types:'No types',surfaces:'No change surfaces',packages:'No packages'};
 const params = new URLSearchParams(location.search), selected = {};
 let report = null, busy = false, visibleColumns = null, columnStorageKey = null;
 for (const id of Object.keys(names)) {
   const values = params.getAll(id);
-  selected[id] = values.includes('*') ? new Set() : values.length ? new Set(values) : id === 'stage' ? null : new Set();
+  selected[id] = values.includes('*') ? null : values.includes(NONE) ? new Set() : values.length ? new Set(values) : id === 'stage' ? undefined : null;
 }
 $('search').value = params.get('q') || '';
 $('predecessors').checked = params.get('predecessors') === '1';
@@ -351,8 +353,10 @@ function links(items) {
 function saveFilters() {
   const query = new URLSearchParams();
   for (const id of Object.keys(names)) {
-    if (!selected[id].size && id === 'stage') query.append(id, '*');
-    for (const value of [...selected[id]].sort()) query.append(id, value);
+    if (selected[id] === null) {
+      if (id === 'stage') query.append(id, '*');
+    } else if (!selected[id].size) query.append(id, NONE);
+    else for (const value of [...selected[id]].sort()) query.append(id, value);
   }
   if ($('search').value) query.set('q', $('search').value);
   if ($('predecessors').checked) query.set('predecessors', '1');
@@ -380,20 +384,25 @@ function searchChoices(id) {
 }
 function options(id, available) {
   const values = [...new Set(available)].sort(), container = $(id);
-  if (selected[id] === null) selected[id] = new Set(values.filter(v => !['fulfilled','superseded','done'].includes(v)));
+  if (selected[id] === undefined) selected[id] = new Set(values.filter(v => !['fulfilled','superseded','done'].includes(v)));
+  const title = value => value === EMPTY ? emptyNames[id] : value;
   const summary = container.querySelector('summary'), choices = choiceMenu(id);
-  summary.textContent = selected[id].size === 0 ? 'All ' + names[id] : selected[id].size === 1 ? [...selected[id]][0] : selected[id].size + ' ' + names[id];
-  summary.title = selected[id].size ? [...selected[id]].join(', ') : 'All ' + names[id];
+  summary.textContent = selected[id] === null ? 'All ' + names[id] : !selected[id].size ? 'No ' + names[id] + ' selected' : selected[id].size === 1 ? title([...selected[id]][0]) : selected[id].size + ' ' + names[id];
+  summary.title = selected[id] === null ? 'All ' + names[id] : !selected[id].size ? 'No ' + names[id] + ' selected' : [...selected[id]].map(title).join(', ');
   const fragment = document.createDocumentFragment();
-  for (const value of [null, ...new Set([...values, ...selected[id]])]) {
+  for (const value of [null, ...new Set([...values, ...(selected[id] || [])])]) {
     const label = el('label',undefined,'filter-choice' + (value === null ? ' all' : ''));
     const input = document.createElement('input'); input.type = 'checkbox';
-    input.checked = value === null ? !selected[id].size : selected[id].has(value);
-    label.append(input,el('span',value === null ? 'All ' + names[id] : value + (values.includes(value) ? '' : ' (missing from current records)')));
+    input.checked = selected[id] === null || (value === null ? values.length > 0 && values.every(v => selected[id].has(v)) : selected[id].has(value));
+    input.indeterminate = value === null && selected[id] !== null && selected[id].size > 0 && !input.checked;
+    label.append(input,el('span',value === null ? 'All ' + names[id] : title(value) + (values.includes(value) ? '' : ' (missing from current records)')));
     input.onchange = () => {
-      if (value === null) selected[id].clear();
-      else if (input.checked) selected[id].add(value);
-      else selected[id].delete(value);
+      if (value === null) selected[id] = input.checked ? null : new Set();
+      else {
+        if (selected[id] === null) selected[id] = new Set(values);
+        if (input.checked) selected[id].add(value);
+        else selected[id].delete(value);
+      }
       saveFilters(); options(id,available); render();
     };
     fragment.append(label);
@@ -461,7 +470,13 @@ function detail(row) {
   }
   box.append(left,right); td.append(box); tr.append(td); return tr;
 }
-function includes(id, values) { return !selected[id].size || values.some(value => selected[id].has(value)); }
+function filterValues(row, id) {
+  const values = id === 'stage' ? [row.stage] : id === 'status' ? [row.status] :
+    ['build','release','spec'].includes(id) ? row[{build:'builds',release:'releases',spec:'specs'}[id]].map(x=>x.name) :
+    row.operator_handoff?.[{types:'types',surfaces:'change_surfaces',packages:'packages'}[id]] || [];
+  return values.length ? values : [EMPTY];
+}
+function includes(id, values) { return selected[id] === null || values.some(value => selected[id].has(value)); }
 function render() {
   if (!report) return;
   const wrap = document.querySelector('.wrap'), scrollTop = wrap.scrollTop, scrollLeft = wrap.scrollLeft;
@@ -469,7 +484,7 @@ function render() {
   const all = report.groups.flatMap(group => group.rows), query = $('search').value.toLowerCase().trim(), matches = new Set();
   for (const row of all) {
     const text = [row.source,row.target,row.id,...row.specs.map(x=>x.name),...row.builds.map(x=>x.name),...row.releases.map(x=>x.name),...Object.values(row.operator_handoff || {}).filter(v=>typeof v==='string' || Array.isArray(v)).flat()].join(' ').toLowerCase();
-    if ((!query || text.includes(query)) && includes('stage',[row.stage]) && includes('status',[row.status]) && includes('build',row.builds.map(x=>x.name)) && includes('release',row.releases.map(x=>x.name)) && includes('spec',row.specs.map(x=>x.name)) && includes('types',row.operator_handoff?.types || []) && includes('surfaces',row.operator_handoff?.change_surfaces || []) && includes('packages',row.operator_handoff?.packages || [])) matches.add(row.id);
+    if ((!query || text.includes(query)) && Object.keys(names).every(id => includes(id,filterValues(row,id)))) matches.add(row.id);
   }
   const show = new Set(matches), sources = new Map(all.filter(row=>row.source).map(row=>[row.source,row]));
   if ($('predecessors').checked) {
@@ -516,9 +531,7 @@ async function refresh() {
     $('subtitle').textContent = report.project + ' · Read ' + new Date(report.refreshed_at).toLocaleTimeString() + ' · Refreshes automatically every __REFRESH__ seconds';
     $('subtitle').classList.remove('error');
     configureColumns();
-    options('stage',all.map(row=>row.stage)); options('status',all.map(row=>row.status)); options('build',all.flatMap(row=>row.builds.map(x=>x.name)));
-    options('release',all.flatMap(row=>row.releases.map(x=>x.name))); options('spec',all.flatMap(row=>row.specs.map(x=>x.name)));
-    options('types',all.flatMap(row=>row.operator_handoff?.types || [])); options('surfaces',all.flatMap(row=>row.operator_handoff?.change_surfaces || [])); options('packages',all.flatMap(row=>row.operator_handoff?.packages || []));
+    for (const id of Object.keys(names)) options(id,all.flatMap(row=>filterValues(row,id)));
     $('issues').hidden = !report.issues.length;
     $('issues').querySelector('summary').textContent = report.issues.length + ' record issue(s)';
     $('issues').querySelector('div').replaceChildren(...report.issues.map(issue=>el('p',issue)));
