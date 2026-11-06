@@ -191,6 +191,51 @@ def completion_path(root, value, errors):
     return path
 
 
+def completion_record(root, value, errors, cache=None):
+    path = completion_path(root, value, errors)
+    if path is None:
+        return None, None
+    if cache is None:
+        return path, load_record(path)
+    if path not in cache:
+        cache[path] = load_record(path)
+    return path, cache[path]
+
+
+def completion_delivery_errors(data, root, *, require_final_merge=False, cache=None):
+    """Shared acceptance and release provenance checks; never recurse into a build."""
+    completion, errors = data['completion'], []
+    path, evidence = completion_record(root, completion['evidence'], errors, cache)
+    if path:
+        entries = [e for e in evidence.get('accepted_slices', []) if e.get('slice_slug') == data['slice_slug']]
+        if (evidence.get('status') != 'accepted'
+                or any(evidence.get(k) != completion[k] for k in ('accepted_by', 'accepted_at'))
+                or len(entries) != 1 or any(entries[0].get(k) != completion[k]
+                    for k in ('kind', 'source', 'tip_sha', 'parent', 'release_id'))):
+            errors.append('$.completion must match explicit acceptance evidence and its exact scope')
+    if completion['kind'] == 'code' and completion['release_id']:
+        paths = list(Path(root).glob('plans/releases/*/' + completion['release_id'] + '/preparation.json'))
+        if len(paths) != 1:
+            errors.append('$.completion release_id must resolve to one canonical release')
+        else:
+            path, release = completion_record(root, str(paths[0].relative_to(root)), errors, cache)
+            if path:
+                if (validate_record(release, 'release', path, root) or release['state'] != 'merged'
+                        or release['lifecycle'] != 'released' or release['acceptance']['status'] not in {'accepted', 'passed'}):
+                    errors.append('$.completion requires a merged, released and accepted release')
+                elif require_final_merge and (release['final_pr']['state'] != 'merged' or not release['final_pr']['landed_sha']):
+                    errors.append('$.completion requires the final release merge to be recorded')
+                elif not any(c['slice_slug'] == data['slice_slug'] and c['source'] == completion['source']
+                             and c['head_sha'] == completion['tip_sha'] and c['original_parent'] == completion['parent']
+                             and c['state'] == 'merged' for c in release['changes']):
+                    errors.append('$.completion must identify an exact merged release member')
+                elif release['acceptance']['evidence'] is None:
+                    errors.append('$.completion accepted release requires evidence')
+                else:
+                    completion_path(root, release['acceptance']['evidence'], errors)
+    return errors
+
+
 def completion_errors(data, root=None):
     completion = data.get('completion')
     if completion is None:
@@ -211,38 +256,11 @@ def completion_errors(data, root=None):
     if root is None:
         return errors
     try:
-        path = completion_path(root, completion['evidence'], errors)
-        if path:
-            evidence = load_record(path)
-            entries = [e for e in evidence.get('accepted_slices', []) if e.get('slice_slug') == data['slice_slug']]
-            if (evidence.get('status') != 'accepted' or evidence.get('accepted_by') != completion['accepted_by']
-                    or evidence.get('accepted_at') != completion['accepted_at'] or len(entries) != 1
-                    or any(entries[0].get(k) != completion[k] for k in ('kind', *provenance))):
-                errors.append('$.completion must match explicit acceptance evidence and its exact scope')
-        if code and completion['release_id']:
-            paths = list(Path(root).glob('plans/releases/*/' + completion['release_id'] + '/preparation.json'))
-            if len(paths) != 1:
-                errors.append('$.completion release_id must resolve to one canonical release')
-            else:
-                path = completion_path(root, str(paths[0].relative_to(root)), errors)
-                release = load_record(path) if path else None
-                if release:
-                    if (validate_record(release, 'release', path, root) or release['state'] != 'merged'
-                            or release['lifecycle'] != 'released' or release['acceptance']['status'] not in {'accepted', 'passed'}):
-                        errors.append('$.completion requires a merged, released and accepted release')
-                    elif not any(c['slice_slug'] == data['slice_slug'] and c['source'] == completion['source']
-                                 and c['head_sha'] == completion['tip_sha'] and c['original_parent'] == completion['parent']
-                                 and c['state'] == 'merged' for c in release['changes']):
-                        errors.append('$.completion must identify an exact merged release member')
-                    elif release['acceptance']['evidence'] is None:
-                        errors.append('$.completion accepted release requires evidence')
-                    else:
-                        completion_path(root, release['acceptance']['evidence'], errors)
+        errors.extend(completion_delivery_errors(data, root))
         if code and data['current']:
             current = data['current']
-            path = completion_path(root, 'plans/builds/' + current['build_id'] + '/manifest.json', errors)
+            path, build = completion_record(root, 'plans/builds/' + current['build_id'] + '/manifest.json', errors)
             if path:
-                build = load_record(path)
                 failures = validate_record(build, 'build', path, root)
                 entries = build.get('branches', []) + ((build.get('schedule') or {}).get('work', []))
                 matching = [e for e in entries if e['slice_slug'] == data['slice_slug'] and e['source'] == current['source']]
@@ -251,6 +269,42 @@ def completion_errors(data, root=None):
                     errors.append('$.completion selected build must retain matching valid source qualification')
     except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
         errors.append('$.completion invalid evidence/reference: ' + str(exc))
+    return errors
+
+
+def released_delivery_errors(data, root):
+    """Prove completed delivery without treating it as original candidate qualification."""
+    if root is None:
+        return ['$.state released delivery evidence requires a project root']
+    if not data['branches']:
+        return ['$.state released delivery requires build members']
+    errors, cache = [], {}
+    if data['unresolved']:
+        errors.append('$.unresolved must be empty for accepted delivery of the whole build')
+    if any(w['status'] != 'complete' or w['waiting_on']
+           for w in (data.get('schedule') or {}).get('work', [])):
+        errors.append('$.schedule has unfinished or waiting work')
+
+    try:
+        for index, branch in enumerate(data['branches']):
+            at = f'$.branches[{index}]'
+            paths = list(Path(root).glob('plans/slices/*/' + branch['slice_slug'] + '/record.json'))
+            if len(paths) != 1:
+                errors.append(at + ' delivery slice must resolve exactly once')
+                continue
+            _, record = completion_record(root, str(paths[0].relative_to(root)), errors, cache)
+            if (record is None or validate_record(record, 'slice') or record['stage'] != 'fulfilled'
+                    or paths[0].parent.parent.name != record['stage']):
+                errors.append(at + ' requires a valid fulfilled slice record')
+                continue
+            completion = record.get('completion')
+            if not completion or completion['kind'] != 'code' or completion['source'] != branch['source']:
+                errors.append(at + ' requires explicit accepted code completion for its slice/source')
+                continue
+            errors.extend(at + ' ' + e for e in completion_delivery_errors(
+                record, root, require_final_merge=True, cache=cache))
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
+        errors.append('$.state invalid released delivery evidence: ' + str(exc))
     return errors
 
 
@@ -282,13 +336,18 @@ def validate_record(data, expected_kind=None, path=None, root=None):
         if len(ids) != len(set(ids)):
             errors.append('$.slice_map.owners must give each acceptance ID one owner')
     elif kind == 'build':
+        delivery_errors = released_delivery_errors(data, root) if data['state'] == 'released' else None
+        accepted_delivery = delivery_errors == []
+        candidate_qualification = data['state'] in {'frozen','staged','accepted','released'} and not accepted_delivery
         slugs = [b['slice_slug'] for b in data['branches']]
         if len(slugs) != len(set(slugs)):
             errors.append('$.branches contains duplicate slice identities')
         if data['freeze'] and data['freeze']['scope_digest'] != scope_digest(data):
             errors.append('$.freeze.scope_digest does not match canonical build scope')
-        if data['state'] in {'frozen','staged','accepted','released'} and data['freeze'] is None:
+        if candidate_qualification and data['freeze'] is None:
             errors.append('$.freeze is required for a frozen or later candidate')
+            if root is not None and delivery_errors:
+                errors.extend(delivery_errors)
         sources = [b['source'] for b in data['branches']]
         if len(sources) != len(set(sources)):
             errors.append('$.branches contains duplicate source identities')
@@ -309,7 +368,7 @@ def validate_record(data, expected_kind=None, path=None, root=None):
                     if mapping['from_sha']!=effective:errors.append(at + '.human_disposition mappings do not form a SHA chain')
                     effective=mapping['to_sha']
                 accepted=disposition['status']=='accepted' and effective==branch['tip_sha']
-            if data['state'] in {'frozen','staged','accepted','released'}:
+            if candidate_qualification:
                 if branch['implementation']['status']!='verified' or branch['trim_review']['status']!='proportionate' or not (branch['review_progress']['status']=='clean' or branch['review_progress']['status']=='review_cap_reached' and accepted):
                     errors.append(at + ' requires verified implementation, proportionate trim and qualified correctness before freezing')
                 parents={data['base']['branch']:data['base']['sha'],**{b['source']:b['tip_sha'] for b in data['branches']}}
