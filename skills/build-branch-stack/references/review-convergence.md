@@ -1,5 +1,9 @@
 # Review Convergence
 
+Treat a plan as a hypothesis. When evidence disproves its mechanism, preserve
+it, return affected slices to `in_progress`, and amend plan, design checkpoint,
+verification boundary, graph and manifest.
+
 Record epoch/design/mechanism/native owner in design checkpoint. Material owner,
 state-model, dependency strategy, mechanism or slice-boundary change starts new
 epoch with prior failure class and reason new design removes it. Identity/counts
@@ -7,9 +11,11 @@ persist across designs: family = invariant/runtime owner/supported path/failure.
 Only reproduced or binding-proof material findings authorize edits; static
 plausibility is advisory. Prefer root-cause removal/simplification over guards.
 
-Before broader design record demonstrated failure, native owner, deletion option,
-one invariant versus separable outcomes, harness footprint and patch removal
-condition. Reject unnecessary state owners/async boundaries/patches/extensions.
+Before edits record failure class, alternatives, decision, added production surface,
+rollback effect and required evidence. Before broader design also record demonstrated
+failure, native owner, deletion option, one invariant versus separable outcomes,
+harness footprint and patch removal condition. Reject unnecessary state owners/
+async boundaries/patches/extensions.
 
 | Trigger | Required continuation |
 | --- | --- |

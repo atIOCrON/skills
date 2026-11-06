@@ -1,6 +1,15 @@
 # Implementation Readiness
 
-Before dispatch, map every owned acceptance group to its candidate mechanism,
+Before moves or edits, inspect repository instructions, plans, maps, refs and CI.
+Before branch creation/adoption, apply slice cohesion/ownership requirements in
+`orchestration-plans-layout.md`. Require one actor/integration-visible outcome.
+Split independently shippable/failing/rollback groups; reassess combined providers,
+SDKs, lifecycle owners, acceptance environments or coordinators introduced solely
+by grouping unrelated outcomes. Decompose within approved scope under the shared
+approval/change rules.
+
+Before dispatch, resolve missing capability, identity or evidence readiness and
+map every owned acceptance group to its candidate mechanism,
 runtime owner, verification phase, executor and local/inherited/external evidence.
 Use the phase contract in `operational-records.md`: build readiness requires
 focused branch implementation proof, plus an owned handoff for later checks;
