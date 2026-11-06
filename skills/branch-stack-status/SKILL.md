@@ -102,6 +102,7 @@ release ID and outstanding release checks separately from incoming review work.
 requires both. Report any merged slices separately from unmerged review work,
 without changing the review-completion statuses above. Report any parent
 rollup discrepancy read-only, without moving plans.
+For released build accounting, follow [Released builds](references/operational-records.md#released-builds).
 If no branches have been accepted yet, say so and report selected work from
 the schedule; do not fabricate a branch table or placeholder commits.
 

@@ -234,12 +234,93 @@ class CompletionTests(unittest.TestCase):
         self.build['state'] = 'released'
         self.assertTrue(any('freeze' in e for e in records.validate_record(self.build)))
 
+    def record_merged_delivery(self):
+        self.release['final_pr'].update(id='2', url='https://example.com/pr/2', state='merged',
+            target_branch='master', landed_sha=fixtures.A)
+        self.write_release()
+        self.build['state'] = 'released'
+        self.write_build()
+
+    def test_released_delivery_preserves_original_waiver_and_null_freeze(self):
+        branch = self.select_build(counts=True)
+        branch['review_progress'].update(status='waived', sha=fixtures.A,
+            evidence=self.completion['evidence'], reason='Original user waiver retained.')
+        self.record_merged_delivery()
+        self.assertFalse(records.validate_record(self.build, root=self.root))
+        self.assertIsNone(self.build['freeze'])
+        self.assertEqual(self.build['branches'][0]['review_progress']['status'], 'waived')
+        self.assertEqual(self.row()['status'], 'Complete')
+
+    def test_delivery_acceptance_never_qualifies_active_candidate_states(self):
+        self.select_build()
+        self.record_merged_delivery()
+        for state in ('frozen', 'staged', 'accepted'):
+            self.build['state'] = state
+            errors = records.validate_record(self.build, root=self.root)
+            self.assertTrue(any('freeze is required' in e for e in errors), state)
+            self.assertTrue(any('qualified correctness' in e for e in errors), state)
+
+    def test_released_delivery_requires_every_member_and_explicit_completion(self):
+        self.select_build()
+        self.record_merged_delivery()
+        self.build['branches'].append(fixtures.branch('two'))
+        self.assertTrue(records.validate_record(self.build, root=self.root))
+        self.build['branches'].pop()
+        self.slice.pop('completion')
+        self.write_slice()
+        self.assertTrue(records.validate_record(self.build, root=self.root))
+
+    def test_released_delivery_requires_final_merge_and_accepted_release(self):
+        self.select_build()
+        self.record_merged_delivery()
+        self.release['final_pr']['landed_sha'] = None
+        self.write_release()
+        self.assertTrue(records.validate_record(self.build, root=self.root))
+        self.record_merged_delivery()
+        self.release['acceptance']['status'] = 'pending'
+        self.write_release()
+        self.assertTrue(records.validate_record(self.build, root=self.root))
+
+    def test_released_delivery_rejects_wrong_acceptance_or_release_version(self):
+        self.select_build()
+        self.record_merged_delivery()
+        evidence = json.loads((self.root / self.completion['evidence']).read_text())
+        evidence['accepted_slices'][0]['tip_sha'] = fixtures.B
+        self.write(self.completion['evidence'], evidence)
+        self.assertTrue(records.validate_record(self.build, root=self.root))
+        self.write_acceptance()
+        self.release['changes'][0]['head_sha'] = fixtures.B
+        self.write_release()
+        self.assertTrue(records.validate_record(self.build, root=self.root))
+
+    def test_released_delivery_cannot_hide_remaining_work(self):
+        self.select_build()
+        self.record_merged_delivery()
+        self.build['unresolved'] = ['Unfinished integration']
+        self.assertTrue(records.validate_record(self.build, root=self.root))
+        self.build['unresolved'] = []
+        self.build['schedule'] = {'work':[fixtures.prepared_work()], 'extensions':{}}
+        self.assertTrue(records.validate_record(self.build, root=self.root))
+
+    def test_released_successor_delivery_does_not_rewrite_original_qualification(self):
+        self.select_build(counts=True)
+        self.slice['current'] = None
+        self.write_slice()
+        self.build['branches'][0]['tip_sha'] = fixtures.B
+        original = copy.deepcopy(self.build['branches'][0])
+        self.record_merged_delivery()
+        self.assertFalse(records.validate_record(self.build, root=self.root))
+        self.assertEqual(self.build['branches'][0], original)
+        self.assertEqual(self.completion['tip_sha'], fixtures.A)
+
     def test_no_deferral_or_historical_build_contract_is_added(self):
         data = copy.deepcopy(self.slice)
         data['deferral'] = {}
         self.assertTrue(records.validate_record(data))
         build = fixtures.build([fixtures.branch('one')])
         build['state'] = 'historical'
+        self.assertTrue(records.validate_record(build))
+        build['state'] = 'closed'
         self.assertTrue(records.validate_record(build))
 
 

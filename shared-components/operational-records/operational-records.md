@@ -146,6 +146,19 @@ Missing/invalid/conflicting qualification→Unclear with problem. Correctness st
 precedes trim unless not_started; unknown counts independently stay Unclear. Reports
 are read-only, checking waiver file safety/size/existence, never narrative proof.
 
+### Released builds
+
+Validate accepted delivery of a `released` build with the project root. Every
+slice/source needs canonical fulfilled completion, matching acceptance evidence,
+and exact membership in a merged, released, accepted release with its final merge
+recorded. Scheduled work must be complete, with no waiting dependencies or unresolved
+blockers. Successor deliveries across multiple releases can complete the scope;
+retain original pins, reviews,
+checks and freeze history without asserting source equivalence or review mapping.
+This establishes delivery without qualifying the original combined candidate.
+Otherwise require normal candidate qualification. The `frozen`, `staged` and
+`accepted` gates remain unchanged.
+
 ## Receipts and history
 
 Accounting receipts requires integer completed_passes/historical_completed_passes
