@@ -6,12 +6,19 @@ runtime/dispatch for persistent owners and scheduling for capacity/isolation.
 
 ## Selection and order
 
+Accept optional specs, slices, branches or a repair/resume manifest. Impose no
+branch cap. Require slice/parent/map approval and eligible parent stages under
+`orchestration-plans-layout.md`; reject draft, stale, superseded, `in_release`,
+merged or fulfilled build inputs. Repair inputs include the release record,
+affected branches and publisher evidence that affected ready CRs are draft.
+
 Explicit specs resolve approved maps; named slices exclude siblings. Honor scope/
 order/base/layout/pauses/exclusions/resume, adding only demonstrated prerequisites
-within authority. Without scope inspect unfinished manifests/sessions/refs/handoffs;
-resume uniquely applicable build including owned in_progress work, never duplicate
-branches/take over live coordinator/infer tail by names/dates. Investigate ambiguous
-ownership/selection; ask only unresolved choice.
+within authority. Without scope, discover and drain the queue without asking for
+selection; inspect unfinished manifests/sessions/refs/handoffs and resume the uniquely
+applicable build including owned in_progress work. Never duplicate branches/take over
+live coordinator/infer tail by names/dates. Investigate ambiguous ownership/selection;
+ask only unresolved choice.
 
 Discover approved specs/to_do, approved maps and to_do children plus resumed work.
 Group explicitly classified standalone legacy slices by slug; report unmapped work.
@@ -33,6 +40,10 @@ prerequisites/existing authority or block, never fabricate dependency/violate or
 
 ## Authoring and acceptance
 
+Starting branch is base unless an existing parent is specified. Create plan branches
+by default; follow `git-branch-commit.md` for base resolution, creation and adoption
+checks. Check/refetch parent pins before each plan/final handoff.
+
 Default new layout linear; explicit dependency/base-targeted overrides, resumes
 retain authorized layout. First acceptance uses pinned start, then tail. If start
 is not eventual integration base, record actual anchor as base, eventual base in
@@ -53,11 +64,16 @@ return invalidated work to same owner and transfer receipts/counts without reset
 Convert provisional completion to clean only on valid accepted-tip qualification,
 otherwise running/null phase SHA; never provisional status in branches. Record
 verified pushed placement, then advance schedule.extensions.tail.
+Failed review moves return affected slices to `in_progress`.
 
 ## Shared mutations and releases
 
 Coordinator alone writes/moves/accepts/restacks/publishes except explicit leases/
 handoffs naming scope/expected pins/owner/return. Session provenance grants no lease.
+For unexplained ref movement, staged/unstaged overlap, failed leases or missing
+artefacts, follow the integrity rules in `from-reviewed-plan-to-git-handoff.md`.
+Use `orchestration-plans-layout.md` for build-authorized prerequisite/split drafts
+and approval; update map, graph and manifest.
 Owners retain isolated authoring/fixes/reviews. Assign review ownership to avoid
 duplicate passes; other agents' pinned reviews/release snapshots use separate outputs,
 coordinator imports evidence/CR state. Default selected release is qualified ancestry-
