@@ -1,0 +1,6 @@
+interface:
+  display_name: "Branch Plan Table"
+  short_description: "List live branches and their spec and slice plans"
+  default_prompt: "Use $branch-plan-table to show current local and remote branches with their spec and slice plans."
+policy:
+  allow_implicit_invocation: true
