@@ -1,0 +1,6 @@
+interface:
+  display_name: "Next Plan"
+  short_description: "Review one draft plan and recommend its next step"
+  default_prompt: "Use $next-plan to present the best remaining draft plan briefly and wait for my decision."
+policy:
+  allow_implicit_invocation: true

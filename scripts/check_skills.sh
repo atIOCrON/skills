@@ -31,6 +31,7 @@ implicit_invocation_exceptions = {
     "branch-plan-table",
     "branch-stack-status",
     "magento-composer-patches",
+    "next-plan",
     "write-concisely",
 }
 
